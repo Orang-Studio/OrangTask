@@ -57,9 +57,13 @@ cd frontend && bun install && bun run dev
 
 ### Android
 
-Open `android/` in Android Studio and run. For native push, drop your Firebase
+Open `android/` in Android Studio and run. It builds in two flavors: `foss`,
+which has no proprietary dependencies and is what F-Droid ships, and `full`,
+which adds Firebase Cloud Messaging for native push. For push, drop your Firebase
 `google-services.json` into `android/app/` and apply the Google Services plugin.
 Without it the app still builds, push is simply inert.
+
+See [android/README.md](android/README.md) for the flavors and the F-Droid setup.
 
 ### Claude Code integration
 

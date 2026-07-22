@@ -39,24 +39,10 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Firebase Cloud Messaging: receives push, builds notifications with
-             action buttons (Mark done / Snooze) in OrangMessagingService. -->
-        <service
-            android:name=".notifications.OrangMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
         <!-- Handles the notification action buttons in the background. -->
         <receiver
             android:name=".notifications.NotificationActionReceiver"
             android:exported="false" />
-
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="@string/fcm_default_channel" />
 
         <activity
             android:name=".MainActivity"

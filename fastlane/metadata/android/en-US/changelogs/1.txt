@@ -1,0 +1,5 @@
+First release.
+
+Lists and smart views, full task editing with recurrence and subtasks, natural language quick add, list sharing, offline queue, search, Google Keep import, JSON export, webhooks, personal API keys and PIN lock.
+
+This is the F-Droid build, so it carries no proprietary libraries and fetches notifications instead of receiving Google pushes.

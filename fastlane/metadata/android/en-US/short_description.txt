@@ -1,0 +1,1 @@
+Self-hosted task manager with lists, smart views, sharing and offline sync

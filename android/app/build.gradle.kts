@@ -29,6 +29,16 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"https://task.oranges.lt\"")
     }
 
+    flavorDimensions += "dist"
+    productFlavors {
+        create("foss") {
+            dimension = "dist"
+        }
+        create("full") {
+            dimension = "dist"
+        }
+    }
+
     signingConfigs {
         if (keystoreProps.isNotEmpty()) {
             create("release") {
@@ -112,7 +122,7 @@ dependencies {
 
     implementation(libs.coil.compose)
 
-    // firebase Cloud Messaging (native push)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.messaging)
+    // firebase Cloud Messaging (native push), full flavour only
+    "fullImplementation"(platform(libs.firebase.bom))
+    "fullImplementation"(libs.firebase.messaging)
 }

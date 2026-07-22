@@ -21,3 +21,8 @@
 # OkHttp
 -dontwarn okhttp3.**
 -dontwarn okio.**
+
+# Tink (pulled in by androidx.security-crypto) references errorprone
+# annotations that are compile-only and never shipped in the APK.
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.concurrent.**
