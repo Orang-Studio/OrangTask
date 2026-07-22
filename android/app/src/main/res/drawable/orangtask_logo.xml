@@ -1,0 +1,16 @@
+<!-- brand glyph: orange disc with the check knocked through to the dark -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="256dp"
+    android:height="256dp"
+    android:viewportWidth="256"
+    android:viewportHeight="256">
+    <path
+        android:fillColor="#f97316"
+        android:pathData="M8,128 A120,120 0 1 0 248,128 A120,120 0 1 0 8,128 Z" />
+    <path
+        android:strokeColor="#161616"
+        android:strokeWidth="34"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter"
+        android:pathData="M65,133 L107,175 L193,81" />
+</vector>

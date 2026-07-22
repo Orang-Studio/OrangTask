@@ -1,0 +1,33 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+google-services.json
+
+# deps
+node_modules/
+.pnp.*
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# the built frontend is copied here at deploy time
+backend/public/
+
+# android
+.gradle/
+.kotlin/
+local.properties
+android/app/release/
+captures/
+.cxx/
+
+# editor / os
+.idea/
+.vscode/
+.DS_Store
+*.log

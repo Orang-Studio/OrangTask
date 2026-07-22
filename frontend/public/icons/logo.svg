@@ -1,0 +1,6 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="orangtask-logo-title">
+  <title id="orangtask-logo-title">OrangTask</title>
+  <circle cx="128" cy="128" r="128" fill="#161616"/>
+  <circle cx="128" cy="128" r="92" fill="#f97316"/>
+  <path d="M80 132 L112 164 L178 92" fill="none" stroke="#161616" stroke-width="26" stroke-linecap="butt" stroke-linejoin="miter"/>
+</svg>

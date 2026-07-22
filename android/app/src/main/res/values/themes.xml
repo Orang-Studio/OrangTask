@@ -1,0 +1,14 @@
+<resources>
+    <!-- Base theme is a bare dark shell; Compose draws everything. -->
+    <style name="Theme.OrangTask" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Theme.OrangTask.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/orangtask_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.OrangTask</item>
+    </style>
+</resources>

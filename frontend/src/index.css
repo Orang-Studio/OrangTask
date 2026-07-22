@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', system-ui, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+/* light / dark theme surfaces */
+.dark body {
+  background-color: #161616;
+  color: #ffffff;
+}
+
+body {
+  background-color: #f5f5f5;
+  color: #161616;
+}
+
+/* scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 0;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #333;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* brand button: sharp corners, uppercase, bold (matches oranges.lt) */
+.btn-brand {
+  @apply inline-flex items-center justify-center font-bold uppercase tracking-wide transition-colors select-none;
+  border-radius: 0;
+}
+.btn-primary {
+  @apply btn-brand bg-orange-500 text-white px-5 h-11;
+}
+.btn-primary:hover {
+  @apply bg-orange-600;
+}
+.btn-secondary {
+  @apply btn-brand bg-white text-black px-5 h-11;
+}
+.dark .btn-secondary {
+  @apply bg-ink-700 text-white;
+}
+.btn-secondary:hover {
+  @apply bg-gray-100;
+}
+.dark .btn-secondary:hover {
+  @apply bg-ink-600;
+}
+
+/* input */
+.input-field {
+  @apply w-full px-3 h-11 bg-white border border-gray-300 text-black outline-none transition-colors;
+  border-radius: 4px;
+}
+.dark .input-field {
+  @apply bg-ink-750 border-ink-500 text-white;
+}
+.input-field:focus {
+  @apply border-orange-500;
+}
+
+/* card surfaces */
+.surface {
+  @apply bg-white border border-gray-200;
+}
+.dark .surface {
+  @apply bg-ink-800 border-ink-600;
+}
+
+/* no text selection on interactive chrome */
+.no-select {
+  user-select: none;
+}
+
+/* safe area padding for mobile bottom bar */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* hide scrollbar but keep scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* skeleton shimmer (solid, no gradient) */
+@keyframes pulse-bg {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.skeleton {
+  @apply bg-gray-200;
+  animation: pulse-bg 1.5s ease-in-out infinite;
+}
+.dark .skeleton {
+  @apply bg-ink-700;
+}
+
+/* mascot (Pip the fox) gentle idle bob, respects reduced motion */
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.mascot-float {
+  animation: mascot-float 4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-float { animation: none; }
+}
+
+/* pIN field: mask digits via CSS instead of type=password, so the browsers saved-passwords / password-manager menu never pops up. (WebKit/Blink.) */
+.pin-mask {
+  -webkit-text-security: disc;
+  text-security: disc;
+}

@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">OrangTask</string>
+    <string name="fcm_default_channel">orangtask_reminders</string>
+</resources>

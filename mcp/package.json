@@ -1,0 +1,13 @@
+{
+  "name": "orangtask-mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing OrangTask tasks and lists to Claude Code",
+  "type": "module",
+  "bin": { "orangtask-mcp": "./index.js" },
+  "files": ["index.js"],
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  }
+}

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- orangtask-export.json is written to the cache dir before sharing. -->
+    <cache-path name="export" path="." />
+</paths>
