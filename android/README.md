@@ -62,9 +62,9 @@ cd android
 ./gradlew assembleFullRelease   # → app/build/outputs/apk/full/release/app-full-release.apk
 ```
 
-Both APKs are installable by sideloading (`adb install` or copying to the
-phone). Without a `keystore.properties`, release builds are signed with the
-debug key; for Play-Store-grade signing create `android/keystore.properties`:
+Debug APKs are installable by sideloading straight away (`adb install` or
+copying to the phone). Release builds come out unsigned unless you create
+`android/keystore.properties`, since that is what F-Droid signs itself:
 
 ```properties
 storeFile=orangtask.jks

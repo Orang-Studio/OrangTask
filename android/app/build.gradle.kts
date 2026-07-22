@@ -58,11 +58,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = if (keystoreProps.isNotEmpty()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            // no keystore.properties means an unsigned APK, which is what
+            // F-Droid wants to sign itself
+            signingConfig = if (keystoreProps.isNotEmpty()) signingConfigs.getByName("release") else null
         }
     }
 
