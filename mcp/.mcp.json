@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "orangtask": {
+      "command": "npx",
+      "args": ["-y", "orangtask-mcp@latest"],
+      "env": {
+        "ORANGTASK_API_KEY": "${ORANGTASK_API_KEY}",
+        "ORANGTASK_API_URL": "${ORANGTASK_API_URL:-https://task.oranges.lt}"
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "orangtask",
+  "description": "Expose your OrangTask tasks and lists to Claude Code over the personal-API-key REST surface. 10 tools: list, search, create, update, complete, delete tasks plus lists and tags.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Orang Studio",
+    "url": "https://github.com/Orang-Studio"
+  },
+  "homepage": "https://task.oranges.lt",
+  "repository": "https://github.com/Orang-Studio/OrangTask",
+  "license": "See LICENSE"
+}

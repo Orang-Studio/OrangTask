@@ -1,0 +1,14 @@
+{
+  "name": "orangtask",
+  "owner": {
+    "name": "Orang Studio",
+    "url": "https://github.com/Orang-Studio"
+  },
+  "plugins": [
+    {
+      "name": "orangtask",
+      "source": "./mcp",
+      "description": "OrangTask tasks and lists in Claude Code via MCP (create, search, update, complete tasks over your personal API key)"
+    }
+  ]
+}
