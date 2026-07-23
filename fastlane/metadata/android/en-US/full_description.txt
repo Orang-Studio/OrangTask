@@ -1,0 +1,27 @@
+OrangTask is a task manager for people who would rather run their own server than hand their to-do list to someone else. The app is a native client for an OrangTask backend, which you can self-host with Docker in a few minutes. The whole stack (server, web app, this app) is MIT licensed.
+
+Sign in and everything syncs live over a WebSocket, on every device at once.
+
+<b>Features</b>
+
+* Lists with their own icon and color, plus smart views for Today, Upcoming, Overdue, Assigned to me and All
+* Full task editing: due date and time, priority, assignee, tags, notes, subtasks and recurring rules
+* Quick add that understands plain language, so "report friday 5pm !high" fills in the date, time and priority for you
+* Share a list with anyone on your instance, as an editor or a viewer
+* Works offline: edits are queued on device and replayed in order once you are back online, and tasks you create offline show up straight away
+* Search across every task, tapping a result opens it
+* Reminders and mentions arrive as notifications with Mark done and Snooze buttons
+* Import from Google Keep using a Google Takeout export, parsed on your device
+* Export everything as JSON whenever you want
+* Personal API keys and outgoing webhooks, so your own scripts, n8n or Zapier can read and change tasks
+* Optional PIN lock, tokens are kept in encrypted storage
+* Sign in with email and password, a magic link, or GitHub and Google if your server has them configured
+* Light and dark themes, no ads, no trackers, no accounts anywhere but your own server
+
+<b>A note on this build</b>
+
+The F-Droid build contains no proprietary libraries, which means no Firebase Cloud Messaging. Notifications are fetched by the app while it runs instead of being pushed instantly by Google. Everything else is identical to the build published elsewhere.
+
+<b>You need a server</b>
+
+The app talks to an OrangTask backend and does nothing on its own. This build ships pointing at task.oranges.lt, where you can create an account. If you would rather run the backend yourself, the source repository has a Docker Compose setup, and the server address is a one line change before you build the app.

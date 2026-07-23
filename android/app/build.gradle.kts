@@ -29,6 +29,16 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"https://task.oranges.lt\"")
     }
 
+    flavorDimensions += "dist"
+    productFlavors {
+        create("foss") {
+            dimension = "dist"
+        }
+        create("full") {
+            dimension = "dist"
+        }
+    }
+
     signingConfigs {
         if (keystoreProps.isNotEmpty()) {
             create("release") {
@@ -48,11 +58,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = if (keystoreProps.isNotEmpty()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            // no keystore.properties means an unsigned APK, which is what
+            // F-Droid wants to sign itself
+            signingConfig = if (keystoreProps.isNotEmpty()) signingConfigs.getByName("release") else null
         }
     }
 
@@ -112,7 +120,7 @@ dependencies {
 
     implementation(libs.coil.compose)
 
-    // firebase Cloud Messaging (native push)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.messaging)
+    // firebase Cloud Messaging (native push), full flavour only
+    "fullImplementation"(platform(libs.firebase.bom))
+    "fullImplementation"(libs.firebase.messaging)
 }

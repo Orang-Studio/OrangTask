@@ -44,16 +44,27 @@ as the web app (REST + WebSocket), point it at your instance and go.
 Requirements: Android Studio (Ladybug or newer) with JDK 17. Everything else
 (Gradle 8.9, SDK 35, dependencies) is fetched automatically on first sync.
 
+There are two product flavors:
+
+| Flavor | Push | Ships to |
+| --- | --- | --- |
+| `foss` | none, the notification list is polled | F-Droid |
+| `full` | Firebase Cloud Messaging | GitHub releases, Play |
+
+`foss` pulls in no proprietary libraries at all, which is what F-Droid requires.
+The only difference in the code is `PushRegistrar`, which is a no-op there, plus
+`OrangMessagingService` and the FCM manifest entries, which only exist in `full`.
+
 ```bash
 # Open the android/ folder in Android Studio and press Run, or:
 cd android
-./gradlew assembleDebug     # → app/build/outputs/apk/debug/app-debug.apk
-./gradlew assembleRelease   # → app/build/outputs/apk/release/app-release.apk
+./gradlew assembleFossDebug     # → app/build/outputs/apk/foss/debug/app-foss-debug.apk
+./gradlew assembleFullRelease   # → app/build/outputs/apk/full/release/app-full-release.apk
 ```
 
-Both APKs are installable by sideloading (`adb install` or copying to the
-phone). Without a `keystore.properties`, release builds are signed with the
-debug key; for Play-Store-grade signing create `android/keystore.properties`:
+Debug APKs are installable by sideloading straight away (`adb install` or
+copying to the phone). Release builds come out unsigned unless you create
+`android/keystore.properties`, since that is what F-Droid signs itself:
 
 ```properties
 storeFile=orangtask.jks
@@ -61,6 +72,23 @@ storePassword=...
 keyAlias=orangtask
 keyPassword=...
 ```
+
+## F-Droid
+
+F-Droid builds `assembleFossRelease` from the tag matching the version, signs it
+itself and publishes it. Two things feed that:
+
+- `fastlane/metadata/android/en-US/` at the repo root holds the store listing
+  (title, summary, description, changelogs, icon, feature graphic). F-Droid
+  reads it straight from this repo on every build, so changing the listing is a
+  normal commit. A new release needs `changelogs/<versionCode>.txt`.
+- `metadata/lt.oranges.orangtask.yml` in
+  [fdroiddata](https://gitlab.com/fdroid/fdroiddata) holds the build recipe.
+  Its `UpdateCheckMode: Tags` picks up new `v*` tags on its own, so a release is
+  just a version bump plus a tag.
+
+Keep the `foss` flavor free of proprietary dependencies or the build gets
+rejected by F-Droid's scanner.
 
 ## Server
 
