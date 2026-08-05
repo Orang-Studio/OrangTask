@@ -21,7 +21,6 @@ import lt.oranges.orangtask.tasks.TaskRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** keeps Room in step with the server while the app is in the foreground: a full refresh on every */
 @Singleton
 class SyncCoordinator @Inject constructor(
     private val taskRepository: TaskRepository,
@@ -45,7 +44,7 @@ class SyncCoordinator @Inject constructor(
                     is RealtimeSignal.Connected -> runCatching { fullRefresh() }
                     is RealtimeSignal.Event -> handleEvent(signal.message)
                     is RealtimeSignal.Unauthorized -> {
-                        // force a token refresh through the authenticator, then retry
+
                         runCatching { authRepository.me() }
                         realtime.reconnectNow()
                     }
@@ -53,7 +52,6 @@ class SyncCoordinator @Inject constructor(
             }
         }
 
-        // refresh immediately even if the socket takes a while (or fails) to open
         s.launch { runCatching { fullRefresh() } }
         realtime.start(s)
     }
@@ -66,9 +64,9 @@ class SyncCoordinator @Inject constructor(
     }
 
     suspend fun fullRefresh() {
-        // unsent offline mutations go out first, otherwise the refresh would overwrite their optimistic Room
+
         if (offlineQueue.hasPending() && !offlineQueue.replayAll()) {
-            // still offline: leave Room as-is, WorkManager retries the queue
+
             return
         }
         coroutineScope {
@@ -89,7 +87,7 @@ class SyncCoordinator @Inject constructor(
                 scheduleRefresh()
             }
             "task.created", "task.updated" -> {
-                // tag-change broadcasts only carry {id}; those fall through to the debounced refresh
+
                 val dto = data?.let {
                     runCatching { json.decodeFromJsonElement(TaskDto.serializer(), it) }.getOrNull()
                 }
@@ -97,7 +95,7 @@ class SyncCoordinator @Inject constructor(
                 scheduleRefresh()
             }
             "list.updated", "list.deleted" -> scheduleRefresh()
-            // "connected", "pong", "notification.new" (Phase 3) nothing to do
+
         }
     }
 

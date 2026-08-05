@@ -16,6 +16,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.activity.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import lt.oranges.orangtask.auth.CaptchaCallback
+import lt.oranges.orangtask.auth.CaptchaTokenStore
 import lt.oranges.orangtask.auth.SessionState
 import lt.oranges.orangtask.auth.SessionViewModel
 import lt.oranges.orangtask.navigation.AppNavHost
@@ -28,6 +30,9 @@ class MainActivity : ComponentActivity() {
     private val sessionViewModel: SessionViewModel by viewModels()
 
     @Inject
+    lateinit var captchaTokenStore: CaptchaTokenStore
+
+    @Inject
     lateinit var themePrefs: ThemePrefs
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,14 +40,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // hold the system splash until we know whether to show login, PIN, or the app
         splash.setKeepOnScreenCondition {
             sessionViewModel.state.value is SessionState.Loading
         }
 
         setContent {
             OrangTaskTheme(mode = themePrefs.mode) {
-                // enableEdgeToEdge() above only reads the *system* dark-mode setting once at launch, so it doesnt
+
                 val dark = isDarkTheme()
                 val view = LocalView.current
                 SideEffect {
@@ -64,16 +68,17 @@ class MainActivity : ComponentActivity() {
         handleDeepLink(intent)
     }
 
-    /** routes an incoming VIEW intent to the OAuth callback or the App Link into task.oranges.lt */
     private fun handleDeepLink(intent: Intent?) {
         val data = intent?.data ?: return
         when {
             data.scheme == "orangtask" && data.host == "auth-callback" -> handleOAuthCallback(data)
+            data.scheme == "orangtask" && data.host == "recaptcha" -> {
+                CaptchaCallback.tokenFrom(data.toString())?.let(captchaTokenStore::set)
+            }
             data.scheme == "https" && data.host == "task.oranges.lt" -> handleAppLink(data)
         }
     }
 
-    /** the OAuth Custom Tab lands back on orangtask://auth-callback with either the token pair (success) or */
     private fun handleOAuthCallback(data: Uri) {
         val access = data.getQueryParameter("access")
         val refresh = data.getQueryParameter("refresh")
@@ -84,11 +89,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** only /auth/magic (the sign-in email button) is handled specially, auto- completing sign-in instead */
     private fun handleAppLink(data: Uri) {
-        if (data.path?.startsWith("/auth/magic") == true) {
-            sessionViewModel.onMagicLink(data.toString()) { message ->
-                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        when {
+            data.path?.startsWith("/auth/magic") == true -> {
+                sessionViewModel.onMagicLink(data.toString()) { message ->
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                }
+            }
+            data.path == "/login" && data.getQueryParameter("verification") == "success" -> {
+                Toast.makeText(this, "Email verified. Sign in to continue.", Toast.LENGTH_LONG).show()
+            }
+            data.path == "/login" && data.getQueryParameter("verification") == "invalid" -> {
+                Toast.makeText(this, "That verification link is invalid or expired.", Toast.LENGTH_LONG).show()
             }
         }
     }

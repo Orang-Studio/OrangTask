@@ -14,7 +14,6 @@ import { WifiOff } from 'lucide-react'
 import { Logo } from './Logo'
 import { modKey } from '../lib/platform'
 
-// shared context for child pages to trigger the QuickAdd focus / search
 import { createContext, useContext } from 'react'
 
 interface LayoutCtx {
@@ -41,13 +40,11 @@ export function Layout() {
   const quickAddFocusRef = useRef<(() => void) | null>(null)
   const pendingFocusRef = useRef(false)
 
-  // real-time WebSocket sync (only when authenticated)
   useWebSocket(!!user)
 
-  // pages register their quick-add input only while its actually on screen
   const registerQuickAdd = useCallback((fn: (() => void) | null) => {
     quickAddFocusRef.current = fn
-    // if we navigated here specifically to add a task, focus the input on mount
+
     if (fn && pendingFocusRef.current) {
       pendingFocusRef.current = false
       setTimeout(fn, 0)
@@ -58,7 +55,7 @@ export function Layout() {
     if (quickAddFocusRef.current) {
       quickAddFocusRef.current()
     } else {
-      // current view has no inline quick-add
+
       pendingFocusRef.current = true
       navigate('/today')
     }
@@ -71,7 +68,6 @@ export function Layout() {
     onHelp: () => setShortcutsOpen(true),
   })
 
-  // flush offline queue when reconnected
   useEffect(() => {
     if (online) useOfflineStore.getState().flush()
   }, [online])
@@ -88,7 +84,7 @@ export function Layout() {
         {!isMobile && <Sidebar />}
 
         <div className="flex-1 flex flex-col min-w-0">
-          {/* mobile header */}
+
           {isMobile && (
             <header className="flex items-center justify-between px-4 h-14 border-b border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-850 pt-safe">
               <div className="flex items-center gap-2">
@@ -99,7 +95,6 @@ export function Layout() {
             </header>
           )}
 
-          {/* desktop top bar with notification bell */}
           {!isMobile && (
             <header className="flex items-center justify-end px-4 h-14 border-b border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-850 gap-2">
               <button
@@ -113,7 +108,6 @@ export function Layout() {
             </header>
           )}
 
-          {/* offline / sync banner */}
           {(!online || queueLen > 0) && (
             <div className="flex items-center justify-center gap-2 px-4 py-1.5 bg-orange-500 text-white text-xs font-medium">
               <WifiOff size={13} />

@@ -1,5 +1,3 @@
-// google Keep import Google Takeout exports Keep as a folder of one .json file per note
-
 import sql from '../db/client.js'
 
 export interface KeepNote {
@@ -39,13 +37,11 @@ export interface KeepImportResult {
   skipped: number
 }
 
-// keep timestamps are microseconds since the epoch
 function usecToDate(usec?: number): Date | null {
   if (typeof usec !== 'number' || !isFinite(usec) || usec <= 0) return null
   return new Date(Math.round(usec / 1000))
 }
 
-// notes without an explicit title use their first non-empty line as the title and the remainder as the
 function deriveTitleAndNotes(n: KeepNote): { title: string; notes: string | null } {
   const rawTitle = n.title?.trim()
   const text = (n.textContent ?? '').replace(/\r\n/g, '\n')
@@ -65,9 +61,8 @@ function deriveTitleAndNotes(n: KeepNote): { title: string; notes: string | null
   return { title, notes: rest || null }
 }
 
-// pure mapping of one Keep note to OrangTask shape (no DB), so it can be unit-tested against real
 export function normalizeKeepNote(n: KeepNote): NormalizedNote {
-  // attachments (images, drawings) are dropped we import the text content only
+
   const { title, notes } = deriveTitleAndNotes(n)
 
   const created = usecToDate(n.createdTimestampUsec) ?? new Date()
@@ -95,8 +90,8 @@ export async function importKeepNotes(
   opts: KeepImportOptions = {}
 ): Promise<KeepImportResult> {
   const listName = (typeof opts.listName === 'string' && opts.listName.trim()) || 'Google Keep'
-  const includeArchived = opts.includeArchived !== false // default: include
-  const includeTrashed = opts.includeTrashed === true // default: skip
+  const includeArchived = opts.includeArchived !== false
+  const includeTrashed = opts.includeTrashed === true
 
   const kept = notes.filter((n) => {
     if (n?.isTrashed && !includeTrashed) return false
@@ -106,7 +101,7 @@ export async function importKeepNotes(
   const skipped = notes.length - kept.length
 
   return await sql.begin(async (sql) => {
-    // reuse an existing list with the same name, otherwise create one
+
     let [list] = await sql`
       SELECT id, name FROM lists WHERE owner_id = ${userId} AND name = ${listName} LIMIT 1
     `
@@ -121,7 +116,6 @@ export async function importKeepNotes(
 
     const normalized = kept.map(normalizeKeepNote)
 
-    // upsert every distinct label once, then reuse the ids per task
     const labelNames = new Set<string>()
     for (const n of normalized) for (const name of n.tagNames) labelNames.add(name)
     const tagIds = new Map<string, string>()

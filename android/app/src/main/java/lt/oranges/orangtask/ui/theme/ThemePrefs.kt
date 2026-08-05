@@ -10,7 +10,6 @@ import javax.inject.Singleton
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-// dark by default, like the web app
 @Singleton
 class ThemePrefs @Inject constructor(@ApplicationContext context: Context) {
     private val prefs = context.getSharedPreferences("theme", Context.MODE_PRIVATE)
@@ -19,7 +18,7 @@ class ThemePrefs @Inject constructor(@ApplicationContext context: Context) {
         runCatching { ThemeMode.valueOf(prefs.getString("mode", ThemeMode.DARK.name)!!) }
             .getOrDefault(ThemeMode.DARK)
     )
-        // the delegated propertys auto-generated setter would otherwise clash (same JVM signature) with the
+
         @JvmName("setModeState") private set
 
     fun setMode(value: ThemeMode) {

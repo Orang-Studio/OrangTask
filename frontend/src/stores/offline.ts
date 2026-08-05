@@ -2,8 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { api } from '../lib/api'
 
-// offline queue: when the network is down, task creates/updates/completes are queued in localStorage
-
 export interface QueuedAction {
   id: string
   type: 'create' | 'update' | 'complete' | 'uncomplete' | 'delete'

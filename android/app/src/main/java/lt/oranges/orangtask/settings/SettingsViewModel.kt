@@ -23,7 +23,6 @@ import lt.oranges.orangtask.ui.theme.ThemePrefs
 import java.io.File
 import javax.inject.Inject
 
-/** state for the full settings surface: profile, PIN, prefs, data import/export */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     val themePrefs: ThemePrefs,
@@ -59,7 +58,6 @@ class SettingsViewModel @Inject constructor(
         profileSaved = false
     }
 
-    /** null while the status request is in flight */
     var hasPin by mutableStateOf<Boolean?>(null)
         private set
 
@@ -100,7 +98,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** optimistic like the web: flip locally, PUT in the background */
     fun setChannel(type: String, channel: String, value: Boolean) {
         val current = prefs ?: return
         val pref = current[type] ?: ChannelPref()
@@ -108,8 +105,6 @@ class SettingsViewModel @Inject constructor(
         prefs = next
         viewModelScope.launch { runCatching { repo.saveNotificationPrefs(next) } }
     }
-
-    // ---- Google Keep import ----
 
     var keepParsing by mutableStateOf(false)
         private set
@@ -166,7 +161,7 @@ class SettingsViewModel @Inject constructor(
                     append(" into \"${res.list.name}\".")
                     if (res.skipped > 0) append(" Skipped ${res.skipped} archived/trashed.")
                 }
-                // pull the new list/tasks/tags into the local cache right away
+
                 runCatching { listRepository.refreshLists() }
                 runCatching { listRepository.refreshTags() }
                 runCatching { taskRepository.refreshAllTasks() }
@@ -178,12 +173,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    // ---- Export / delete account ----
-
     var exporting by mutableStateOf(false)
         private set
 
-    /** downloads the JSON export to the cache and hands the file to [onReady] (share sheet) */
     fun export(onReady: (File) -> Unit) {
         if (exporting) return
         viewModelScope.launch {

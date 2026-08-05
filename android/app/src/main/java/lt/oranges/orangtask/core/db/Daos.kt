@@ -6,7 +6,6 @@ import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
-/** the smart-view queries reproduce backend/src/routes/tasks.ts predicates locally */
 @Dao
 interface TaskDao {
 
@@ -65,8 +64,6 @@ interface TaskDao {
     @Query("DELETE FROM tasks WHERE parentId = :parentId")
     suspend fun deleteSubtasksOf(parentId: String)
 
-    // reconciliation deletes spare `local-` drafts: rows created offline that the server cant know about
-
     @Query("DELETE FROM tasks WHERE parentId IS NULL AND id NOT IN (:ids) AND id NOT LIKE 'local-%'")
     suspend fun deleteTopLevelNotIn(ids: List<String>)
 
@@ -85,7 +82,6 @@ interface TaskDao {
     @Query("UPDATE tasks SET subtaskCount = MAX(0, subtaskCount + :delta) WHERE id = :id")
     suspend fun adjustSubtaskCount(id: String, delta: Int)
 
-    /** subtasks added offline under a draft parent follow it to its real id */
     @Query("UPDATE tasks SET parentId = :realId WHERE parentId = :tempId")
     suspend fun remapParent(tempId: String, realId: String)
 }
@@ -118,7 +114,6 @@ interface ListDao {
     suspend fun adjustTaskCount(id: String, delta: Int)
 }
 
-/** FIFO queue of offline mutations; replay order is the insertion order */
 @Dao
 interface PendingOpDao {
 
@@ -134,7 +129,6 @@ interface PendingOpDao {
     @Query("SELECT COUNT(*) FROM pending_ops")
     suspend fun count(): Int
 
-    /** once a queued create resolves, later ops that referenced its draft id follow */
     @Query("UPDATE pending_ops SET path = REPLACE(path, :tempId, :realId), body = REPLACE(body, :tempId, :realId)")
     suspend fun replaceId(tempId: String, realId: String)
 }

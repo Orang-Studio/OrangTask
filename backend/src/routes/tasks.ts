@@ -4,6 +4,17 @@ import { authMiddleware } from '../middleware/auth.js'
 import { fireWebhooks } from '../services/webhooks.js'
 import { broadcastToListMembers, publishToUser } from '../ws/pubsub.js'
 import { createNotification } from '../services/notifications.js'
+import {
+  MAX,
+  PRIORITIES,
+  STATUSES,
+  dateField,
+  enumField,
+  firstError,
+  pageParams,
+  textField,
+  uuidField,
+} from '../lib/validate.js'
 import type { AppEnv } from '../types.js'
 
 const app = new Hono<AppEnv>()
@@ -23,6 +34,12 @@ async function canAccessList(userId: string, listId: string) {
   return (await getListRole(userId, listId)) !== null
 }
 
+async function parentError(listId: string, parentId: string): Promise<string | null> {
+  const [parent] = await sql`SELECT list_id FROM tasks WHERE id = ${parentId}`
+  if (!parent || parent.list_id !== listId) return 'Parent task must be another task in the same list'
+  return null
+}
+
 async function canAccessTask(userId: string, taskId: string) {
   const [access] = await sql`
     SELECT t.*, CASE WHEN l.owner_id = ${userId} THEN 'owner' ELSE lm.role END as my_role
@@ -37,6 +54,8 @@ async function canAccessTask(userId: string, taskId: string) {
 app.get('/', async (c) => {
   const userId = c.get('userId')
   const { listId, smart, parentId } = c.req.query()
+
+  const { limit, offset } = pageParams(c.req.query())
 
   let tasks
 
@@ -57,6 +76,7 @@ app.get('/', async (c) => {
         AND t.parent_id IS NULL
       GROUP BY t.id, au.id
       ORDER BY t.position, t.due_date
+      LIMIT ${limit} OFFSET ${offset}
     `
   } else if (smart === 'assigned') {
     tasks = await sql`
@@ -75,6 +95,7 @@ app.get('/', async (c) => {
         AND t.status != 'done'
       GROUP BY t.id, au.id, l.name
       ORDER BY t.due_date NULLS LAST, t.position
+      LIMIT ${limit} OFFSET ${offset}
     `
   } else if (smart === 'week') {
     tasks = await sql`
@@ -93,6 +114,7 @@ app.get('/', async (c) => {
         AND t.parent_id IS NULL
       GROUP BY t.id, au.id
       ORDER BY t.due_date, t.position
+      LIMIT ${limit} OFFSET ${offset}
     `
   } else if (smart === 'overdue') {
     tasks = await sql`
@@ -111,6 +133,7 @@ app.get('/', async (c) => {
         AND t.parent_id IS NULL
       GROUP BY t.id, au.id
       ORDER BY t.due_date, t.position
+      LIMIT ${limit} OFFSET ${offset}
     `
   } else if (smart === 'all') {
     tasks = await sql`
@@ -127,6 +150,7 @@ app.get('/', async (c) => {
         AND t.parent_id IS NULL
       GROUP BY t.id, au.id
       ORDER BY t.position, t.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
     `
   } else if (listId) {
     const hasAccess = await canAccessList(userId, listId)
@@ -148,12 +172,14 @@ app.get('/', async (c) => {
       WHERE ${query}
       GROUP BY t.id, au.id
       ORDER BY t.position, t.created_at
+      LIMIT ${limit} OFFSET ${offset}
     `
   } else {
     return c.json({ error: 'Provide listId or smart parameter' }, 400)
   }
 
-  return c.json({ tasks })
+  const nextOffset = tasks.length === limit ? offset + limit : null
+  return c.json({ tasks, nextOffset })
 })
 
 app.post('/', async (c) => {
@@ -163,11 +189,26 @@ app.post('/', async (c) => {
 
   if (!list_id || !title) return c.json({ error: 'list_id and title required' }, 400)
 
+  const invalid = firstError(
+    textField(title, 'title', MAX.title, { required: true }),
+    textField(notes, 'notes', MAX.notes),
+    textField(recurrence_rule, 'recurrence_rule', MAX.recurrenceRule),
+    enumField(priority, 'priority', PRIORITIES),
+    dateField(due_date, 'due_date'),
+    dateField(start_date, 'start_date'),
+    uuidField(parent_id, 'parent_id'),
+  )
+  if (invalid) return c.json({ error: invalid }, 400)
+
   const role = await getListRole(userId, list_id)
   if (!role) return c.json({ error: 'Not found' }, 404)
   if (role === 'viewer') return c.json({ error: 'Viewers cannot add tasks' }, 403)
 
-  // assignee must have access to the list
+  if (parent_id) {
+    const parentIssue = await parentError(list_id, parent_id)
+    if (parentIssue) return c.json({ error: parentIssue }, 400)
+  }
+
   if (assigned_to && !(await getListRole(assigned_to, list_id))) {
     return c.json({ error: 'Assignee is not a member of this list' }, 400)
   }
@@ -205,26 +246,65 @@ app.post('/', async (c) => {
   return c.json({ task }, 201)
 })
 
-// bulk reorder must be declared before PATCH /:id so "reorder" isnt treated as a task id
 app.patch('/reorder', async (c) => {
   const userId = c.get('userId')
-  const { items } = await c.req.json() // [{ id, position }]
+  const { items } = await c.req.json()
 
   if (!Array.isArray(items)) return c.json({ error: 'items array required' }, 400)
 
-  for (const { id, position } of items) {
-    const task = await canAccessTask(userId, id)
-    if (!task || task.my_role === 'viewer') continue
-    await sql`UPDATE tasks SET position = ${position}, updated_at = now() WHERE id = ${id}`
+  if (items.length > MAX.reorderItems) {
+    return c.json({ error: `At most ${MAX.reorderItems} items per reorder` }, 400)
   }
+  if (items.some((i) => typeof i?.id !== 'string' || !Number.isInteger(i?.position))) {
+    return c.json({ error: 'Each item needs an id and an integer position' }, 400)
+  }
+  if (items.length === 0) return c.json({ ok: true, updated: 0 })
 
-  return c.json({ ok: true })
+  const ids: string[] = items.map((i) => i.id)
+
+  const editable = await sql<{ id: string }[]>`
+    SELECT t.id
+    FROM tasks t
+    JOIN lists l ON l.id = t.list_id
+    LEFT JOIN list_members lm ON lm.list_id = t.list_id AND lm.user_id = ${userId}
+    WHERE t.id = ANY(${sql.array(ids)}::uuid[])
+      AND (l.owner_id = ${userId} OR lm.user_id = ${userId})
+      AND COALESCE(CASE WHEN l.owner_id = ${userId} THEN 'owner' ELSE lm.role END, '') <> 'viewer'
+  `
+
+  const allowed = new Set(editable.map((r) => r.id))
+  const moves = items.filter((i) => allowed.has(i.id))
+  if (moves.length === 0) return c.json({ ok: true, updated: 0 })
+
+  await sql`
+    UPDATE tasks SET position = v.position, updated_at = now()
+    FROM unnest(
+      ${sql.array(moves.map((m) => m.id))}::uuid[],
+      ${sql.array(moves.map((m) => m.position))}::int[]
+    ) AS v(id, position)
+    WHERE tasks.id = v.id
+  `
+
+  return c.json({ ok: true, updated: moves.length })
 })
 
 app.patch('/:id', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
   const body = await c.req.json()
+
+  const invalid = firstError(
+    textField(body.title, 'title', MAX.title),
+    textField(body.notes, 'notes', MAX.notes),
+    textField(body.recurrence_rule, 'recurrence_rule', MAX.recurrenceRule),
+    enumField(body.priority, 'priority', PRIORITIES),
+
+    enumField(body.status, 'status', STATUSES),
+    dateField(body.due_date, 'due_date'),
+    dateField(body.start_date, 'start_date'),
+    uuidField(body.parent_id, 'parent_id'),
+  )
+  if (invalid) return c.json({ error: invalid }, 400)
 
   const task = await canAccessTask(userId, id)
   if (!task) return c.json({ error: 'Not found' }, 404)
@@ -234,7 +314,39 @@ app.patch('/:id', async (c) => {
     return c.json({ error: 'Assignee is not a member of this list' }, 400)
   }
 
-  const allowed = ['title', 'notes', 'priority', 'status', 'due_date', 'start_date', 'assigned_to', 'position', 'recurrence_rule']
+  let movedPosition: number | null = null
+
+  if ('parent_id' in body) {
+    const nextParent: string | null = body.parent_id || null
+    body.parent_id = nextParent
+
+    if (nextParent) {
+      if (nextParent === id) return c.json({ error: 'A task cannot be its own parent' }, 400)
+
+      const parentIssue = await parentError(task.list_id, nextParent)
+      if (parentIssue) return c.json({ error: parentIssue }, 400)
+
+      const [cycle] = await sql`
+        WITH RECURSIVE descendants AS (
+          SELECT id FROM tasks WHERE parent_id = ${id}
+          UNION
+          SELECT t.id FROM tasks t JOIN descendants d ON t.parent_id = d.id
+        )
+        SELECT 1 FROM descendants WHERE id = ${nextParent}
+      `
+      if (cycle) return c.json({ error: 'Cannot move a task under one of its own subtasks' }, 400)
+    }
+
+    if ((task.parent_id ?? null) !== nextParent) {
+      const [maxPos] = await sql`
+        SELECT COALESCE(MAX(position), -1) + 1 as pos FROM tasks
+        WHERE list_id = ${task.list_id} AND parent_id IS NOT DISTINCT FROM ${nextParent}
+      `
+      movedPosition = Number(maxPos.pos)
+    }
+  }
+
+  const allowed = ['title', 'notes', 'priority', 'status', 'due_date', 'start_date', 'assigned_to', 'position', 'parent_id', 'recurrence_rule']
 
   const sets: string[] = ['updated_at = now()']
   const values: unknown[] = []
@@ -246,6 +358,12 @@ app.patch('/:id', async (c) => {
       values.push(body[key] === undefined ? null : body[key])
       idx++
     }
+  }
+
+  if (movedPosition !== null && !('position' in body)) {
+    sets.push(`position = $${idx}`)
+    values.push(movedPosition)
+    idx++
   }
 
   if (values.length === 0) return c.json({ task })
@@ -303,7 +421,6 @@ app.post('/:id/complete', async (c) => {
     RETURNING *
   `
 
-  // notify collaborators when a shared task is completed
   const [list] = await sql`SELECT * FROM lists WHERE id = ${task.list_id}`
   if (list.owner_id !== userId) {
     await createNotification(
@@ -339,7 +456,6 @@ app.post('/:id/uncomplete', async (c) => {
   return c.json({ task: updated })
 })
 
-// bulk reorder Add a tag to a task
 app.post('/:id/tags/:tagId', async (c) => {
   const userId = c.get('userId')
   const taskId = c.req.param('id')

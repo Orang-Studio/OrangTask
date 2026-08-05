@@ -26,7 +26,11 @@ export async function saveSubscription(userId: string, sub: BrowserSubscription)
   `
 }
 
-export async function removeSubscription(endpoint: string) {
+export async function removeSubscription(userId: string, endpoint: string) {
+  await sql`DELETE FROM push_subscriptions WHERE endpoint = ${endpoint} AND user_id = ${userId}`
+}
+
+export async function dropDeadSubscription(endpoint: string) {
   await sql`DELETE FROM push_subscriptions WHERE endpoint = ${endpoint}`
 }
 
@@ -35,7 +39,7 @@ export interface PushPayload {
   body?: string
   url?: string
   type?: string
-  // native (FCM) extras so the app can build action buttons and deep-link
+
   taskId?: string
   notificationId?: string
 }
@@ -51,9 +55,9 @@ export async function sendWebPush(userId: string, payload: PushPayload) {
           JSON.stringify(payload)
         )
       } catch (err: any) {
-        // subscription expired/gone clean it up
+
         if (err?.statusCode === 404 || err?.statusCode === 410) {
-          await sql`DELETE FROM push_subscriptions WHERE endpoint = ${s.endpoint}`.catch(() => {})
+          await dropDeadSubscription(s.endpoint).catch(() => {})
         } else {
           console.error('web-push send failed:', err?.statusCode, err?.body || err?.message)
         }

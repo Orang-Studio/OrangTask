@@ -38,7 +38,6 @@ class SessionViewModel @Inject constructor(
         refresh()
     }
 
-    /** re-evaluates the session (called on startup and after login / PIN unlock) */
     fun refresh() {
         viewModelScope.launch { load() }
     }
@@ -51,14 +50,12 @@ class SessionViewModel @Inject constructor(
         }
     }
 
-    /** tokens delivered by the OAuth deep link (orangtask://auth-callback) */
     fun onOAuthTokens(access: String, refresh: String) {
         tokenStore.storeTokens(access, refresh)
         _state.value = SessionState.Loading
         viewModelScope.launch { load() }
     }
 
-    /** a task.oranges.lt/auth/magic?token=… link opened directly (App Link from the magic-link email), so */
     fun onMagicLink(url: String, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
@@ -86,7 +83,7 @@ class SessionViewModel @Inject constructor(
         } catch (e: HttpException) {
             if (e.code() == 401) SessionState.LoggedOut else fromCache()
         } catch (e: IOException) {
-            fromCache() // offline start open with the cached identity
+            fromCache()
         }
     }
 

@@ -7,7 +7,6 @@ import type { AppEnv } from '../types.js'
 
 const app = new Hono<AppEnv>()
 
-// public the client needs this to subscribe
 app.get('/public-key', (c) => c.json({ key: vapidPublicKey }))
 
 app.post('/subscribe', authMiddleware, async (c) => {
@@ -21,12 +20,12 @@ app.post('/subscribe', authMiddleware, async (c) => {
 })
 
 app.post('/unsubscribe', authMiddleware, async (c) => {
+  const userId = c.get('userId')
   const { endpoint } = await c.req.json().catch(() => ({}))
-  if (endpoint) await removeSubscription(endpoint)
+  if (endpoint) await removeSubscription(userId, endpoint)
   return c.json({ ok: true })
 })
 
-// native (Android/FCM) registration token the app posts its token here
 app.post('/device', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const { token, platform } = await c.req.json().catch(() => ({}))
@@ -36,12 +35,12 @@ app.post('/device', authMiddleware, async (c) => {
 })
 
 app.delete('/device', authMiddleware, async (c) => {
+  const userId = c.get('userId')
   const { token } = await c.req.json().catch(() => ({}))
-  if (token) await removeDeviceToken(token)
+  if (token) await removeDeviceToken(userId, token)
   return c.json({ ok: true })
 })
 
-// send a test push to all of this users subscribed devices (web + native)
 app.post('/test', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const [row] = await sql`SELECT count(*)::int AS n FROM push_subscriptions WHERE user_id = ${userId}`

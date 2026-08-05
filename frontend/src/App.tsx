@@ -14,6 +14,7 @@ import { LegalPage } from './pages/LegalPage'
 import { useAuthStore } from './stores/auth'
 import { useTheme } from './hooks/useTheme'
 import { Logo } from './components/Logo'
+import { UndoableTaskDeleteProvider } from './components/UndoableTaskDelete'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,7 +71,9 @@ function AppRoutes() {
       <Route
         element={
           <AuthGate>
-            <Layout />
+            <UndoableTaskDeleteProvider>
+              <Layout />
+            </UndoableTaskDeleteProvider>
           </AuthGate>
         }
       >
@@ -92,7 +95,7 @@ function AppRoutes() {
 }
 
 export default function App() {
-  useTheme() // initialize theme on mount
+  useTheme()
 
   return (
     <QueryClientProvider client={queryClient}>

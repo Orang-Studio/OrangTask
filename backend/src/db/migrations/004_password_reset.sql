@@ -1,5 +1,3 @@
--- Password reset codes, a short numeric PIN emailed to the user.
--- The code itself is never stored in plaintext (scrypt hash, same scheme as passwords).
 CREATE TABLE IF NOT EXISTS password_resets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL,

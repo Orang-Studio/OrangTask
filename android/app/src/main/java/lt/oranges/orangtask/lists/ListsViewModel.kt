@@ -18,7 +18,6 @@ class ListsViewModel @Inject constructor(
     val lists: StateFlow<List<ListEntity>> = listRepository.lists
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** creates the list, then jumps straight into it (like the web) */
     fun createList(name: String, onCreated: (String) -> Unit) {
         viewModelScope.launch {
             runCatching { listRepository.createList(name) }

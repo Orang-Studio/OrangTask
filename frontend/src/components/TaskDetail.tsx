@@ -45,7 +45,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
   const [showTagPicker, setShowTagPicker] = useState(false)
   const [showAssignPicker, setShowAssignPicker] = useState(false)
   const [newTagName, setNewTagName] = useState('')
-  // desktop panel is resizable by dragging its left edge; width persists
+
   const MIN_W = 320
   const maxW = () => Math.min(900, Math.round(window.innerWidth * 0.7))
   const [width, setWidth] = useState(() => {
@@ -53,7 +53,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
       const saved = parseInt(localStorage.getItem('task-panel-width') || '', 10)
       if (!isNaN(saved)) return saved
     } catch {}
-    return 384 // matches the old w-96 default
+    return 384
   })
   const widthRef = useRef(width)
 
@@ -62,7 +62,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
     const startX = e.clientX
     const startW = widthRef.current
     const onMove = (ev: MouseEvent) => {
-      // panel is on the right, so dragging left (smaller clientX) widens it
+
       const next = Math.max(MIN_W, Math.min(startW + (startX - ev.clientX), maxW()))
       widthRef.current = next
       setWidth(next)
@@ -123,7 +123,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        {/* title */}
+
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -133,7 +133,6 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
           placeholder="Task title"
         />
 
-        {/* due date */}
         <div className="flex items-center gap-3">
           <Calendar size={18} className="text-gray-400 flex-shrink-0" />
           <input
@@ -146,7 +145,6 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
           />
         </div>
 
-        {/* priority */}
         <div className="flex items-center gap-3">
           <Flag size={18} className="text-gray-400 flex-shrink-0" />
           <div className="flex gap-2">
@@ -170,7 +168,6 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
           </div>
         </div>
 
-        {/* assignee only shown when the list is shared with someone */}
         {members && members.length > 1 && (() => {
           const assignee = members.find((m) => m.id === task.assigned_to)
           return (
@@ -301,7 +298,6 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
           </div>
         </div>
 
-        {/* notes */}
         <div>
           <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">Notes</label>
           <textarea
@@ -314,7 +310,6 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
           />
         </div>
 
-        {/* subtasks */}
         <div>
           <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">Subtasks</label>
           <div className="space-y-1">
@@ -332,7 +327,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                   {st.title}
                 </span>
                 <button
-                  onClick={() => deleteTask.mutate(st.id)}
+                  onClick={() => deleteTask.mutate(st)}
                   className="text-gray-400 hover:text-red-500"
                 >
                   <Trash2 size={14} />
@@ -358,7 +353,6 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
         </div>
       </div>
 
-      {/* footer */}
       <div className="border-t border-gray-200 dark:border-ink-700 p-3">
         <button
           onClick={() => {
@@ -409,7 +403,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
       style={{ width }}
       className="relative border-l border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-850 h-full flex-shrink-0"
     >
-      {/* drag handle - resize the panel by dragging this left edge */}
+
       <div
         onMouseDown={startResize}
         role="separator"

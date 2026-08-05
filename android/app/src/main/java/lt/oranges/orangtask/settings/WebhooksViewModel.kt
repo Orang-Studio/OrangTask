@@ -14,7 +14,6 @@ import lt.oranges.orangtask.core.network.WebhookDto
 import lt.oranges.orangtask.core.network.userMessage
 import javax.inject.Inject
 
-/** WebhookManager.tsx: CRUD + enable toggle + test + delivery log */
 @HiltViewModel
 class WebhooksViewModel @Inject constructor(
     private val repo: SettingsRepository,
@@ -29,7 +28,6 @@ class WebhooksViewModel @Inject constructor(
     var creating by mutableStateOf(false)
         private set
 
-    /** delivery log per expanded webhook; test results flash per webhook */
     val deliveries = mutableStateMapOf<String, List<WebhookDeliveryDto>>()
     val testResults = mutableStateMapOf<String, String>()
 
@@ -61,7 +59,7 @@ class WebhooksViewModel @Inject constructor(
     }
 
     fun setEnabled(id: String, enabled: Boolean) {
-        // optimistic toggle, reconciled with the server row
+
         webhooks = webhooks.map { if (it.id == id) it.copy(enabled = enabled) else it }
         viewModelScope.launch {
             try {

@@ -10,6 +10,7 @@ import type { AppEnv } from './types.js'
 import sql from './db/client.js'
 import { addClient, removeClient } from './ws/pubsub.js'
 import { startDueSoonJob } from './services/notifications.js'
+import { rateLimit } from './middleware/rateLimit.js'
 
 import authRoutes from './routes/auth.js'
 import listsRoutes from './routes/lists.js'
@@ -28,9 +29,14 @@ const app = new Hono<AppEnv>()
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>()
 
 const APP_URL = process.env.APP_URL || 'http://localhost:5173'
+const isProd = process.env.NODE_ENV === 'production'
+
+const allowedOrigins = isProd
+  ? [APP_URL]
+  : [APP_URL, 'http://localhost:5173', 'http://localhost:3000']
 
 app.use('*', cors({
-  origin: [APP_URL, 'http://localhost:5173', 'http://localhost:3000'],
+  origin: allowedOrigins,
   credentials: true,
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -38,6 +44,8 @@ app.use('*', cors({
 
 app.use('*', secureHeaders())
 app.use('*', logger())
+
+app.use('/api/*', rateLimit({ windowMs: 60_000, max: 600, keyPrefix: 'api' }))
 
 app.route('/api/auth', authRoutes)
 app.route('/api/lists', listsRoutes)
@@ -50,17 +58,20 @@ app.route('/api/push', pushRoutes)
 app.route('/api/webhooks', webhookRoutes)
 app.route('/api/api-keys', apiKeysRoutes)
 
-// incoming webhook (public) provides POST /api/hooks/:token
 app.route('/api', webhookIncoming)
 
 app.get('/ws', upgradeWebSocket(async (c) => {
-  const token = getCookie(c, 'session') || c.req.query('token')
+
+  const token =
+    getCookie(c, 'session') || c.req.header('Authorization')?.replace('Bearer ', '')
 
   let userId: string | null = null
 
   if (token) {
     const [session] = await sql`
-      SELECT user_id FROM sessions WHERE token = ${token} AND expires_at > now()
+      SELECT s.user_id FROM sessions s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.token = ${token} AND s.expires_at > now()
     `
     if (session) userId = session.user_id
   }
@@ -98,7 +109,6 @@ app.get('/ws', upgradeWebSocket(async (c) => {
 
 app.get('/health', (c) => c.json({ ok: true, ts: new Date().toISOString() }))
 
-// serve the built frontend (production)
 if (process.env.NODE_ENV === 'production') {
   app.use('/assets/*', serveStatic({ root: './public' }))
   app.use('/icons/*', serveStatic({ root: './public' }))

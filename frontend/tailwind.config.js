@@ -1,11 +1,10 @@
-/** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        // orange-Studio brand
+
         orange: {
           50: '#fff7ed',
           100: '#ffedd5',
@@ -18,7 +17,7 @@ export default {
           800: '#9a3412',
           900: '#7c2d12',
         },
-        // dark surfaces matching oranges.lt (#161616)
+
         ink: {
           900: '#0f0f0f',
           850: '#141414',

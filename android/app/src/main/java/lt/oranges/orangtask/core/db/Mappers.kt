@@ -8,7 +8,6 @@ import java.time.Instant
 fun isoToMillis(iso: String?): Long? =
     iso?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
 
-/** different endpoints return different projections of a task */
 fun TaskDto.toEntity(existing: TaskEntity? = null) = TaskEntity(
     id = id,
     listId = listId,

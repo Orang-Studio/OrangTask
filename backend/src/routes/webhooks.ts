@@ -3,11 +3,14 @@ import { randomBytes, createHmac } from 'crypto'
 import sql from '../db/client.js'
 import { authMiddleware } from '../middleware/auth.js'
 import * as chrono from 'chrono-node'
+import { assertPublicUrl, safePostJson, UnsafeUrlError } from '../services/safeFetch.js'
+import { MAX, PRIORITIES, enumField, firstError, textField } from '../lib/validate.js'
 import type { AppEnv } from '../types.js'
 
 const app = new Hono<AppEnv>()
 
-// public incoming webhook endpoint
+const MAX_INCOMING_TAGS = 25
+
 app.post('/hooks/:token', async (c) => {
   const token = c.req.param('token')
   const [webhook] = await sql`
@@ -18,23 +21,37 @@ app.post('/hooks/:token', async (c) => {
   const body = await c.req.json()
   const { title, notes, due, list: listName, priority, tags } = body
 
-  if (!title) return c.json({ error: 'title required' }, 400)
+  const invalid = firstError(
+    textField(title, 'title', MAX.title, { required: true }),
+    textField(notes, 'notes', MAX.notes),
+    textField(listName, 'list', MAX.listName),
+    textField(due, 'due', 200),
+    enumField(priority, 'priority', PRIORITIES),
+  )
+  if (invalid) return c.json({ error: invalid }, 400)
 
-  // parse due date
+  if (tags !== undefined && tags !== null && !Array.isArray(tags)) {
+    return c.json({ error: 'tags must be an array' }, 400)
+  }
+  if (Array.isArray(tags) && tags.length > MAX_INCOMING_TAGS) {
+    return c.json({ error: `At most ${MAX_INCOMING_TAGS} tags per task` }, 400)
+  }
+
   let due_date: Date | null = null
   if (due) {
     const parsed = chrono.parseDate(due)
     if (parsed) due_date = parsed
   }
 
-  // find or create list
+  const targetList = listName || 'Incoming'
   let [list] = await sql`
-    SELECT * FROM lists WHERE owner_id = ${webhook.user_id} AND name ILIKE ${listName || 'Incoming'}
+    SELECT * FROM lists
+    WHERE owner_id = ${webhook.user_id} AND lower(name) = lower(${targetList})
   `
   if (!list) {
     ;[list] = await sql`
       INSERT INTO lists (owner_id, name, color, icon, position)
-      VALUES (${webhook.user_id}, ${listName || 'Incoming'}, '#6366f1', 'webhook', 999)
+      VALUES (${webhook.user_id}, ${targetList}, '#6366f1', 'webhook', 999)
       RETURNING *
     `
   }
@@ -50,9 +67,9 @@ app.post('/hooks/:token', async (c) => {
     RETURNING *
   `
 
-  // handle tags
-  if (tags && Array.isArray(tags)) {
+  if (Array.isArray(tags)) {
     for (const tagName of tags) {
+      if (typeof tagName !== 'string' || tagName === '' || tagName.length > MAX.tagName) continue
       const [tag] = await sql`
         INSERT INTO tags (owner_id, name) VALUES (${webhook.user_id}, ${tagName})
         ON CONFLICT (owner_id, name) DO UPDATE SET name = EXCLUDED.name
@@ -65,7 +82,6 @@ app.post('/hooks/:token', async (c) => {
   return c.json({ task }, 201)
 })
 
-// protected webhook CRUD lives on this router, mounted at /api/webhooks in index.ts
 const webhooks = new Hono<AppEnv>()
 webhooks.use('*', authMiddleware)
 
@@ -79,8 +95,24 @@ webhooks.post('/', async (c) => {
   const userId = c.get('userId')
   const { name, url, direction, events } = await c.req.json()
 
-  if (!name || !direction) return c.json({ error: 'name and direction required' }, 400)
+  if (!direction) return c.json({ error: 'direction required' }, 400)
   if (direction === 'outgoing' && !url) return c.json({ error: 'url required for outgoing' }, 400)
+
+  const invalidField = firstError(
+    textField(name, 'name', MAX.webhookName, { required: true }),
+    textField(url, 'url', MAX.webhookUrl),
+    enumField(direction, 'direction', ['incoming', 'outgoing']),
+  )
+  if (invalidField) return c.json({ error: invalidField }, 400)
+
+  if (direction === 'outgoing') {
+    try {
+      await assertPublicUrl(url)
+    } catch (err) {
+      if (err instanceof UnsafeUrlError) return c.json({ error: err.message }, 400)
+      throw err
+    }
+  }
 
   const secret = randomBytes(32).toString('hex')
   const incoming_token = direction === 'incoming' ? randomBytes(24).toString('hex') : null
@@ -97,6 +129,21 @@ webhooks.patch('/:id', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
   const { name, url, events, enabled } = await c.req.json()
+
+  const invalidField = firstError(
+    textField(name, 'name', MAX.webhookName),
+    textField(url, 'url', MAX.webhookUrl),
+  )
+  if (invalidField) return c.json({ error: invalidField }, 400)
+
+  if (url != null) {
+    try {
+      await assertPublicUrl(url)
+    } catch (err) {
+      if (err instanceof UnsafeUrlError) return c.json({ error: err.message }, 400)
+      throw err
+    }
+  }
 
   const [updated] = await sql`
     UPDATE webhooks SET
@@ -155,17 +202,12 @@ webhooks.post('/:id/test', async (c) => {
   let error = ''
 
   try {
-    const res = await fetch(webhook.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(signature ? { 'X-OrangTask-Signature': signature } : {}),
-      },
-      body,
-      signal: AbortSignal.timeout(10000),
+    const res = await safePostJson(webhook.url, body, {
+      'Content-Type': 'application/json',
+      ...(signature ? { 'X-OrangTask-Signature': signature } : {}),
     })
     statusCode = res.status
-    responseBody = await res.text()
+    responseBody = (await res.text()).slice(0, 4000)
   } catch (err: unknown) {
     error = err instanceof Error ? err.message : String(err)
   }

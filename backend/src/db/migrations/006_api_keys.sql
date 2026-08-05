@@ -1,6 +1,3 @@
--- Personal API keys: long-lived bearer credentials for direct REST API access
--- from external tools (n8n, Zapier, scripts), session tokens expire hourly
--- and require login, which doesn't work for unattended integrations.
 CREATE TABLE IF NOT EXISTS api_keys (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,

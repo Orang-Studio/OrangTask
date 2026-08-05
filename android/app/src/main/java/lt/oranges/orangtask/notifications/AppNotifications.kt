@@ -14,7 +14,6 @@ import androidx.core.content.ContextCompat
 import lt.oranges.orangtask.MainActivity
 import lt.oranges.orangtask.R
 
-/** builds the system notifications shown for FCM pushes */
 object AppNotifications {
     const val CHANNEL_ID = "orangtask_reminders"
 
@@ -23,7 +22,6 @@ object AppNotifications {
     const val EXTRA_TASK_ID = "task_id"
     const val EXTRA_NOTIF_ID = "notif_id"
 
-    // backend notification types that carry a task and therefore get buttons
     private val TASK_TYPES = setOf("task_due_soon", "task_assigned", "task_completed_by", "task_reminder")
 
     fun ensureChannel(context: Context) {
@@ -82,7 +80,7 @@ object AppNotifications {
             putExtra(EXTRA_TASK_ID, taskId)
             putExtra(EXTRA_NOTIF_ID, notifId)
         }
-        // distinct request code per (action, task) so extras arent collapsed
+
         return PendingIntent.getBroadcast(
             context, (action + taskId).hashCode(), intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,

@@ -1,4 +1,3 @@
-// per-user notification channel preferences
 export const NOTIFICATION_TYPES = [
   'task_due_soon',
   'task_assigned',
@@ -9,7 +8,6 @@ export const NOTIFICATION_TYPES = [
 export type NotifType = (typeof NOTIFICATION_TYPES)[number]
 export type ChannelPrefs = Record<string, { push: boolean; email: boolean }>
 
-// sensible defaults when a user hasnt customised anything
 export const DEFAULT_PREFS: ChannelPrefs = {
   task_due_soon: { push: true, email: true },
   task_assigned: { push: true, email: false },
@@ -17,7 +15,6 @@ export const DEFAULT_PREFS: ChannelPrefs = {
   task_completed_by: { push: true, email: false },
 }
 
-// merge stored prefs with defaults and sanitise to known types/booleans
 export function resolvePrefs(stored: unknown): ChannelPrefs {
   const s = stored && typeof stored === 'object' ? (stored as Record<string, any>) : {}
   const out: ChannelPrefs = {}

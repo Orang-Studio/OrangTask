@@ -79,7 +79,6 @@ import lt.oranges.orangtask.ui.format.formatDueDate
 import lt.oranges.orangtask.ui.theme.Ink700
 import lt.oranges.orangtask.ui.theme.Orange500
 
-/** static header config per smart view (SmartViews.tsx) */
 private data class SmartConfig(
     val title: String,
     val icon: ImageVector,
@@ -111,7 +110,6 @@ private val SMART_CONFIGS = mapOf(
     ),
 )
 
-/** TaskListView.tsx + SmartViews.tsx as one parameterized screen */
 @Composable
 fun TaskListScreen(
     quickAddRequests: ReceiveChannel<Unit>,
@@ -149,7 +147,7 @@ fun TaskListScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // scaffolds contentWindowInsets dont include the IME, so without this the keyboard just overlaps the
+
             .imePadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -170,7 +168,7 @@ fun TaskListScreen(
                     letterSpacing = 1.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    // fill = true (default): claim all leftover width so the trailing count/bell/menu sit flush right
+
                     modifier = Modifier.weight(1f),
                 )
                 if (tasks.isNotEmpty()) {
@@ -223,7 +221,6 @@ fun TaskListScreen(
                 }
             }
 
-            // quick add with natural-language parsing (QuickAdd.tsx)
             if (showQuickAdd) {
                 QuickAddBar(focusRequester = focusRequester, onAdd = viewModel::quickAdd)
             }
@@ -272,7 +269,6 @@ private fun QuickAddBar(focusRequester: FocusRequester, onAdd: (String) -> Unit)
         }
     }
 
-    // live parse preview, like the web QuickAdd chips: shows what the natural-language parser will pull
     val parsed = remember(text) { if (text.isBlank()) null else parseQuickAdd(text) }
     val hasMeta = parsed != null &&
         (parsed.dueAt != null || parsed.priority != "none" || parsed.recurrenceRule != null)
@@ -321,19 +317,18 @@ private fun QuickAddBar(focusRequester: FocusRequester, onAdd: (String) -> Unit)
     }
 }
 
-/** one parse-preview chip (date is orange like the web, the rest neutral) */
 @Composable
 private fun ParseChip(icon: ImageVector, label: String, highlight: Boolean = false) {
     val dark = isDarkTheme()
     val background = when {
-        highlight && dark -> Color(0xFF431407) // orange-950
-        highlight -> Color(0xFFFFEDD5)         // orange-100
+        highlight && dark -> Color(0xFF431407)
+        highlight -> Color(0xFFFFEDD5)
         dark -> Ink700
-        else -> Color(0xFFF3F4F6)              // gray-100
+        else -> Color(0xFFF3F4F6)
     }
     val content = when {
-        highlight && dark -> Color(0xFFFB923C) // orange-400
-        highlight -> Color(0xFFC2410C)         // orange-700
+        highlight && dark -> Color(0xFFFB923C)
+        highlight -> Color(0xFFC2410C)
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     Row(
@@ -346,7 +341,6 @@ private fun ParseChip(icon: ImageVector, label: String, highlight: Boolean = fal
     }
 }
 
-/** share / rename / change icon / change color / delete ListPage.tsx kebab menu */
 @Composable
 private fun ListMenu(
     isOwner: Boolean,
@@ -366,7 +360,6 @@ private fun ListMenu(
     var renameValue by remember { mutableStateOf("") }
     val haptics = rememberHaptics()
 
-    // viewers keep the menu too Share is how they see members and leave
     Box {
         IconButton(onClick = { haptics.tap(); menuOpen = true }) {
             Icon(Icons.Outlined.MoreVert, contentDescription = "List options", tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -493,7 +486,6 @@ private fun ListMenu(
     }
 }
 
-/** simple loading placeholder rows */
 @Composable
 private fun TaskListSkeleton() {
     val barColor = if (isDarkTheme()) Ink700 else Color(0xFFE5E7EB)

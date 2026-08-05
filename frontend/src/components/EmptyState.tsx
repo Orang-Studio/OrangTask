@@ -7,11 +7,11 @@ export function EmptyState({
   description,
   pose = 'idle',
 }: {
-  /** optional small Lucide badge tucked beside the mascot */
+
   icon?: LucideIcon
   title: string
   description: string
-  /** mascot expression - pick the one that fits the empty context */
+
   pose?: MascotPose
 }) {
   return (

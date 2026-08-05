@@ -5,7 +5,6 @@ import okhttp3.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** tags every request as a native client */
 @Singleton
 class AuthInterceptor @Inject constructor(private val tokenStore: TokenStore) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {

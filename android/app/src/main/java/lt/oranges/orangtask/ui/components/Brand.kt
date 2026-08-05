@@ -60,7 +60,6 @@ fun Logo(size: Dp = 56.dp, modifier: Modifier = Modifier) {
     )
 }
 
-/** btn-primary / btn-secondary: sharp corners, uppercase, bold, 44dp tall */
 @Composable
 fun BrandButton(
     text: String,
@@ -70,7 +69,7 @@ fun BrandButton(
     secondary: Boolean = false,
     icon: ImageVector? = null,
     iconPainter: Painter? = null,
-    // brand marks (e.g Googles multi-color "G") must keep their own colors only monochrome icons
+
     tintIcon: Boolean = true,
 ) {
     val colors = if (secondary) {
@@ -116,7 +115,6 @@ fun BrandButton(
     }
 }
 
-/** uppercase micro-label above inputs */
 @Composable
 fun FieldLabel(text: String, modifier: Modifier = Modifier) {
     Text(
@@ -128,7 +126,6 @@ fun FieldLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** input-field: 44dp, 4dp radius, orange border on focus */
 @Composable
 fun OrangTextField(
     value: String,
@@ -197,7 +194,6 @@ fun OrangTextField(
     )
 }
 
-/** the red error banner used across auth screens */
 @Composable
 fun ErrorBanner(text: String, modifier: Modifier = Modifier) {
     val dark = isDarkTheme()
@@ -215,7 +211,6 @@ fun ErrorBanner(text: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** surface: card with 1px border, no radius */
 @Composable
 fun SurfaceCard(
     modifier: Modifier = Modifier,

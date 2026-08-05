@@ -2,7 +2,6 @@ package lt.oranges.orangtask.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// orange-Studio brand scale (frontend/tailwind.config.js)
 val Orange50 = Color(0xFFFFF7ED)
 val Orange100 = Color(0xFFFFEDD5)
 val Orange200 = Color(0xFFFED7AA)
@@ -14,7 +13,6 @@ val Orange700 = Color(0xFFC2410C)
 val Orange800 = Color(0xFF9A3412)
 val Orange900 = Color(0xFF7C2D12)
 
-// dark surfaces matching oranges.lt
 val Ink900 = Color(0xFF0F0F0F)
 val Ink850 = Color(0xFF141414)
 val Ink800 = Color(0xFF161616)
@@ -24,7 +22,6 @@ val Ink600 = Color(0xFF2A2A2A)
 val Ink500 = Color(0xFF333333)
 val Ink400 = Color(0xFF444444)
 
-// light-mode grays (tailwind gray scale as used by the web app)
 val Gray50 = Color(0xFFF9FAFB)
 val Gray100 = Color(0xFFF3F4F6)
 val Gray200 = Color(0xFFE5E7EB)

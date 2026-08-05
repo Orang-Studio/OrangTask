@@ -16,6 +16,9 @@ data class UserDto(
 data class AuthResponse(
     val user: UserDto? = null,
     @SerialName("requires_pin") val requiresPin: Boolean = false,
+    @SerialName("requires_email_2fa") val requiresEmail2fa: Boolean = false,
+    @SerialName("requires_email_verification") val requiresEmailVerification: Boolean = false,
+    @SerialName("recaptcha_required") val recaptchaRequired: Boolean = false,
     @SerialName("access_token") val accessToken: String? = null,
     @SerialName("refresh_token") val refreshToken: String? = null,
 )
@@ -38,8 +41,18 @@ data class ProvidersResponse(val github: Boolean = false, val google: Boolean = 
 @Serializable
 data class DeviceTokenRequest(val token: String, val platform: String = "android")
 
-@Serializable data class LoginRequest(val email: String, val password: String)
-@Serializable data class RegisterRequest(val email: String, val password: String, val name: String)
+@Serializable data class LoginRequest(
+    val email: String,
+    val password: String,
+    @SerialName("recaptcha_token") val recaptchaToken: String? = null,
+)
+@Serializable data class RegisterRequest(
+    val email: String,
+    val password: String,
+    val name: String,
+    @SerialName("recaptcha_token") val recaptchaToken: String? = null,
+)
+@Serializable data class EmailCodeRequest(val email: String, val code: String)
 @Serializable data class EmailRequest(val email: String)
 @Serializable data class ResetPasswordRequest(val email: String, val code: String, val password: String)
 @Serializable data class PinRequest(val pin: String)

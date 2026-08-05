@@ -13,7 +13,6 @@ import lt.oranges.orangtask.core.network.CreatedApiKeyDto
 import lt.oranges.orangtask.core.network.userMessage
 import javax.inject.Inject
 
-/** personal API keys for direct REST access (n8n, Zapier, scripts, etc.) */
 @HiltViewModel
 class ApiKeysViewModel @Inject constructor(
     private val repo: SettingsRepository,
@@ -28,7 +27,6 @@ class ApiKeysViewModel @Inject constructor(
     var creating by mutableStateOf(false)
         private set
 
-    /** set right after creation the raw key, shown exactly once */
     var revealed by mutableStateOf<CreatedApiKeyDto?>(null)
         private set
 

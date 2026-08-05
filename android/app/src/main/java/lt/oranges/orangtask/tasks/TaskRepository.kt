@@ -16,6 +16,7 @@ import lt.oranges.orangtask.core.db.toEntity
 import lt.oranges.orangtask.core.network.CreateTaskRequest
 import lt.oranges.orangtask.core.network.OrangApi
 import lt.oranges.orangtask.core.network.TaskDto
+import lt.oranges.orangtask.core.network.fetchAllPages
 import lt.oranges.orangtask.core.sync.OfflineQueue
 import java.io.IOException
 import java.time.Instant
@@ -23,7 +24,6 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** room is the source of truth for the UI; every mutation is applied to Room optimistically, then sent */
 @Singleton
 class TaskRepository @Inject constructor(
     private val api: OrangApi,
@@ -41,29 +41,31 @@ class TaskRepository @Inject constructor(
     fun observeAssigned(userId: String): Flow<List<TaskEntity>> = taskDao.observeAssigned(userId)
     fun observeAll(): Flow<List<TaskEntity>> = taskDao.observeAll()
 
-    // ---- Sync ----
-
-    /** smart=all returns every top-level task the user can see, with tags */
     suspend fun refreshAllTasks() {
-        val tasks = api.getTasks(smart = "all").tasks
+        val tasks = fetchAllPages { offset ->
+            api.getTasks(smart = "all", offset = offset).let { it.tasks to it.nextOffset }
+        }
         upsertMerged(tasks)
         taskDao.deleteTopLevelNotIn(tasks.map { it.id })
     }
 
-    /** the per-list query is the only one that carries subtask_count */
     suspend fun refreshListTasks(listId: String) {
-        val tasks = api.getTasks(listId = listId).tasks
+        val tasks = fetchAllPages { offset ->
+            api.getTasks(listId = listId, offset = offset).let { it.tasks to it.nextOffset }
+        }
         upsertMerged(tasks)
         taskDao.deleteTopLevelForListNotIn(listId, tasks.map { it.id })
     }
 
     suspend fun refreshSubtasks(listId: String, parentId: String) {
-        val tasks = api.getTasks(listId = listId, parentId = parentId).tasks
+        val tasks = fetchAllPages { offset ->
+            api.getTasks(listId = listId, parentId = parentId, offset = offset)
+                .let { it.tasks to it.nextOffset }
+        }
         upsertMerged(tasks)
         taskDao.deleteSubtasksNotIn(parentId, tasks.map { it.id })
     }
 
-    /** applies a full task row pushed over the WebSocket */
     suspend fun upsertFromServer(dto: TaskDto) {
         taskDao.upsert(dto.toEntity(taskDao.getById(dto.id)))
     }
@@ -76,8 +78,6 @@ class TaskRepository @Inject constructor(
     private suspend fun upsertMerged(tasks: List<TaskDto>) {
         taskDao.upsertAll(tasks.map { it.toEntity(taskDao.getById(it.id)) })
     }
-
-    // ---- Mutations ----
 
     suspend fun createTask(
         listId: String,
@@ -106,7 +106,6 @@ class TaskRepository @Inject constructor(
         return entity
     }
 
-    /** offline create: a `local-` draft row renders immediately and survives reconciliation; the queued */
     private suspend fun localDraft(request: CreateTaskRequest): TaskEntity {
         val tempId = "local-" + UUID.randomUUID()
         offlineQueue.enqueue(
@@ -134,7 +133,7 @@ class TaskRepository @Inject constructor(
             startDate = request.startDate,
             startAtMillis = isoToMillis(request.startDate),
             completedAt = null,
-            position = Int.MAX_VALUE, // sorts after every server row
+            position = Int.MAX_VALUE,
             recurrenceRule = request.recurrenceRule,
             tagIds = emptyList(),
             tagNames = emptyList(),
@@ -152,7 +151,7 @@ class TaskRepository @Inject constructor(
                 completedAt = if (complete) Instant.now().toString() else null,
             )
         )
-        // open-task counter on the list card mirrors the servers task_count
+
         if (before.done != complete) listDao.adjustTaskCount(before.listId, if (complete) -1 else +1)
         try {
             val dto = (if (complete) api.completeTask(id) else api.uncompleteTask(id)).task
@@ -183,7 +182,6 @@ class TaskRepository @Inject constructor(
         }
     }
 
-    /** optimistic PATCH; [fields] holds exactly the keys to send */
     suspend fun patchTask(id: String, fields: JsonObject, optimistic: (TaskEntity) -> TaskEntity) {
         val before = taskDao.getById(id) ?: return
         taskDao.upsert(optimistic(before))

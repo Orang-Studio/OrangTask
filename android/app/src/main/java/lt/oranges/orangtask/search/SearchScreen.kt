@@ -45,7 +45,6 @@ import lt.oranges.orangtask.ui.components.rememberHaptics
 import lt.oranges.orangtask.ui.format.formatDueDate
 import lt.oranges.orangtask.ui.theme.Ink700
 
-/** CommandPalette.tsx as the Search tab: type ≥2 characters, results stream in as you pause, tapping */
 @Composable
 fun SearchScreen(
     onOpenTask: (listId: String, taskId: String) -> Unit,

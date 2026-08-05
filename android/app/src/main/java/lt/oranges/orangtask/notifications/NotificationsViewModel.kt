@@ -21,7 +21,6 @@ import lt.oranges.orangtask.core.network.NotificationDto
 import lt.oranges.orangtask.settings.SettingsRepository
 import javax.inject.Inject
 
-/** the bell (on any tab) and the notifications screen (its own route) live on different back-stack */
 @Composable
 fun sharedNotificationsViewModel(): NotificationsViewModel {
     var context: Context = LocalContext.current
@@ -32,7 +31,6 @@ fun sharedNotificationsViewModel(): NotificationsViewModel {
     error("NotificationsViewModel requires a ComponentActivity host")
 }
 
-/** NotificationsPage.tsx + the bell badge */
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val repo: SettingsRepository,
@@ -43,7 +41,6 @@ class NotificationsViewModel @Inject constructor(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading
 
-    /** the cached list, kept fresh by a 60s poll while anyone is subscribed */
     val items: StateFlow<List<NotificationDto>> = channelFlow {
         launch {
             while (true) {
@@ -57,7 +54,6 @@ class NotificationsViewModel @Inject constructor(
         cache.collect { send(it) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** derived from [items], so collecting the badge also drives the poll */
     val unreadCount: StateFlow<Int> = items
         .map { list -> list.count { !it.read } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)

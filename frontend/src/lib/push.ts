@@ -47,7 +47,6 @@ export async function sendTestPush(): Promise<{ ok: boolean; configured: boolean
   return api.post('/push/test')
 }
 
-// show a notification straight from the page via the SW - no push network involved
 export async function showLocalTestNotification(): Promise<boolean> {
   if (!pushSupported() || Notification.permission !== 'granted') return false
   const reg = await navigator.serviceWorker.ready

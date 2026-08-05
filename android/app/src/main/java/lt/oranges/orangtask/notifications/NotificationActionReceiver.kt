@@ -14,7 +14,6 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
-/** runs the notification action buttons in the background */
 @AndroidEntryPoint
 class NotificationActionReceiver : BroadcastReceiver() {
 
@@ -35,7 +34,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                         taskRepo.setDueDate(taskId, Instant.now().plus(1, ChronoUnit.HOURS))
                 }
             } catch (_: Exception) {
-                // setCompleted/setDueDate already queue on network failure; a hard error here just means no local
+
             } finally {
                 NotificationManagerCompat.from(context).cancel(notifId)
                 pending.finish()

@@ -27,7 +27,6 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** profile, PIN, notification prefs, webhooks, notifications, data import/export */
 @Singleton
 class SettingsRepository @Inject constructor(
     private val api: OrangApi,
@@ -35,7 +34,6 @@ class SettingsRepository @Inject constructor(
     private val json: Json,
 ) {
 
-    /** PATCH /user answers without pin_enabled, so merge into the cached user instead of replacing it */
     suspend fun updateProfile(name: String, avatarUrl: String?): UserDto {
         val updated = api.updateProfile(
             UpdateProfileRequest(name = name, avatarUrl = avatarUrl?.takeIf { it.isNotBlank() })
@@ -51,7 +49,7 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setPin(pin: String) {
         api.setPin(PinRequest(pin))
-        // setting a PIN counts as having just verified it dont lock this device
+
         tokenStore.markPinVerified()
         cacheUserPinEnabled(true)
     }
@@ -76,7 +74,6 @@ class SettingsRepository @Inject constructor(
 
     suspend fun apiKeys(): List<ApiKeyDto> = api.getApiKeys().keys
 
-    /** raw key is only ever returned here show it once, then discard it */
     suspend fun createApiKey(name: String): CreatedApiKeyDto =
         api.createApiKey(CreateApiKeyRequest(name.trim())).key
 
@@ -111,7 +108,6 @@ class SettingsRepository @Inject constructor(
         api.markAllNotificationsRead()
     }
 
-    /** streams GET /user/export into [target] (cache file the share sheet can hand out) */
     suspend fun exportTo(target: File) = withContext(Dispatchers.IO) {
         api.exportData().use { body ->
             body.byteStream().use { input ->

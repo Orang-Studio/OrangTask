@@ -54,7 +54,6 @@ import lt.oranges.orangtask.ui.theme.Ink700
 import lt.oranges.orangtask.ui.theme.Ink800
 import lt.oranges.orangtask.ui.theme.Orange500
 
-/** ListsPage.tsx: the mobile index of smart views and lists, and the only place to create a new list */
 @Composable
 fun ListsScreen(
     onOpenView: (String) -> Unit,
@@ -220,7 +219,7 @@ private fun IndexRow(
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                // fill = true (default) so this claims all leftover row width instead of just its own text width
+
                 modifier = Modifier.weight(1f),
             )
             roleBadge?.let {

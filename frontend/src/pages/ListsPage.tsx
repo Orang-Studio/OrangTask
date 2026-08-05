@@ -8,7 +8,6 @@ import { useHaptics } from '../hooks/useHaptics'
 import { EmptyState } from '../components/EmptyState'
 import { ListIcon, DEFAULT_LIST_ICON } from '../lib/listIcons'
 
-// mobile-first index of all lists
 export function ListsPage() {
   const { data: lists } = useLists()
   const createList = useCreateList()
@@ -24,7 +23,7 @@ export function ListsPage() {
     const list = await createList.mutateAsync({ name, color: '#f97316', icon: DEFAULT_LIST_ICON })
     setNewName('')
     setAdding(false)
-    // jump straight into the new list so you can add tasks / share right away
+
     if (list?.id) navigate(`/list/${list.id}`)
   }
 
@@ -48,7 +47,7 @@ export function ListsPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* inline create row */}
+
         {adding && (
           <div className="flex items-center gap-3 px-4 md:px-6 h-14 border-b border-gray-100 dark:border-ink-800">
             <Hash size={18} className="text-gray-400" />
@@ -67,7 +66,6 @@ export function ListsPage() {
           </div>
         )}
 
-        {/* smart views (no other mobile entry point for these) */}
         <p className="px-4 md:px-6 pt-4 pb-1 text-xs uppercase tracking-wider text-gray-400 font-semibold">Views</p>
         {[
           { to: '/upcoming', label: 'Upcoming', Icon: CalendarDays },
@@ -81,7 +79,6 @@ export function ListsPage() {
           </button>
         ))}
 
-        {/* the lists */}
         <p className="px-4 md:px-6 pt-4 pb-1 text-xs uppercase tracking-wider text-gray-400 font-semibold">Lists</p>
         {lists?.map((list) => (
           <button key={list.id} className={rowClass} onClick={() => { haptics.tap(); navigate(`/list/${list.id}`) }}>

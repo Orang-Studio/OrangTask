@@ -5,7 +5,6 @@ import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-/** receives FCM pushes The backend sends data-only messages so we build the notification here */
 @AndroidEntryPoint
 class OrangMessagingService : FirebaseMessagingService() {
 

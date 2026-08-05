@@ -8,7 +8,6 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import lt.oranges.orangtask.R
 
-// DM Sans variable font same file family the web app uses
 @OptIn(ExperimentalTextApi::class)
 val DmSans = FontFamily(
     Font(R.font.dm_sans, weight = FontWeight.Normal, variationSettings = FontVariation.Settings(FontVariation.weight(400))),

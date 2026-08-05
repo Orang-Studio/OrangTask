@@ -11,7 +11,7 @@ export function useApiKeys() {
 export function useCreateApiKey() {
   const qc = useQueryClient()
   return useMutation({
-    // raw_key is only ever present in this one response never refetched or cached
+
     mutationFn: (name: string) =>
       api.post<{ key: ApiKey & { raw_key: string } }>('/api-keys', { name }).then((d) => d.key),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['api-keys'] }),

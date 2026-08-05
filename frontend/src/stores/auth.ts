@@ -22,7 +22,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchMe: async () => {
     set({ loading: true })
     try {
-      // the server decides if a PIN is still required
+
       const res = await api.get<{ user: User; requires_pin?: boolean }>('/auth/me')
       set({ user: res.user, loading: false, requiresPin: !!res.requires_pin })
     } catch {

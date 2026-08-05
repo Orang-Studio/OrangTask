@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, Task } from '../lib/api'
+import { api, fetchAllPages, Task } from '../lib/api'
 import { useOfflineStore } from '../stores/offline'
+import { usePendingTaskDeletionIds, useUndoableDeleteTask } from '../components/UndoableTaskDelete'
 
 export type SmartView = 'today' | 'week' | 'overdue' | 'all' | 'assigned'
 
 export function useTasks(opts: { listId?: string; smart?: SmartView; parentId?: string }) {
+  const pendingDeletionIds = usePendingTaskDeletionIds()
   const params = new URLSearchParams()
   if (opts.listId) params.set('listId', opts.listId)
   if (opts.smart) params.set('smart', opts.smart)
@@ -12,7 +14,8 @@ export function useTasks(opts: { listId?: string; smart?: SmartView; parentId?: 
 
   return useQuery({
     queryKey: ['tasks', opts],
-    queryFn: () => api.get<{ tasks: Task[] }>(`/tasks?${params}`).then((d) => d.tasks),
+    queryFn: () => fetchAllPages<Task>('/tasks', 'tasks', params),
+    select: (tasks) => tasks.filter((task) => !pendingDeletionIds.has(task.id)),
   })
 }
 
@@ -25,7 +28,7 @@ export function useCreateTask() {
       qc.invalidateQueries({ queryKey: ['lists'] })
     },
     onError: (_e, body) => {
-      // queue offline if network failure
+
       if (!navigator.onLine) {
         useOfflineStore.getState().enqueue({ type: 'create', path: '/tasks', method: 'POST', body })
       }
@@ -92,26 +95,7 @@ export function useCompleteTask() {
 }
 
 export function useDeleteTask() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => api.delete(`/tasks/${id}`),
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: ['tasks'] })
-      const previous = qc.getQueriesData<Task[]>({ queryKey: ['tasks'] })
-      qc.setQueriesData<Task[]>({ queryKey: ['tasks'] }, (old) => old?.filter((t) => t.id !== id))
-      return { previous }
-    },
-    onError: (_e, id, ctx) => {
-      ctx?.previous?.forEach(([key, data]) => qc.setQueryData(key, data))
-      if (!navigator.onLine) {
-        useOfflineStore.getState().enqueue({ type: 'delete', path: `/tasks/${id}`, method: 'DELETE' })
-      }
-    },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['tasks'] })
-      qc.invalidateQueries({ queryKey: ['lists'] })
-    },
-  })
+  return useUndoableDeleteTask()
 }
 
 export function useReorderTasks() {

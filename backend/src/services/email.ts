@@ -1,11 +1,9 @@
 import { Resend } from 'resend'
 
-// lazily construct Resend only when a key is present the constructor throws without one, and email
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.FROM_EMAIL || 'noreply@oranges.lt'
 const APP_URL = process.env.APP_URL || 'http://localhost:5173'
 
-// most email clients (Gmail, Outlook) strip inline <svg>, which renders as an empty square
 const logoImg = (size = 48) =>
   `<img src="${APP_URL}/icons/icon-192.png" width="${size}" height="${size}" alt="OrangTask"
     style="display: inline-block; border-radius: 12px; border: 0; outline: none; text-decoration: none;" />`
@@ -40,6 +38,49 @@ export async function sendMagicLink(email: string, token: string) {
           If you didn't request this, you can safely ignore this email.<br>
           This link will expire in 15 minutes.
         </p>
+      </div>
+    `,
+  })
+}
+
+export async function sendEmailVerification(email: string, token: string) {
+  const url = `${APP_URL}/api/auth/verify-email?token=${token}`
+  if (!resend) {
+    console.log(`[DEV] Email verification link for ${email}: ${url}`)
+    return
+  }
+
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: 'Verify your OrangTask email address',
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">${logoImg(48)}<h1 style="font-size: 24px; color: #111;">Verify your email</h1></div>
+        <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Confirm your email address to activate your OrangTask account. This link expires in 24 hours.</p>
+        <div style="text-align: center; margin: 32px 0;"><a href="${url}" style="background: #f97316; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Verify email address</a></div>
+        <p style="color: #999; font-size: 13px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">If you did not create this account, you can safely ignore this email.</p>
+      </div>
+    `,
+  })
+}
+
+export async function sendLoginCode(email: string, code: string) {
+  if (!resend) {
+    console.log(`[DEV] Login verification code for ${email}: ${code}`)
+    return
+  }
+
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: `Your OrangTask sign-in code: ${code}`,
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">${logoImg(48)}<h1 style="font-size: 24px; color: #111;">Confirm your sign-in</h1></div>
+        <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Enter this code to finish signing in to OrangTask. It expires in 10 minutes.</p>
+        <div style="text-align: center; margin: 32px 0;"><div style="display: inline-block; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px 28px; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #ea580c;">${code}</div></div>
+        <p style="color: #999; font-size: 13px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">If you did not try to sign in, change your password.</p>
       </div>
     `,
   })
@@ -109,7 +150,6 @@ export async function sendPinResetCode(email: string, code: string) {
   })
 }
 
-// generic notification email (assignments, shares, completions, etc.)
 export async function sendNotificationEmail(email: string, subject: string, body?: string) {
   if (!resend) {
     console.log(`[DEV] Notification email to ${email}: ${subject}`)

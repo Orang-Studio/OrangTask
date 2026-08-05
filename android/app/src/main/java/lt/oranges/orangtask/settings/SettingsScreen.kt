@@ -76,7 +76,6 @@ import lt.oranges.orangtask.ui.theme.Ink700
 import lt.oranges.orangtask.ui.theme.Orange500
 import lt.oranges.orangtask.ui.theme.ThemeMode
 
-// section keys ("" = index)
 private const val SECTION_PROFILE = "profile"
 private const val SECTION_APPEARANCE = "appearance"
 private const val SECTION_NOTIFICATIONS = "notifications"
@@ -95,7 +94,6 @@ private val SECTIONS = listOf(
     SectionInfo(SECTION_DATA, "Data", Icons.Outlined.Storage),
 )
 
-/** SettingsPage.tsx, phone-shaped: an index of sections that push in, instead of the web sidebar */
 @Composable
 fun SettingsScreen(
     user: UserDto?,
@@ -160,7 +158,7 @@ fun SettingsScreen(
                     SECTION_PROFILE -> ProfileSection(user, viewModel, onUserChanged)
                     SECTION_APPEARANCE -> AppearanceSection(viewModel)
                     SECTION_NOTIFICATIONS -> NotificationPrefsSection(viewModel)
-                    // webhook/integration errors funnel into the same snackbar via the settings VM
+
                     SECTION_WEBHOOKS -> WebhooksSection(onError = { viewModel.errors.tryEmit(it) })
                     SECTION_INTEGRATIONS -> IntegrationsSection(onError = { viewModel.errors.tryEmit(it) })
                     SECTION_DATA -> DataSection(user, viewModel, onLogout)
@@ -171,8 +169,6 @@ fun SettingsScreen(
         SnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
-
-// ---- Index ----
 
 @Composable
 private fun SettingsIndex(user: UserDto?, onOpen: (String) -> Unit, onLogout: () -> Unit) {
@@ -231,8 +227,6 @@ private fun SettingsIndex(user: UserDto?, onOpen: (String) -> Unit, onLogout: ()
         )
     }
 }
-
-// ---- Profile + PIN ----
 
 @Composable
 private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserChanged: () -> Unit) {
@@ -346,8 +340,6 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
     }
 }
 
-// ---- Appearance ----
-
 @Composable
 private fun AppearanceSection(viewModel: SettingsViewModel) {
     val haptics = rememberHaptics()
@@ -444,8 +436,6 @@ private fun NotificationPrefsSection(viewModel: SettingsViewModel) {
         }
     }
 }
-
-// ---- Data: export, Keep import, delete account ----
 
 @Composable
 private fun DataSection(user: UserDto?, viewModel: SettingsViewModel, onLogout: () -> Unit) {

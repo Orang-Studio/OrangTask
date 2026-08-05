@@ -31,3 +31,6 @@ captures/
 .vscode/
 .DS_Store
 *.log
+
+# scratch
+fdroiddata-*

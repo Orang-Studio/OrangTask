@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // custom service worker (src/sw.ts) so we can handle Web Push
+
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',

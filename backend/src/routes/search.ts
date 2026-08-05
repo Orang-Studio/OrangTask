@@ -8,10 +8,10 @@ app.use('*', authMiddleware)
 
 app.get('/', async (c) => {
   const userId = c.get('userId')
-  const q = c.req.query('q')?.trim()
+
+  const q = c.req.query('q')?.trim().slice(0, 200)
   if (!q || q.length < 2) return c.json({ results: [] })
 
-  // substring match (so "stu" finds "stuff") plus full-text for word relevance
   const pattern = '%' + q.replace(/[\\%_]/g, (ch) => '\\' + ch) + '%'
 
   const results = await sql`

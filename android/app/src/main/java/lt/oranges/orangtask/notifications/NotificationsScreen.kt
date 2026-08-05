@@ -43,7 +43,6 @@ import lt.oranges.orangtask.ui.format.formatDueDate
 import lt.oranges.orangtask.ui.theme.Ink700
 import lt.oranges.orangtask.ui.theme.Orange500
 
-/** NotificationsPage.tsx: list + mark read; tapping deep-links into the list */
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit,
@@ -116,7 +115,6 @@ fun NotificationsScreen(
     }
 }
 
-/** list_shared / task_assigned events carry the list to open in metadata */
 private val NotificationDto.listId: String?
     get() = (metadata?.get("list_id") as? JsonPrimitive)?.takeIf { it.isString }?.content
 

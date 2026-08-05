@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// mcp server exposing OrangTask over the personal API key (otk_) REST surface
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
@@ -46,7 +45,6 @@ const wrap = (fn) => async (args) => {
   }
 }
 
-// keep responses small so a big list does not flood the context
 const slimTask = (t) => ({
   id: t.id,
   title: t.title,
@@ -57,10 +55,11 @@ const slimTask = (t) => ({
   list_name: t.list_name,
   assignee: t.assignee_name,
   tags: t.tag_names?.filter(Boolean) ?? [],
+  subtask_count: t.subtask_count != null ? Number(t.subtask_count) : undefined,
   notes: t.notes ? String(t.notes).slice(0, 300) : undefined,
 })
 
-const server = new McpServer({ name: 'orangtask', version: '0.1.0' })
+const server = new McpServer({ name: 'orangtask', version: '0.2.0' })
 
 server.registerTool(
   'list_tasks',
@@ -76,6 +75,25 @@ server.registerTool(
   },
   wrap(async ({ view, list_id }) => {
     const q = list_id ? `?listId=${encodeURIComponent(list_id)}` : `?smart=${view || 'today'}`
+    const { tasks } = await api(`/tasks${q}`)
+    return (tasks || []).map(slimTask)
+  })
+)
+
+server.registerTool(
+  'list_subtasks',
+  {
+    title: 'List subtasks',
+    description:
+      'Read the subtasks nested under one parent task. Both ids come from list_tasks or search_tasks output. ' +
+      'The other task tools only ever return top level tasks, so use this on any task whose subtask_count is above zero.',
+    inputSchema: {
+      list_id: z.string().describe('list_id of the parent task'),
+      parent_id: z.string().describe('id of the parent task'),
+    },
+  },
+  wrap(async ({ list_id, parent_id }) => {
+    const q = `?listId=${encodeURIComponent(list_id)}&parentId=${encodeURIComponent(parent_id)}`
     const { tasks } = await api(`/tasks${q}`)
     return (tasks || []).map(slimTask)
   })
@@ -98,10 +116,16 @@ server.registerTool(
   'create_task',
   {
     title: 'Create task',
-    description: 'Add a task to a list. list_id is required, get one from list_lists.',
+    description:
+      'Add a task to a list. list_id is required, get one from list_lists. ' +
+      'Pass parent_id to nest the new task under an existing one as a subtask.',
     inputSchema: {
       list_id: z.string(),
       title: z.string(),
+      parent_id: z
+        .string()
+        .optional()
+        .describe('id of the parent task, must live in the same list; omit for a top level task'),
       notes: z.string().optional(),
       priority: z.enum(['none', 'low', 'medium', 'high']).optional(),
       due_date: z.string().optional().describe('ISO 8601 timestamp'),
@@ -117,9 +141,16 @@ server.registerTool(
   'update_task',
   {
     title: 'Update task',
-    description: 'Change fields on an existing task, only the fields you pass are touched.',
+    description:
+      'Change fields on an existing task, only the fields you pass are touched. ' +
+      'Set parent_id to nest the task under another one, or null to pull it back up to the top level.',
     inputSchema: {
       id: z.string(),
+      parent_id: z
+        .string()
+        .nullable()
+        .optional()
+        .describe('new parent task id, must be in the same list; null promotes the task to top level'),
       title: z.string().optional(),
       notes: z.string().optional(),
       priority: z.enum(['none', 'low', 'medium', 'high']).optional(),

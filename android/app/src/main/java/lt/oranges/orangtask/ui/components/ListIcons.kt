@@ -57,7 +57,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** material equivalents of the web lucide list-icon registry (frontend/src/lib/listIcons.tsx) */
 val LIST_ICONS: Map<String, ImageVector> = linkedMapOf(
     "hash" to Icons.Outlined.Tag,
     "inbox" to Icons.Outlined.Inbox,

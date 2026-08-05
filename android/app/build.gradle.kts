@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-// optional release signing: put keystore.properties next to this file with
 val keystoreProps = Properties().apply {
     val f = rootProject.file("keystore.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -102,6 +101,8 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.browser)
 
+    testImplementation("junit:junit:4.13.2")
+
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
@@ -112,7 +113,6 @@ dependencies {
 
     implementation(libs.coil.compose)
 
-    // firebase Cloud Messaging (native push)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
 }

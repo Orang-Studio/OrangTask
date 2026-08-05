@@ -4,6 +4,7 @@ import { authMiddleware } from '../middleware/auth.js'
 import { resolvePrefs } from '../services/notificationPrefs.js'
 import { importKeepNotes, type KeepNote } from '../services/keepImport.js'
 import { publishToUser } from '../ws/pubsub.js'
+import { firstError, textField, urlField } from '../lib/validate.js'
 import type { AppEnv } from '../types.js'
 
 const app = new Hono<AppEnv>()
@@ -12,6 +13,12 @@ app.use('*', authMiddleware)
 app.patch('/', async (c) => {
   const userId = c.get('userId')
   const { name, avatar_url } = await c.req.json()
+
+  const invalid = firstError(
+    textField(name, 'name', 200),
+    urlField(avatar_url, 'avatar_url'),
+  )
+  if (invalid) return c.json({ error: invalid }, 400)
 
   const [user] = await sql`
     UPDATE users SET
@@ -27,6 +34,7 @@ app.patch('/', async (c) => {
 app.delete('/', async (c) => {
   const userId = c.get('userId')
   const { email } = await c.req.json()
+  if (typeof email !== 'string') return c.json({ error: 'Email required' }, 400)
 
   const user = c.get('user')
   if (email.toLowerCase() !== user.email.toLowerCase()) {
@@ -85,7 +93,6 @@ app.get('/pin/status', async (c) => {
   return c.json({ has_pin: user.has_pin })
 })
 
-// import notes from a Google Keep (Google Takeout) export
 app.post('/import/google-keep', async (c) => {
   const userId = c.get('userId')
   const body = await c.req.json().catch(() => ({}))
@@ -100,7 +107,6 @@ app.post('/import/google-keep', async (c) => {
     includeTrashed: body?.includeTrashed,
   })
 
-  // nudge connected clients to refetch so the new list/tasks appear live
   publishToUser(userId, { type: 'list.updated', data: { id: result.list.id } }).catch(() => {})
 
   return c.json(result)

@@ -18,7 +18,6 @@ export async function createNotification(
     RETURNING *
   `
 
-  // in-app / real-time is always delivered; push + email follow the users prefs
   publishToUser(userId, { type: 'notification.new', data: notif }).catch(() => {})
 
   try {
@@ -57,7 +56,7 @@ export async function startDueSoonJob() {
       `
 
       for (const task of tasks) {
-        // createNotification now handles email + push per the users prefs
+
         await createNotification(
           task.user_id_field,
           'task_due_soon',

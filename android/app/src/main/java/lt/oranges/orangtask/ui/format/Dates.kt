@@ -11,7 +11,6 @@ private val timeFmt = DateTimeFormatter.ofPattern("h:mm a", Locale.US)
 private val weekdayFmt = DateTimeFormatter.ofPattern("EEE", Locale.US)
 private val monthDayFmt = DateTimeFormatter.ofPattern("MMM d", Locale.US)
 
-/** port of frontend/src/lib/date.ts formatDueDate() */
 fun formatDueDate(millis: Long?): String {
     if (millis == null) return ""
     val zone = ZoneId.systemDefault()

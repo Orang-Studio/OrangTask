@@ -7,7 +7,6 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
-/** replays the offline queue once connectivity returns */
 @HiltWorker
 class ReplayWorker @AssistedInject constructor(
     @Assisted context: Context,

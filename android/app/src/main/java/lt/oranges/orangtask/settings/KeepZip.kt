@@ -7,12 +7,10 @@ import kotlinx.serialization.json.JsonPrimitive
 import java.io.InputStream
 import java.util.zip.ZipInputStream
 
-/** reads a Google Takeout zip and pulls out the Keep note JSON objects, exactly like the web */
 object KeepZip {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    /** same duck-typing the web uses to tell notes from other Takeout JSON */
     private fun isKeepNote(o: JsonObject): Boolean {
         fun field(name: String) = o[name]
         return field("textContent") is JsonPrimitive ||
@@ -27,7 +25,7 @@ object KeepZip {
             while (true) {
                 val entry = zip.nextEntry ?: break
                 if (entry.isDirectory || !entry.name.lowercase().endsWith(".json")) continue
-                // ZipInputStream must stay open across entries read, dont close
+
                 val text = zip.readBytes().toString(Charsets.UTF_8)
                 val obj = runCatching { json.parseToJsonElement(text) }.getOrNull() as? JsonObject
                     ?: continue

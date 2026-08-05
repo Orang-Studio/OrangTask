@@ -30,7 +30,6 @@ export function MobileTabBar({ onAdd, onSearch }: Props) {
         <span className="text-[10px] font-medium">Lists</span>
       </button>
 
-      {/* center add button */}
       <div className="flex-1 flex items-center justify-center">
         <button
           onClick={() => { haptics.tap(); onAdd() }}

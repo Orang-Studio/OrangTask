@@ -17,7 +17,7 @@ function isTyping(): boolean {
 export function useGlobalKeyboard(handlers: Handlers) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // cmd/Ctrl+K command palette works even while typing
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         handlers.onCommandPalette?.()

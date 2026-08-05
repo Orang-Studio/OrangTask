@@ -6,7 +6,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
 
-/** natural-language quick add frontend/src/lib/chrono.ts in Kotlin */
 data class ParsedQuickAdd(
     val title: String,
     val dueAt: Instant?,
@@ -16,7 +15,6 @@ data class ParsedQuickAdd(
     val dueAtMillis: Long? get() = dueAt?.toEpochMilli()
 }
 
-// word-ish boundaries; \b alone cant start a match at "!high"
 private const val B0 = """(?:^|(?<=\s))"""
 private const val B1 = """(?=$|[\s.,;:!?])"""
 
@@ -74,7 +72,6 @@ private const val MONTH_ALT =
     "january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|" +
         "september|sept|sep|october|oct|november|nov|december|dec"
 
-// leading preposition is part of the match so "report by friday" "report"
 private const val PREP = """(?:(?:on|by|due)\s+)?"""
 
 private const val TIME_CORE =
@@ -83,7 +80,6 @@ private const val TIME_CORE =
 private val AFTER_DATE_TIME = Regex("""^,?\s+(?:at\s+)?$TIME_CORE$B1""", IC)
 private val STANDALONE_TIME = Regex("""$B0(?:at\s+)?$TIME_CORE$B1""", IC)
 
-/** a date/time phrase found in the input, with the character range it covers */
 private class DateHit(
     val start: Int,
     var end: Int,
@@ -122,7 +118,7 @@ private val DATE_RULES = listOf(
     DateRule("""$PREP(next\s+)?($WEEKDAY_ALT)""") { m, now ->
         val target = WEEKDAYS[m.groupValues[2].lowercase()] ?: return@DateRule null
         var diff = (target.value - now.dayOfWeek.value + 7) % 7
-        if (diff == 0 && m.groupValues[1].isNotEmpty()) diff = 7 // "next friday" on a Friday
+        if (diff == 0 && m.groupValues[1].isNotEmpty()) diff = 7
         m.hit(now.toLocalDate().plusDays(diff.toLong()))
     },
     DateRule("""$PREP($MONTH_ALT)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?""") { m, now ->
@@ -138,7 +134,7 @@ private fun monthDayHit(m: MatchResult, now: ZonedDateTime, monthGroup: Int, day
     val day = m.groupValues[dayGroup].toIntOrNull() ?: return null
     val year = m.groupValues[yearGroup].toIntOrNull()
     var date = runCatching { LocalDate.of(year ?: now.year, month, day) }.getOrNull() ?: return null
-    // no explicit year the next occurrence (chronos forwardDate)
+
     if (year == null && date.isBefore(now.toLocalDate())) date = date.plusYears(1)
     return m.hit(date)
 }
@@ -155,7 +151,7 @@ private fun resolveTime(m: MatchResult): LocalTime? {
     when (ampm.lowercase()) {
         "pm" -> if (hour in 1..11) hour += 12
         "am" -> if (hour == 12) hour = 0
-        // no am/pm ("17:30") 24h clock, take as-is
+
     }
     return runCatching { LocalTime.of(hour, minute) }.getOrNull()
 }
@@ -164,7 +160,6 @@ fun parseQuickAdd(input: String, now: ZonedDateTime = ZonedDateTime.now()): Pars
     var title = input
     var priority = "none"
 
-    // priority first keyword in table order, like the web
     for ((regex, level) in PRIORITY_PATTERNS) {
         val match = regex.find(title) ?: continue
         priority = level
@@ -172,7 +167,6 @@ fun parseQuickAdd(input: String, now: ZonedDateTime = ZonedDateTime.now()): Pars
         break
     }
 
-    // recurrence must run before date parsing so the weekday rule never sees the day name inside
     var recurrenceRule: String? = null
     for ((regex, rule) in RECURRENCE_PATTERNS) {
         val match = regex.find(title) ?: continue
@@ -181,7 +175,6 @@ fun parseQuickAdd(input: String, now: ZonedDateTime = ZonedDateTime.now()): Pars
         break
     }
 
-    // date: earliest match wins; ties go to the longest (like chronos first result)
     var best: DateHit? = null
     for (rule in DATE_RULES) {
         val match = rule.regex.find(title) ?: continue
@@ -196,7 +189,7 @@ fun parseQuickAdd(input: String, now: ZonedDateTime = ZonedDateTime.now()): Pars
 
     val dated = best
     if (dated != null && dated.exact == null) {
-        // a time right after the date ("friday at 5pm", "tomorrow 9am")
+
         val match = AFTER_DATE_TIME.find(title.substring(dated.end))
         if (match != null) {
             val time = resolveTime(match)
@@ -206,7 +199,7 @@ fun parseQuickAdd(input: String, now: ZonedDateTime = ZonedDateTime.now()): Pars
             }
         }
     } else if (dated == null) {
-        // bare time today, or tomorrow once it has passed (forwardDate)
+
         val match = STANDALONE_TIME.find(title)
         if (match != null) {
             val time = resolveTime(match)
@@ -223,12 +216,11 @@ fun parseQuickAdd(input: String, now: ZonedDateTime = ZonedDateTime.now()): Pars
         title = title.removeRange(hit.start, hit.end).trim()
         when {
             hit.exact != null -> hit.exact.toInstant()
-            // date without a time defaults to end of day same as the Today views quick add, and never instantly
+
             else -> hit.date!!.atTime(hit.time ?: LocalTime.of(23, 59)).atZone(now.zone).toInstant()
         }
     }
 
-    // leftover prepositions and double spaces (web cleanup, verbatim)
     title = title.replace(Regex("""\s+(on|at|by|in|every)\s*$""", IC), "").trim()
     title = title.replace(Regex("""\s{2,}"""), " ").trim()
 

@@ -1,5 +1,3 @@
-// API client with automatic token refresh on 401
-
 const API_BASE = '/api'
 
 let refreshPromise: Promise<boolean> | null = null
@@ -46,7 +44,7 @@ async function request<T>(
     if (refreshed) {
       return request<T>(path, options, false)
     }
-    // genuine auth failure
+
     if (!path.includes('/auth/')) {
       window.dispatchEvent(new CustomEvent('auth:expired'))
     }
@@ -68,6 +66,34 @@ async function request<T>(
     return res.json()
   }
   return res.text() as unknown as T
+}
+
+export const PAGE_SIZE = 200
+
+const MAX_PAGES = 50
+
+export async function fetchAllPages<T>(
+  path: string,
+  key: string,
+  params?: URLSearchParams,
+): Promise<T[]> {
+  const all: T[] = []
+  let offset: number | null = 0
+
+  for (let page = 0; page < MAX_PAGES && offset !== null; page++) {
+    const query = new URLSearchParams(params)
+    query.set('limit', String(PAGE_SIZE))
+    query.set('offset', String(offset))
+
+    const data = await request<Record<string, unknown>>(`${path}?${query}`)
+    const rows = data[key]
+    if (Array.isArray(rows)) all.push(...(rows as T[]))
+
+    const next = data.nextOffset
+    offset = typeof next === 'number' ? next : null
+  }
+
+  return all
 }
 
 export const api = {

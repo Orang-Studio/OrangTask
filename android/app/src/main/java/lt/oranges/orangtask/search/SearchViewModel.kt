@@ -19,14 +19,13 @@ import lt.oranges.orangtask.core.network.userMessage
 import javax.inject.Inject
 
 sealed interface SearchUiState {
-    /** fewer than 2 characters the server would return nothing anyway */
+
     data object Idle : SearchUiState
     data object Searching : SearchUiState
     data class Results(val query: String, val results: List<SearchResultDto>) : SearchUiState
     data class Error(val message: String) : SearchUiState
 }
 
-/** CommandPalette.tsx as a screen: debounce typing pauses (250ms, like the web), then hit GET */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SearchViewModel @Inject constructor(

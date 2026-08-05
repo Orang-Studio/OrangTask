@@ -32,7 +32,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
 
-/** one view model for every task surface the smart views */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class TaskListViewModel @Inject constructor(
@@ -45,12 +44,10 @@ class TaskListViewModel @Inject constructor(
     val listId: String? = savedState["listId"]
     val kind: String = savedState["kind"] ?: if (listId != null) "list" else "today"
 
-    /** set when a search result deep-links straight into a task ("?task=…") */
     private val initialTaskId: String? = savedState["task"]
 
     val myUserId: String = authRepository.cachedUser()?.id ?: ""
 
-    /** skeleton until the first server sync for this screen settles */
     var initialLoading by mutableStateOf(true)
         private set
 
@@ -59,11 +56,9 @@ class TaskListViewModel @Inject constructor(
     val tasks: StateFlow<List<TaskEntity>> = taskFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** present only on the list route: header title, role, menu state */
     val list: StateFlow<ListEntity?> = (listId?.let { listRepository.observeList(it) } ?: flowOf(null))
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** quick-add on smart views files into the first list, like the web quickAdd() reads `lists.value` */
     val lists: StateFlow<List<ListEntity>> = listRepository.lists
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -125,11 +120,9 @@ class TaskListViewModel @Inject constructor(
         selectedId.value = null
     }
 
-    // ---- Mutations (optimistic in the repository; errors surface here) ----
-
     fun quickAdd(title: String) {
         if (title.isBlank()) return
-        // "report friday 5pm high priority" title/date/priority/RRULE
+
         val parsed = parseQuickAdd(title.trim())
         if (parsed.title.isBlank()) return
         val targetList = listId ?: lists.value.firstOrNull()?.id
@@ -137,7 +130,7 @@ class TaskListViewModel @Inject constructor(
             errors.tryEmit("Create a list first")
             return
         }
-        // the Today view defaults undated tasks to tonight, like the web
+
         val due = parsed.dueAt ?: if (kind == "today") {
             LocalDate.now().atTime(23, 59).atZone(ZoneId.systemDefault()).toInstant()
         } else null
@@ -195,9 +188,6 @@ class TaskListViewModel @Inject constructor(
         if (name.isNotBlank()) taskRepository.addTag(taskId, listRepository.createTag(name.trim()))
     }
 
-    // ---- Sharing (list route only, ShareModal.tsx) ----
-
-    /** loads members when the share sheet opens (theyre not cached) */
     fun loadMembers() {
         val id = listId ?: return
         viewModelScope.launch {

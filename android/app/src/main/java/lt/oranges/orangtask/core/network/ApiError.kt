@@ -6,7 +6,6 @@ import java.io.IOException
 
 private val errorJson = Json { ignoreUnknownKeys = true }
 
-/** human-readable message: prefers the backends `{ "error": "..." }` body */
 fun Throwable.userMessage(): String = when (this) {
     is HttpException -> {
         val serverError = runCatching {

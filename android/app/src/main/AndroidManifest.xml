@@ -76,6 +76,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="orangtask" android:host="auth-callback" />
+                <data android:scheme="orangtask" android:host="recaptcha" />
             </intent-filter>
 
             <!-- App Links for the web app's own domain: tapping a task.oranges.lt

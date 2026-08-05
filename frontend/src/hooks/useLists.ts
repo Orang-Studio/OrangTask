@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, List, Member, Tag } from '../lib/api'
+import { api, fetchAllPages, List, Member, Tag } from '../lib/api'
 
 export function useLists() {
   return useQuery({
     queryKey: ['lists'],
-    queryFn: () => api.get<{ lists: List[] }>('/lists').then((d) => d.lists),
+    queryFn: () => fetchAllPages<List>('/lists', 'lists'),
   })
 }
 
@@ -39,7 +39,7 @@ export function useDeleteList() {
 export function useListMembers(listId: string | undefined) {
   return useQuery({
     queryKey: ['list-members', listId],
-    queryFn: () => api.get<{ members: Member[] }>(`/lists/${listId}/members`).then((d) => d.members),
+    queryFn: () => fetchAllPages<Member>(`/lists/${listId}/members`, 'members'),
     enabled: !!listId,
   })
 }
@@ -74,7 +74,7 @@ export function useRemoveMember() {
 export function useTags() {
   return useQuery({
     queryKey: ['tags'],
-    queryFn: () => api.get<{ tags: Tag[] }>('/tags').then((d) => d.tags),
+    queryFn: () => fetchAllPages<Tag>('/tags', 'tags'),
   })
 }
 

@@ -82,7 +82,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** TaskDetail.tsx as a modal bottom sheet: complete toggle, title, due date/time, priority, assignee */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskDetailSheet(
@@ -97,7 +96,6 @@ fun TaskDetailSheet(
     val dark = isDarkTheme()
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
 
-    // draft fields, reset when a different task is opened
     var title by rememberSaveable(task.id) { mutableStateOf(task.title) }
     var notes by rememberSaveable(task.id) { mutableStateOf(task.notes ?: "") }
     var recurrence by rememberSaveable(task.id) { mutableStateOf(task.recurrenceRule ?: "") }
@@ -133,7 +131,7 @@ fun TaskDetailSheet(
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            // header: complete toggle + close
+
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -167,7 +165,6 @@ fun TaskDetailSheet(
                 }
             }
 
-            // title
             BasicTextField(
                 value = title,
                 onValueChange = { title = it },
@@ -185,7 +182,6 @@ fun TaskDetailSheet(
                     },
             )
 
-            // due date
             DetailRow(icon = Icons.Outlined.CalendarMonth) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -213,7 +209,6 @@ fun TaskDetailSheet(
                 }
             }
 
-            // priority
             DetailRow(icon = Icons.Outlined.Flag) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PRIORITIES.forEach { p ->
@@ -242,7 +237,6 @@ fun TaskDetailSheet(
                 }
             }
 
-            // assignee only when the list is actually shared
             if (members.size > 1) {
                 val assignee = members.find { it.id == task.assignedTo }
                 DetailRow(icon = Icons.Outlined.Person) {
@@ -365,7 +359,6 @@ fun TaskDetailSheet(
                 }
             }
 
-            // notes
             Column {
                 FieldLabel("Notes")
                 Spacer(Modifier.height(6.dp))
@@ -383,7 +376,6 @@ fun TaskDetailSheet(
                 )
             }
 
-            // recurrence rule
             DetailRow(icon = Icons.Outlined.Repeat) {
                 OrangTextField(
                     value = recurrence,
@@ -397,7 +389,6 @@ fun TaskDetailSheet(
                 )
             }
 
-            // subtasks
             Column {
                 FieldLabel("Subtasks")
                 Spacer(Modifier.height(8.dp))
@@ -464,7 +455,6 @@ fun TaskDetailSheet(
                 }
             }
 
-            // footer: delete
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -483,7 +473,6 @@ fun TaskDetailSheet(
         }
     }
 
-    // date picker time picker save
     if (showDatePicker) {
         val dateState = rememberDatePickerState(
             initialSelectedDateMillis = task.dueAtMillis ?: System.currentTimeMillis(),
@@ -517,7 +506,7 @@ fun TaskDetailSheet(
                 TextButton(onClick = {
                     val dayMillis = pendingDayMillis
                     if (dayMillis != null) {
-                        // DatePicker returns UTC midnight of the picked day
+
                         val date = LocalDate.ofEpochDay(dayMillis / 86_400_000L)
                         val due = date.atTime(timeState.hour, timeState.minute)
                             .atZone(ZoneId.systemDefault())

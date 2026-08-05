@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** durable offline mutation queue frontend/src/stores/offline.ts, but backed by Room and replayed by */
 @Singleton
 class OfflineQueue @Inject constructor(
     private val dao: PendingOpDao,
@@ -36,7 +35,7 @@ class OfflineQueue @Inject constructor(
     private val json: Json,
     @ApplicationContext private val context: Context,
 ) {
-    /** one replay at a time: the worker and the sync coordinator both call in */
+
     private val replayLock = Mutex()
 
     suspend fun enqueue(method: String, path: String, body: JsonObject? = null, tempId: String? = null) {
@@ -54,7 +53,6 @@ class OfflineQueue @Inject constructor(
 
     suspend fun hasPending(): Boolean = dao.count() > 0
 
-    /** hands the queue to WorkManager: runs when connected, retries with backoff */
     fun schedule() {
         val request = OneTimeWorkRequestBuilder<ReplayWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
@@ -64,7 +62,6 @@ class OfflineQueue @Inject constructor(
             .enqueueUniqueWork("offline-replay", ExistingWorkPolicy.KEEP, request)
     }
 
-    /** replays every queued op in order */
     suspend fun replayAll(): Boolean = replayLock.withLock {
         var drained = true
         while (true) {
@@ -99,7 +96,6 @@ class OfflineQueue @Inject constructor(
         }
     }
 
-    /** a queued create came back with the servers row: swap the local draft for it and rewrite any later */
     private suspend fun adoptServerId(tempId: String, response: JsonObject) {
         val task = response["task"] as? JsonObject ?: return
         val realId = task["id"]?.jsonPrimitive?.contentOrNull ?: return

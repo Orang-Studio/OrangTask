@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 
-/** COUNT() columns come back from postgres.js as JSON strings ("3"), not numbers, so counts are */
 private fun JsonPrimitive?.asIntOrNull(): Int? = this?.let { it.intOrNull ?: it.content.toIntOrNull() }
 
 @Serializable
@@ -70,7 +69,6 @@ data class MemberDto(
     @SerialName("created_at") val createdAt: String? = null,
 )
 
-/** one row from GET /api/search (backend/src/routes/search.ts) */
 @Serializable
 data class SearchResultDto(
     val id: String,
@@ -84,13 +82,25 @@ data class SearchResultDto(
 
 @Serializable data class SearchResponse(val results: List<SearchResultDto> = emptyList())
 
-@Serializable data class TasksResponse(val tasks: List<TaskDto> = emptyList())
+@Serializable data class TasksResponse(
+    val tasks: List<TaskDto> = emptyList(),
+    val nextOffset: Int? = null,
+)
 @Serializable data class TaskResponse(val task: TaskDto)
-@Serializable data class ListsResponse(val lists: List<ListDto> = emptyList())
+@Serializable data class ListsResponse(
+    val lists: List<ListDto> = emptyList(),
+    val nextOffset: Int? = null,
+)
 @Serializable data class ListResponse(val list: ListDto)
-@Serializable data class TagsResponse(val tags: List<TagDto> = emptyList())
+@Serializable data class TagsResponse(
+    val tags: List<TagDto> = emptyList(),
+    val nextOffset: Int? = null,
+)
 @Serializable data class TagResponse(val tag: TagDto)
-@Serializable data class MembersResponse(val members: List<MemberDto> = emptyList())
+@Serializable data class MembersResponse(
+    val members: List<MemberDto> = emptyList(),
+    val nextOffset: Int? = null,
+)
 
 @Serializable
 data class CreateTaskRequest(

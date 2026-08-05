@@ -35,7 +35,6 @@ app.post('/', async (c) => {
     RETURNING id, name, key_prefix, last_used_at, created_at
   `
 
-  // the raw key is only ever shown here the server keeps just its hash
   return c.json({ key: { ...row, raw_key: key } }, 201)
 })
 

@@ -42,7 +42,6 @@ export function TaskListView({
   const [searchParams, setSearchParams] = useSearchParams()
   const quickAddRef = useRef<HTMLInputElement>(null)
 
-  // register quick-add focus (for global "N" / mobile FAB) only while the input is actually rendered
   useEffect(() => {
     if (showQuickAdd && listId) {
       registerQuickAdd(() => quickAddRef.current?.focus())
@@ -51,7 +50,6 @@ export function TaskListView({
     registerQuickAdd(null)
   }, [registerQuickAdd, showQuickAdd, listId])
 
-  // open task from ?task= deep link (e.g from search)
   useEffect(() => {
     const taskId = searchParams.get('task')
     if (taskId && tasks) {
@@ -60,7 +58,6 @@ export function TaskListView({
     }
   }, [searchParams, tasks])
 
-  // keep selectedTask in sync with the latest task data
   useEffect(() => {
     if (selectedTask && tasks) {
       const updated = tasks.find((t) => t.id === selectedTask.id)
@@ -70,7 +67,7 @@ export function TaskListView({
 
   const handleAdd = (data: { title: string; due_date: string | null; priority: string; recurrence_rule: string | null }) => {
     if (!listId) {
-      // for smart views without a specific list, create in the first list
+
       return
     }
     createTask.mutate({
@@ -99,7 +96,6 @@ export function TaskListView({
           {headerAccessory}
         </div>
 
-        {/* list */}
         <div className="flex-1 overflow-y-auto group">
           {isLoading ? (
             <TaskListSkeleton />
@@ -113,7 +109,7 @@ export function TaskListView({
                     onToggleComplete={(t) => completeTask.mutate({ id: t.id, complete: t.status !== 'done' })}
                     onDelete={(t) => {
                       haptics.error()
-                      deleteTask.mutate(t.id)
+                      deleteTask.mutate(t)
                       if (selectedTask?.id === t.id) closeDetail()
                     }}
                     onOpen={(t) => setSelectedTask(t)}
@@ -126,11 +122,9 @@ export function TaskListView({
           )}
         </div>
 
-        {/* quick add */}
         {showQuickAdd && listId && <QuickAdd ref={quickAddRef} onAdd={handleAdd} />}
       </div>
 
-      {/* task detail panel */}
       <AnimatePresence>
         {selectedTask && (
           <TaskDetail
@@ -138,7 +132,7 @@ export function TaskListView({
             task={selectedTask}
             onClose={closeDetail}
             onUpdate={(patch) => updateTask.mutate(patch)}
-            onDelete={(t) => deleteTask.mutate(t.id)}
+            onDelete={(t) => deleteTask.mutate(t)}
           />
         )}
       </AnimatePresence>

@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import lt.oranges.orangtask.ui.theme.Orange500
 
-/** avatar image, or an orange initial circle when there is no picture */
 @Composable
 fun Avatar(name: String?, url: String?, size: Dp = 24.dp, modifier: Modifier = Modifier) {
     if (url != null) {

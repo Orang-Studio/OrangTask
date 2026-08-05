@@ -1,5 +1,8 @@
 import { createHmac } from 'crypto'
 import sql from '../db/client.js'
+import { safePostJson, UnsafeUrlError } from './safeFetch.js'
+
+const MAX_RESPONSE_CHARS = 4000
 
 export async function fireWebhooks(userId: string, event: string, data: unknown) {
   const webhooks = await sql`
@@ -32,22 +35,18 @@ async function deliverWebhook(webhook: Record<string, unknown>, event: string, d
   let error: string | undefined
 
   try {
-    const res = await fetch(webhook.url as string, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(signature ? { 'X-OrangTask-Signature': `sha256=${signature}` } : {}),
-      },
-      body,
-      signal: AbortSignal.timeout(10000),
+    const res = await safePostJson(webhook.url as string, body, {
+      'Content-Type': 'application/json',
+      ...(signature ? { 'X-OrangTask-Signature': `sha256=${signature}` } : {}),
     })
 
     statusCode = res.status
-    responseBody = await res.text()
+
+    responseBody = (await res.text()).slice(0, MAX_RESPONSE_CHARS)
   } catch (err: unknown) {
     error = err instanceof Error ? err.message : String(err)
 
-    if (attempt < 3) {
+    if (attempt < 3 && !(err instanceof UnsafeUrlError)) {
       const delay = Math.pow(2, attempt) * 1000
       setTimeout(() => deliverWebhook(webhook, event, data, attempt + 1), delay)
     }

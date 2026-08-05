@@ -56,7 +56,6 @@ import lt.oranges.orangtask.ui.theme.Ink700
 import lt.oranges.orangtask.ui.theme.Ink850
 import lt.oranges.orangtask.ui.theme.Orange500
 
-/** ShareModal.tsx as a bottom sheet: member list with roles, invite-by-email (owner), role */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareSheet(
@@ -261,7 +260,6 @@ private fun RoleBadge(text: String, highlight: Boolean = false) {
     )
 }
 
-/** editor/Viewer dropdown, standing in for the web <select> */
 @Composable
 private fun RolePicker(role: String, onRole: (String) -> Unit, compact: Boolean = false) {
     var open by remember { mutableStateOf(false) }

@@ -74,7 +74,7 @@ fun PinScreen(
             Logo(48.dp)
 
             if (state.recoverMessage != null) {
-                // ---- Forgot-PIN recovery: enter the emailed 6-digit code ----
+
                 Text(
                     "RESET YOUR PIN",
                     fontSize = 20.sp,
@@ -118,7 +118,7 @@ fun PinScreen(
                     Text("Back to PIN entry", fontSize = 14.sp, color = Gray400)
                 }
             } else {
-                // ---- Normal PIN entry ----
+
                 Text(
                     "ENTER YOUR PIN",
                     fontSize = 20.sp,

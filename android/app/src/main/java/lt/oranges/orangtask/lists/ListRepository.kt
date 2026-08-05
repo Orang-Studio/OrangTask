@@ -15,6 +15,7 @@ import lt.oranges.orangtask.core.network.InviteMemberRequest
 import lt.oranges.orangtask.core.network.MemberDto
 import lt.oranges.orangtask.core.network.MemberRoleRequest
 import lt.oranges.orangtask.core.network.OrangApi
+import lt.oranges.orangtask.core.network.fetchAllPages
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,9 +31,10 @@ class ListRepository @Inject constructor(
 
     fun observeList(id: String): Flow<ListEntity?> = listDao.observeById(id)
 
-    /** GET /lists is authoritative for the whole set: upsert + drop the rest */
     suspend fun refreshLists() {
-        val lists = api.getLists().lists
+        val lists = fetchAllPages { offset ->
+            api.getLists(offset = offset).let { it.lists to it.nextOffset }
+        }
         listDao.upsertAll(lists.map { it.toEntity(listDao.getById(it.id)) })
         val ids = lists.map { it.id }
         listDao.deleteNotIn(ids)
@@ -40,7 +42,9 @@ class ListRepository @Inject constructor(
     }
 
     suspend fun refreshTags() {
-        val tags = api.getTags().tags
+        val tags = fetchAllPages { offset ->
+            api.getTags(offset = offset).let { it.tags to it.nextOffset }
+        }
         tagDao.upsertAll(tags.map { it.toEntity() })
         tagDao.deleteNotIn(tags.map { it.id })
     }
@@ -52,7 +56,6 @@ class ListRepository @Inject constructor(
         return entity
     }
 
-    /** optimistic PATCH: apply [optimistic] locally, send only [fields], and reconcile with the server row */
     suspend fun updateList(id: String, fields: JsonObject, optimistic: (ListEntity) -> ListEntity) {
         val before = listDao.getById(id) ?: return
         listDao.upsert(optimistic(before))
@@ -86,10 +89,11 @@ class ListRepository @Inject constructor(
         return entity
     }
 
-    /** members are only needed while the detail sheet is open not cached */
-    suspend fun members(listId: String): List<MemberDto> = api.getMembers(listId).members
+    suspend fun members(listId: String): List<MemberDto> = allMembers(listId)
 
-    // ---- Sharing (ShareModal.tsx)
+    private suspend fun allMembers(listId: String): List<MemberDto> = fetchAllPages { offset ->
+        api.getMembers(listId, offset = offset).let { it.members to it.nextOffset }
+    }
 
     suspend fun inviteMember(listId: String, email: String, role: String): List<MemberDto> {
         api.inviteMember(listId, InviteMemberRequest(email = email.trim(), role = role))
@@ -98,7 +102,7 @@ class ListRepository @Inject constructor(
 
     suspend fun updateMemberRole(listId: String, userId: String, role: String): List<MemberDto> {
         api.updateMemberRole(listId, userId, MemberRoleRequest(role))
-        return api.getMembers(listId).members
+        return allMembers(listId)
     }
 
     suspend fun removeMember(listId: String, userId: String): List<MemberDto> {
@@ -106,7 +110,6 @@ class ListRepository @Inject constructor(
         return refreshMembersAndListFlags(listId)
     }
 
-    /** leaving a shared list = removing yourself; the list disappears locally */
     suspend fun leaveList(listId: String, myUserId: String) {
         api.removeMember(listId, myUserId)
         listDao.deleteById(listId)
@@ -114,8 +117,8 @@ class ListRepository @Inject constructor(
     }
 
     private suspend fun refreshMembersAndListFlags(listId: String): List<MemberDto> {
-        // is_shared / task counts may have changed refresh the cached row too
+
         runCatching { refreshLists() }
-        return api.getMembers(listId).members
+        return allMembers(listId)
     }
 }

@@ -63,9 +63,14 @@ fun LoginScreen(
     viewModel.onAuthenticated = onAuthenticated
 
     val context = LocalContext.current
-    // opens the providers consent page in a Chrome Custom Tab; the backend redirects back to
+
     val onOAuth: (String) -> Unit = { provider ->
         val url = "${BuildConfig.API_BASE_URL.trimEnd('/')}/api/auth/$provider?platform=android"
+        CustomTabsIntent.Builder().build().launchUrl(context, Uri.parse(url))
+    }
+
+    val onCaptcha: () -> Unit = {
+        val url = "${BuildConfig.API_BASE_URL.trimEnd('/')}/api/auth/recaptcha/mobile?return_to=orangtask%3A%2F%2Frecaptcha"
         CustomTabsIntent.Builder().build().launchUrl(context, Uri.parse(url))
     }
 
@@ -85,7 +90,7 @@ fun LoginScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            // brand
+
             Logo(56.dp)
             Text(
                 "ORANGTASK",
@@ -113,10 +118,12 @@ fun LoginScreen(
                     } else {
                         when (state.mode) {
                             LoginMode.MAGIC -> MagicForm(state, viewModel)
-                            LoginMode.PASSWORD, LoginMode.REGISTER -> PasswordForm(state, viewModel)
+                            LoginMode.PASSWORD, LoginMode.REGISTER -> PasswordForm(state, viewModel, onCaptcha)
                             LoginMode.RESET -> ResetForm(state, viewModel)
+                            LoginMode.EMAIL_2FA -> EmailTwoFactorForm(state, viewModel)
+                            LoginMode.VERIFY_EMAIL -> VerifyEmailContent(state, viewModel)
                         }
-                        if (state.mode != LoginMode.RESET &&
+                        if (state.mode in setOf(LoginMode.MAGIC, LoginMode.PASSWORD, LoginMode.REGISTER) &&
                             (state.providers.github || state.providers.google)
                         ) {
                             OAuthSection(state, onOAuth)
@@ -183,7 +190,6 @@ private fun MagicSentContent(state: LoginUiState, vm: LoginViewModel) {
             modifier = Modifier.padding(top = 4.dp),
         )
 
-        // native flow: opening the link lands in the browser, so let the user finish here by pasting the link
         Spacer(Modifier.height(20.dp))
         FieldLabel("Paste the sign-in link", Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
@@ -207,7 +213,7 @@ private fun MagicSentContent(state: LoginUiState, vm: LoginViewModel) {
 }
 
 @Composable
-private fun PasswordForm(state: LoginUiState, vm: LoginViewModel) {
+private fun PasswordForm(state: LoginUiState, vm: LoginViewModel, onCaptcha: () -> Unit) {
     val register = state.mode == LoginMode.REGISTER
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (register) {
@@ -229,6 +235,21 @@ private fun PasswordForm(state: LoginUiState, vm: LoginViewModel) {
             isPassword = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
+        if (state.captchaRequired) {
+            Text(
+                if (state.captchaToken == null) "Complete the Google reCAPTCHA security check before continuing."
+                else "Security check complete.",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            BrandButton(
+                text = if (state.captchaToken == null) "Complete security check" else "Security check complete",
+                onClick = onCaptcha,
+                enabled = !state.loading && state.captchaToken == null,
+                icon = Icons.Default.Check,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         BrandButton(
             text = when {
                 state.loading -> "Please wait..."
@@ -240,6 +261,57 @@ private fun PasswordForm(state: LoginUiState, vm: LoginViewModel) {
             icon = Icons.Outlined.Lock,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+@Composable
+private fun EmailTwoFactorForm(state: LoginUiState, vm: LoginViewModel) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            "Enter the 6-digit security code we sent to ${state.email}.",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FieldLabel("Email security code")
+        OrangTextField(
+            value = state.emailCode,
+            onValueChange = vm::setEmailCode,
+            placeholder = "123456",
+            centered = true,
+            textStyle = androidx.compose.ui.text.TextStyle(letterSpacing = 8.sp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        )
+        BrandButton(
+            text = if (state.loading) "Verifying..." else "Verify and sign in",
+            onClick = vm::verifyEmailCode,
+            enabled = !state.loading,
+            icon = Icons.Outlined.Lock,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        TextButton(onClick = vm::resendLoginCode, enabled = !state.loading) {
+            Text("Resend code", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@Composable
+private fun VerifyEmailContent(state: LoginUiState, vm: LoginViewModel) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            "Verify ${state.email} before accessing your tasks. We sent a verification link to that address.",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        BrandButton(
+            text = if (state.loading) "Sending..." else "Resend verification email",
+            onClick = vm::resendVerification,
+            enabled = !state.loading,
+            icon = Icons.Outlined.MailOutline,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        TextButton(onClick = { vm.setMode(LoginMode.PASSWORD) }) {
+            Text("Back to sign in", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+        }
     }
 }
 
@@ -381,6 +453,7 @@ private fun ModeToggles(state: LoginUiState, vm: LoginViewModel) {
                     Text("Back to sign in", fontSize = 14.sp, color = muted)
                 }
             }
+            LoginMode.EMAIL_2FA, LoginMode.VERIFY_EMAIL -> Unit
         }
     }
 }

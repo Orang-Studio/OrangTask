@@ -46,7 +46,6 @@ import lt.oranges.orangtask.ui.theme.Ink700
 import lt.oranges.orangtask.ui.theme.Ink800
 import lt.oranges.orangtask.ui.theme.Orange500
 
-/** TaskItem.tsx: swipe right to complete (orange), swipe left to delete (red), tap to open, circle */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskRow(
@@ -64,7 +63,7 @@ fun TaskRow(
                 SwipeToDismissBoxValue.StartToEnd -> {
                     haptics.success()
                     onToggleComplete()
-                    false // snap back; the row just re-renders as done
+                    false
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
                     haptics.error()
@@ -74,7 +73,8 @@ fun TaskRow(
                 else -> false
             }
         },
-        positionalThreshold = { totalDistance -> totalDistance * 0.35f },
+
+        positionalThreshold = { totalDistance -> totalDistance * 0.5f },
     )
 
     SwipeToDismissBox(
@@ -230,7 +230,6 @@ private fun TaskRowContent(
     }
 }
 
-/** the 24dp circle checkbox: orange fill + white check when done */
 @Composable
 fun TaskCheckbox(
     done: Boolean,

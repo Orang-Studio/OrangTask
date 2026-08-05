@@ -20,7 +20,6 @@ const PRIORITY_WORDS: Record<string, ParsedInput['priority']> = {
   p3: 'low',
 }
 
-// detect simple recurrence and produce an RRULE
 function detectRecurrence(text: string): { rule: string | null; matched: string | null } {
   const lower = text.toLowerCase()
 
@@ -50,7 +49,6 @@ export function parseQuickAdd(input: string): ParsedInput {
   let title = input
   let priority: ParsedInput['priority'] = 'none'
 
-  // priority
   for (const [word, level] of Object.entries(PRIORITY_WORDS)) {
     const idx = title.toLowerCase().indexOf(word)
     if (idx !== -1) {
@@ -60,25 +58,22 @@ export function parseQuickAdd(input: string): ParsedInput {
     }
   }
 
-  // recurrence
   const { rule, matched } = detectRecurrence(title)
   if (matched) {
     const idx = title.toLowerCase().indexOf(matched)
     title = (title.slice(0, idx) + title.slice(idx + matched.length)).trim()
   }
 
-  // date parsing
   const results = chrono.parse(title, new Date(), { forwardDate: true })
   let due_date: Date | null = null
 
   if (results.length > 0) {
     const result = results[0]
     due_date = result.start.date()
-    // remove the matched date text from the title
+
     title = (title.slice(0, result.index) + title.slice(result.index + result.text.length)).trim()
   }
 
-  // cleanup leftover prepositions
   title = title.replace(/\s+(on|at|by|in|every)\s*$/i, '').trim()
   title = title.replace(/\s{2,}/g, ' ').trim()
 

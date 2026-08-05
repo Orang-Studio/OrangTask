@@ -14,7 +14,7 @@ data class PinUiState(
     val pin: String = "",
     val error: Boolean = false,
     val submitting: Boolean = false,
-    // forgot-PIN recovery: null = normal entry, otherwise the emailed-code step
+
     val recoverMessage: String? = null,
     val recoverCode: String = "",
     val recoverError: String? = null,
@@ -33,7 +33,7 @@ class PinViewModel @Inject constructor(
     fun onPinChange(value: String) {
         val digits = value.filter(Char::isDigit).take(6)
         _state.update { it.copy(pin = digits, error = false) }
-        // a 6-digit PIN is unambiguous, so submit automatically; 4-5 use Unlock
+
         if (digits.length == 6) verify()
     }
 

@@ -1,4 +1,3 @@
-// shared list-icon registry used by the Sidebar, the Lists index, and the list editors icon picker
 import {
   Hash, Inbox, Briefcase, Home, Star, Heart, ShoppingCart, Webhook,
   List, ListChecks, Calendar, BookOpen, Code, Music, Camera, Coffee,
@@ -24,10 +23,8 @@ export const LIST_ICONS: Record<string, LucideIcon> = {
   webhook: Webhook,
 }
 
-// stable display order for the picker
 export const LIST_ICON_KEYS = Object.keys(LIST_ICONS)
 
-// default icon for newly created lists, so a fresh list and one explicitly set to this icon look
 export const DEFAULT_LIST_ICON = 'list'
 
 export function ListIcon({

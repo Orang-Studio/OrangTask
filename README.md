@@ -75,7 +75,7 @@ Without it the app still builds, push is simply inert.
 
 <div align="center">
 
-GPLv3 licensed<br>
+MIT licensed<br>
 Made with Love ❤️
 
 </div>

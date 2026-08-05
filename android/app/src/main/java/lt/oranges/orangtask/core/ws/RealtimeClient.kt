@@ -22,20 +22,19 @@ import kotlin.math.min
 import kotlin.math.pow
 
 sealed interface RealtimeSignal {
-    /** parsed server event, e.g. {"type":"task.updated","data":{...}} */
+
     data class Event(val message: JsonObject) : RealtimeSignal
-    /** socket (re)connected a good moment to resync missed changes */
+
     data object Connected : RealtimeSignal
-    /** server rejected the token (1008) refresh the session, then reconnect */
+
     data object Unauthorized : RealtimeSignal
 }
 
-/** OkHttp WebSocket to /ws?token=<access_token> (backend/src/index.ts) with the web clients */
 @Singleton
 class RealtimeClient @Inject constructor(
     private val tokenStore: TokenStore,
 ) {
-    // bare client: auth travels in the query string, and WS failures must not recurse through the token
+
     private val client = OkHttpClient.Builder()
         .pingInterval(25, TimeUnit.SECONDS)
         .build()
@@ -64,7 +63,6 @@ class RealtimeClient @Inject constructor(
         socket = null
     }
 
-    /** immediate reconnect with a fresh token (after a session refresh) */
     fun reconnectNow() {
         if (scope == null) return
         attempts = 0
@@ -78,8 +76,10 @@ class RealtimeClient @Inject constructor(
         val token = tokenStore.accessToken ?: return
 
         val base = BuildConfig.API_BASE_URL.trimEnd('/')
+
         val request = Request.Builder()
-            .url("$base/ws?token=$token")
+            .url("$base/ws")
+            .header("Authorization", "Bearer $token")
             .build()
 
         socket = client.newWebSocket(request, object : WebSocketListener() {

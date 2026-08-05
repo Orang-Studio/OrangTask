@@ -31,7 +31,7 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
     await removeMember.mutateAsync({ listId, userId: currentUser.id })
     haptics.success()
     onClose()
-    // navigate away the list is no longer accessible
+
     window.location.assign('/today')
   }
 

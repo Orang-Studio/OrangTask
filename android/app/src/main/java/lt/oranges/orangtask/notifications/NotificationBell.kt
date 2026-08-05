@@ -19,7 +19,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lt.oranges.orangtask.ui.components.rememberHaptics
 import lt.oranges.orangtask.ui.theme.Orange500
 
-/** NotificationBell.tsx: bell icon with an unread dot */
 @Composable
 fun NotificationBell(
     onClick: () -> Unit,

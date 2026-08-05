@@ -4,8 +4,9 @@ import { Mail, Github, Lock, ArrowRight, Check, KeyRound } from 'lucide-react'
 import { api } from '../lib/api'
 import { useAuthStore } from '../stores/auth'
 import { Logo } from '../components/Logo'
+import { Recaptcha } from '../components/Recaptcha'
 
-type Mode = 'magic' | 'password' | 'register' | 'reset'
+type Mode = 'magic' | 'password' | 'register' | 'reset' | 'twoFactor' | 'verifyEmail'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -21,8 +22,12 @@ export function LoginPage() {
   const [magicSent, setMagicSent] = useState(false)
   const [resetStep, setResetStep] = useState<'request' | 'confirm'>('request')
   const [resetCode, setResetCode] = useState('')
+  const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [recaptchaToken, setRecaptchaToken] = useState('')
+  const [captchaRequired, setCaptchaRequired] = useState(false)
 
   const urlError = searchParams.get('error')
+  const verification = searchParams.get('verification')
 
   const openReset = () => {
     setMode('reset')
@@ -53,11 +58,7 @@ export function LoginPage() {
     setError('')
     try {
       if (mode === 'register') {
-        const { user } = await api.post<{ user: any }>('/auth/register', { email, password, name })
-        setUser(user)
-        navigate('/today')
-      } else {
-        const res = await api.post<{ user?: any; requires_pin?: boolean }>('/auth/login', { email, password })
+        const res = await api.post<{ user?: any; requires_pin?: boolean }>('/auth/register', { email, password, name, recaptcha_token: recaptchaToken })
         if (res.requires_pin) {
           setRequiresPin(true)
           navigate('/pin?next=/today')
@@ -65,9 +66,65 @@ export function LoginPage() {
           setUser(res.user)
           navigate('/today')
         }
+      } else {
+        const res = await api.post<{ requires_email_2fa?: boolean }>('/auth/login', { email, password, recaptcha_token: recaptchaToken })
+        if (res.requires_email_2fa) {
+          setTwoFactorCode('')
+          setMode('twoFactor')
+        }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Authentication failed')
+      const message = e instanceof Error ? e.message : 'Authentication failed'
+      setError(message)
+      if (message.includes('CAPTCHA')) setCaptchaRequired(true)
+      if (message.includes('Verify your email')) setMode('verifyEmail')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const verifyTwoFactor = async () => {
+    if (!/^\d{6}$/.test(twoFactorCode)) {
+      setError('Enter the 6-digit code from your email')
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      const res = await api.post<{ user?: any; requires_pin?: boolean }>('/auth/login/2fa/verify', { email, code: twoFactorCode })
+      if (res.requires_pin) {
+        setRequiresPin(true)
+        navigate('/pin?next=/today')
+      } else {
+        setUser(res.user)
+        navigate('/today')
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not verify sign-in code')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resendVerification = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      await api.post('/auth/resend-verification', { email })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not resend verification email')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resendTwoFactor = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      await api.post('/auth/login/2fa/resend', { email })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not resend sign-in code')
     } finally {
       setLoading(false)
     }
@@ -103,7 +160,7 @@ export function LoginPage() {
     setError('')
     try {
       await api.post('/auth/reset-password', { email, code: resetCode, password })
-      // reset succeeded - sign straight in with the new password
+
       const res = await api.post<{ user?: any; requires_pin?: boolean }>('/auth/login', { email, password })
       if (res.requires_pin) {
         setRequiresPin(true)
@@ -122,7 +179,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50 dark:bg-ink-900">
       <div className="w-full max-w-sm">
-        {/* brand */}
+
         <div className="flex flex-col items-center mb-8">
           <Logo size={56} />
           <h1 className="mt-4 text-2xl font-bold uppercase tracking-wider">OrangTask</h1>
@@ -130,9 +187,9 @@ export function LoginPage() {
         </div>
 
         <div className="surface p-6">
-          {(urlError || error) && (
+          {(urlError || error || verification) && (
             <div className="mb-4 px-3 py-2 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 text-sm">
-              {error || (urlError === 'expired' ? 'Link expired, request a new one' : 'Sign in failed, try again')}
+              {error || (verification === 'success' ? 'Email verified — sign in to continue.' : verification === 'invalid' ? 'This verification link is invalid or expired.' : urlError === 'expired' ? 'Link expired, request a new one' : 'Sign in failed, try again')}
             </div>
           )}
 
@@ -203,7 +260,8 @@ export function LoginPage() {
                     placeholder="••••••••"
                     className="input-field"
                   />
-                  <button onClick={doPassword} disabled={loading} className="btn-primary w-full">
+                  <Recaptcha active={mode === 'register' || captchaRequired} onChange={setRecaptchaToken} />
+                  <button onClick={doPassword} disabled={loading || ((mode === 'register' || captchaRequired) && !recaptchaToken)} className="btn-primary w-full">
                     <Lock size={16} className="mr-2" />
                     {loading ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Sign in'}
                   </button>
@@ -269,8 +327,38 @@ export function LoginPage() {
                 </div>
               )}
 
-              {/* divider + OAuth (not shown during password reset) */}
-              {mode !== 'reset' && (
+              {mode === 'twoFactor' && (
+                <div className="space-y-3 text-center">
+                  <h2 className="font-bold">Check your email</h2>
+                  <p className="text-sm text-gray-500 dark:text-ink-400">Enter the 6-digit sign-in code sent to <strong>{email}</strong>.</p>
+                  <input
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyDown={(e) => e.key === 'Enter' && verifyTwoFactor()}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="123456"
+                    className="input-field tracking-[0.3em] text-center"
+                    autoFocus
+                  />
+                  <button onClick={verifyTwoFactor} disabled={loading} className="btn-primary w-full">
+                    <Lock size={16} className="mr-2" /> {loading ? 'Verifying...' : 'Verify & sign in'}
+                  </button>
+                  <button onClick={resendTwoFactor} disabled={loading} className="text-xs text-gray-400 hover:text-orange-500">Resend code</button>
+                </div>
+              )}
+
+              {mode === 'verifyEmail' && (
+                <div className="space-y-3 text-center">
+                  <div className="w-12 h-12 mx-auto bg-orange-500 flex items-center justify-center"><Mail size={24} className="text-white" /></div>
+                  <h2 className="font-bold">Check your email</h2>
+                  <p className="text-sm text-gray-500 dark:text-ink-400">We sent a verification link to <strong>{email}</strong>. You can verify it later; it does not block task access.</p>
+                  <button onClick={resendVerification} disabled={loading} className="btn-secondary w-full">{loading ? 'Sending...' : 'Resend verification email'}</button>
+                  <button onClick={() => setMode('password')} className="text-xs text-gray-400 hover:text-orange-500">Back to sign in</button>
+                </div>
+              )}
+
+              {(mode === 'magic' || mode === 'password' || mode === 'register') && (
                 <>
                   <div className="flex items-center gap-3 my-5">
                     <div className="flex-1 h-px bg-gray-200 dark:bg-ink-600" />
@@ -295,7 +383,6 @@ export function LoginPage() {
                 </>
               )}
 
-              {/* mode toggles */}
               <div className="mt-5 text-center text-sm space-y-1">
                 {mode === 'magic' && (
                   <button onClick={() => setMode('password')} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">

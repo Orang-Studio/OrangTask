@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 
-// the backend magic-link verify endpoint sets cookies and redirects here only in edge cases; normally
 export function MagicPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()

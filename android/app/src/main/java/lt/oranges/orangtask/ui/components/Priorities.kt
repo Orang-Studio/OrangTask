@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// frontend/src/components/PriorityDot.tsx
 val PRIORITIES = listOf("none", "low", "medium", "high")
 
 fun priorityColor(priority: String): Color = when (priority) {
@@ -36,7 +35,6 @@ fun PriorityDot(priority: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** the web 8-color list palette (ListPage.tsx) */
 val LIST_COLORS = listOf(
     "#f97316", "#ef4444", "#eab308", "#22c55e",
     "#3b82f6", "#8b5cf6", "#ec4899", "#6b7280",

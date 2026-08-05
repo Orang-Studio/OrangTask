@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** holds the access/refresh token pair (Android Keystore-encrypted at rest) plus the local PIN-unlock */
 @Singleton
 class TokenStore @Inject constructor(@ApplicationContext context: Context) {
 
@@ -24,7 +23,6 @@ class TokenStore @Inject constructor(@ApplicationContext context: Context) {
 
     private val _sessionExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-    /** emitted when a refresh attempt fails and tokens are cleared navigate to login */
     val sessionExpired: SharedFlow<Unit> = _sessionExpired
 
     @Volatile
@@ -41,12 +39,10 @@ class TokenStore @Inject constructor(@ApplicationContext context: Context) {
             prefs.edit().putString(KEY_REFRESH, value).apply()
         }
 
-    /** same 7-day cap the server applies to its pin_ok cookie */
     var pinVerifiedUntil: Long
         get() = prefs.getLong(KEY_PIN_UNTIL, 0L)
         set(value) = prefs.edit().putLong(KEY_PIN_UNTIL, value).apply()
 
-    /** cached /me user JSON so a cold offline start can still open the app */
     var cachedUserJson: String?
         get() = prefs.getString(KEY_USER, null)
         set(value) = prefs.edit().putString(KEY_USER, value).apply()

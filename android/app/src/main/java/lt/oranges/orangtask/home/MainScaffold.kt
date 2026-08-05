@@ -79,7 +79,6 @@ class SyncViewModel @Inject constructor(
     }
 }
 
-/** the signed-in shell: bottom tab bar (MobileTabBar.tsx) + NavHost */
 @Composable
 fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit = {}) {
     val navController = rememberNavController()
@@ -91,7 +90,6 @@ fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit
         onStopOrDispose { syncViewModel.stop() }
     }
 
-    // POST_NOTIFICATIONS is a runtime permission from API 33 on; without asking for it, both FCM pushes
     val context = LocalContext.current
     val notifPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     LaunchedEffect(Unit) {
@@ -103,7 +101,6 @@ fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit
         }
     }
 
-    // the center "+" focuses the quick-add on task screens; screens without one first navigate to Today
     val quickAddRequests = remember { Channel<Unit>(Channel.CONFLATED) }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -157,7 +154,7 @@ fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit
                 )
             }
             composable(
-                // "?task=" deep-links straight into a task from search results
+
                 route = "list/{listId}?task={task}",
                 arguments = listOf(
                     navArgument("task") {
@@ -222,7 +219,6 @@ private fun OrangTabBar(
             TabSlot(Icons.Outlined.WbSunny, "Today", todayActive, onToday, Modifier.weight(1f))
             TabSlot(Icons.Outlined.Layers, "Lists", listsActive, onLists, Modifier.weight(1f))
 
-            // center add button, raised above the bar like the web FAB
             Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
                 Box(
                     contentAlignment = Alignment.Center,

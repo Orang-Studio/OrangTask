@@ -14,22 +14,20 @@ import retrofit2.http.Query
 import retrofit2.http.Streaming
 import retrofit2.http.Url
 
-/** tasks / lists / tags surface of the backend (backend/src/routes) */
 interface OrangApi {
-
-    // ---- Tasks ----
 
     @GET("api/tasks")
     suspend fun getTasks(
         @Query("listId") listId: String? = null,
         @Query("smart") smart: String? = null,
         @Query("parentId") parentId: String? = null,
+        @Query("limit") limit: Int = PAGE_SIZE,
+        @Query("offset") offset: Int = 0,
     ): TasksResponse
 
     @POST("api/tasks")
     suspend fun createTask(@Body body: CreateTaskRequest): TaskResponse
 
-    /** patch semantics: only keys present are updated; JsonNull clears a field */
     @PATCH("api/tasks/{id}")
     suspend fun updateTask(@Path("id") id: String, @Body body: JsonObject): TaskResponse
 
@@ -48,10 +46,11 @@ interface OrangApi {
     @DELETE("api/tasks/{id}/tags/{tagId}")
     suspend fun removeTagFromTask(@Path("id") id: String, @Path("tagId") tagId: String): OkResponse
 
-    // ---- Lists ----
-
     @GET("api/lists")
-    suspend fun getLists(): ListsResponse
+    suspend fun getLists(
+        @Query("limit") limit: Int = PAGE_SIZE,
+        @Query("offset") offset: Int = 0,
+    ): ListsResponse
 
     @POST("api/lists")
     suspend fun createList(@Body body: CreateListRequest): ListResponse
@@ -63,9 +62,12 @@ interface OrangApi {
     suspend fun deleteList(@Path("id") id: String): OkResponse
 
     @GET("api/lists/{id}/members")
-    suspend fun getMembers(@Path("id") id: String): MembersResponse
+    suspend fun getMembers(
+        @Path("id") id: String,
+        @Query("limit") limit: Int = PAGE_SIZE,
+        @Query("offset") offset: Int = 0,
+    ): MembersResponse
 
-    /** returns the bare list_members row (no email/name) refetch members after */
     @POST("api/lists/{id}/members")
     suspend fun inviteMember(@Path("id") id: String, @Body body: InviteMemberRequest): JsonObject
 
@@ -80,23 +82,20 @@ interface OrangApi {
     suspend fun removeMember(@Path("id") id: String, @Path("userId") userId: String): OkResponse
 
     @GET("api/tags")
-    suspend fun getTags(): TagsResponse
+    suspend fun getTags(
+        @Query("limit") limit: Int = PAGE_SIZE,
+        @Query("offset") offset: Int = 0,
+    ): TagsResponse
 
     @POST("api/tags")
     suspend fun createTag(@Body body: CreateTagRequest): TagResponse
 
-    // ---- Search ----
-
-    /** substring + full-text search over the users tasks (min 2 chars) */
     @GET("api/search")
     suspend fun search(@Query("q") query: String): SearchResponse
-
-    // ---- User / settings (backend/src/routes/user.ts) ----
 
     @PATCH("api/user")
     suspend fun updateProfile(@Body body: UpdateProfileRequest): UserResponse
 
-    // retrofits plain @DELETE refuses a body, and this endpoint requires one
     @HTTP(method = "DELETE", path = "api/user", hasBody = true)
     suspend fun deleteAccount(@Body body: DeleteAccountRequest): OkResponse
 
@@ -158,15 +157,11 @@ interface OrangApi {
     @PATCH("api/notifications/{id}/read")
     suspend fun markNotificationRead(@Path("id") id: String): OkResponse
 
-    // ---- Push (FCM device token) ----
-
     @POST("api/push/device")
     suspend fun registerDevice(@Body body: DeviceTokenRequest): OkResponse
 
     @HTTP(method = "DELETE", path = "api/push/device", hasBody = true)
     suspend fun unregisterDevice(@Body body: DeviceTokenRequest): OkResponse
-
-    // ---- Offline replay ---- Queued ops carry their own relative path, so these are untyped: every
 
     @POST
     suspend fun replayPost(@Url path: String, @Body body: JsonObject): JsonObject

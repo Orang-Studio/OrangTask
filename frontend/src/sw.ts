@@ -7,7 +7,6 @@ declare let self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: (string | { url: string; revision: string | null })[]
 }
 
-// precache the app shell (manifest injected by vite-plugin-pwa at build time)
 precacheAndRoute(self.__WB_MANIFEST)
 
 self.addEventListener('install', () => {
@@ -17,7 +16,6 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 })
 
-// API + navigation: network-first with a short timeout so the app works offline
 registerRoute(
   ({ url }) => /\/api\/(tasks|lists|tags|notifications)/.test(url.pathname),
   new NetworkFirst({ cacheName: 'api-cache', networkTimeoutSeconds: 3 })

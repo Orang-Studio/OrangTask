@@ -5,7 +5,6 @@ import { useAuthStore } from '../stores/auth'
 import { Logo } from '../components/Logo'
 import { useHaptics } from '../hooks/useHaptics'
 
-// optional PIN gate Reached on app startup (and after login) when a user has a PIN set Accepts a 4-6
 export function PinPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -17,7 +16,6 @@ export function PinPage() {
   const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // forgot-PIN recovery: 'idle' = normal entry, 'sent' = enter emailed code
   const [recover, setRecover] = useState<'idle' | 'sent'>('idle')
   const [code, setCode] = useState('')
   const [recoverMsg, setRecoverMsg] = useState('')
@@ -34,7 +32,7 @@ export function PinPage() {
     const digits = val.replace(/\D/g, '').slice(0, 6)
     setPin(digits)
     setError(false)
-    // a 6-digit PIN is unambiguous, so submit automatically; 4-5 use Unlock/Enter
+
     if (digits.length === 6) verify(digits)
   }
 
@@ -81,7 +79,7 @@ export function PinPage() {
     try {
       await api.post('/auth/pin/reset', { code })
       haptics.success()
-      // PIN removed; this session is unlocked
+
       setRequiresPin(false)
       await fetchMe()
       navigate(next)
@@ -146,7 +144,6 @@ export function PinPage() {
           <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">Unlock your tasks</p>
         </div>
 
-        {/* type=text + CSS mask (not type=password) so the browsers saved-passwords menu never pops up */}
         <input
           ref={inputRef}
           value={pin}

@@ -4,7 +4,6 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/** task rows mirror the API payload, denormalized: tag names/ids, assignee name/avatar, list name and */
 @Entity(
     tableName = "tasks",
     indices = [Index("listId"), Index("parentId"), Index("dueAtMillis"), Index("assignedTo")],
@@ -59,7 +58,6 @@ data class TagEntity(
     val color: String?,
 )
 
-/** a mutation made while offline, waiting to be replayed in order the durable version of the web */
 @Entity(tableName = "pending_ops")
 data class PendingOpEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

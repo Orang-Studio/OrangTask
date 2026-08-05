@@ -33,7 +33,7 @@ function SmartBadge({ smart }: { smart: 'today' | 'overdue' | 'assigned' }) {
 
 export function Sidebar() {
   const { data: lists } = useLists()
-  // show the Assigned view for anyone in a collaborative list: invited members, or owners whose list has
+
   const hasSharedLists = lists?.some((l) => l.is_shared || (l.my_role && l.my_role !== 'owner')) ?? false
   const createList = useCreateList()
   const { user, logout } = useAuthStore()
@@ -75,7 +75,7 @@ export function Sidebar() {
 
   return (
     <aside className={`${collapsed ? 'w-16' : 'w-60'} flex-shrink-0 border-r border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-850 flex flex-col h-full transition-[width] duration-200`}>
-      {/* brand + collapse toggle */}
+
       <div className={`flex items-center h-14 border-b border-gray-200 dark:border-ink-700 ${collapsed ? 'justify-center px-0' : 'gap-2 px-4'}`}>
         {collapsed ? (
           <button onClick={toggleCollapsed} className="p-1" aria-label="Expand sidebar" title="Expand sidebar">
@@ -93,7 +93,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3 no-scrollbar">
-        {/* smart views */}
+
         <div className="px-2 space-y-0.5">
           {SMART_VIEWS.map((v) => (
             <NavLink key={v.to} to={v.to} className={navClass} onClick={() => haptics.tap()} title={collapsed ? v.label : undefined}>
@@ -103,7 +103,7 @@ export function Sidebar() {
               {!collapsed && v.smart === 'overdue' && <SmartBadge smart="overdue" />}
             </NavLink>
           ))}
-          {/* shown only for users who collaborate on a shared list */}
+
           {hasSharedLists && (
             <NavLink to="/assigned" className={navClass} onClick={() => haptics.tap()} title={collapsed ? 'Assigned to Me' : undefined}>
               <UserCheck size={17} className="flex-shrink-0" />
@@ -113,7 +113,6 @@ export function Sidebar() {
           )}
         </div>
 
-        {/* lists */}
         <div className={`mt-6 mb-1 flex items-center ${collapsed ? 'justify-center px-0' : 'justify-between px-4'}`}>
           {!collapsed && <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Lists</span>}
           <button
@@ -156,7 +155,6 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* user footer */}
       <div className="border-t border-gray-200 dark:border-ink-700 p-2">
         <div className={`flex ${collapsed ? 'flex-col items-center gap-1' : 'items-center gap-2'}`}>
           <button

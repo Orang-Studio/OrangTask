@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
-// native WebSocket client with auto-reconnect (exponential backoff)
 export function useWebSocket(enabled: boolean) {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
@@ -51,7 +50,7 @@ export function useWebSocket(enabled: boolean) {
     ws.onclose = () => {
       if (pingTimer.current) clearInterval(pingTimer.current)
       if (!shouldConnect.current) return
-      // exponential backoff: 1s, 2s, 4s, 8s .. capped at 30s
+
       const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000)
       reconnectAttempts.current++
       reconnectTimer.current = setTimeout(connect, delay)

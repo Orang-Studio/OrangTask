@@ -17,7 +17,7 @@ export function CommandPalette({ open, onClose }: Props) {
   const [selectedIdx, setSelectedIdx] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  // only hit the server once the user pauses typing
+
   const debouncedQuery = useDebouncedValue(query, 250)
   const { data: results, isFetching } = useSearch(debouncedQuery)
   const pending = isFetching || debouncedQuery !== query
@@ -34,7 +34,6 @@ export function CommandPalette({ open, onClose }: Props) {
     setSelectedIdx(0)
   }, [results])
 
-  // escape closes from anywhere while open, even if focus left the input
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -45,7 +44,7 @@ export function CommandPalette({ open, onClose }: Props) {
   }, [open, onClose])
 
   const handleKey = (e: React.KeyboardEvent) => {
-    // escape always closes, even before any results have loaded
+
     if (e.key === 'Escape') {
       e.preventDefault()
       onClose()

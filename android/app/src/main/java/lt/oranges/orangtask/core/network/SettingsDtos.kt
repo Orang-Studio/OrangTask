@@ -6,16 +6,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 
-/** phase 3 surface: sharing, profile/PIN, webhooks, notifications, Keep import */
-
 private fun JsonPrimitive?.asIntOrNull(): Int? = this?.let { it.intOrNull ?: it.content.toIntOrNull() }
-
-// ---- List sharing ----
 
 @Serializable data class InviteMemberRequest(val email: String, val role: String = "editor")
 @Serializable data class MemberRoleRequest(val role: String)
-
-// ---- Profile / account ----
 
 @Serializable
 data class UpdateProfileRequest(
@@ -29,10 +23,7 @@ data class UpdateProfileRequest(
 
 @Serializable data class ChannelPref(val push: Boolean = true, val email: Boolean = false)
 
-/** { prefs: { task_due_soon: {push, email}, ... } } GET response and PUT body */
 @Serializable data class NotificationPrefs(val prefs: Map<String, ChannelPref> = emptyMap())
-
-// ---- Personal API keys (direct REST access for integrations) ----
 
 @Serializable
 data class ApiKeyDto(
@@ -43,7 +34,6 @@ data class ApiKeyDto(
     @SerialName("created_at") val createdAt: String? = null,
 )
 
-/** only present on the create response the server never stores or replays the raw key */
 @Serializable
 data class CreatedApiKeyDto(
     val id: String,
@@ -89,7 +79,6 @@ data class CreateWebhookRequest(
     val events: List<String>? = null,
 )
 
-/** sparse PATCH omitted (null) fields are left unchanged by the server */
 @Serializable
 data class UpdateWebhookRequest(
     val name: String? = null,
@@ -98,7 +87,6 @@ data class UpdateWebhookRequest(
     val enabled: Boolean? = null,
 )
 
-/** POST /webhooks/:id/test answers camelCase (built in the route, not from the DB) */
 @Serializable
 data class TestWebhookResponse(
     val statusCode: Int = 0,
@@ -117,16 +105,13 @@ data class NotificationDto(
     val title: String,
     val body: String? = null,
     val read: Boolean = false,
-    /** jsonb column; list_shared/task_assigned carry a list_id for deep links */
+
     val metadata: JsonObject? = null,
     @SerialName("created_at") val createdAt: String? = null,
 )
 
 @Serializable data class NotificationsResponse(val notifications: List<NotificationDto> = emptyList())
 
-// ---- Google Keep import ----
-
-/** the zip is unpacked on-device (like the web unzips in the browser) and the raw note JSON objects are */
 @Serializable
 data class KeepImportRequest(
     val notes: List<JsonObject>,

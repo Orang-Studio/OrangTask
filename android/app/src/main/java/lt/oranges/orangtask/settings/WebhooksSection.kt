@@ -67,7 +67,6 @@ private val OUTGOING_EVENTS = listOf(
     "task.created", "task.updated", "task.completed", "task.deleted", "task.due_soon", "list.shared",
 )
 
-/** WebhookManager.tsx: cards with enable toggle, expandable detail, add form */
 @Composable
 fun WebhooksSection(
     onError: (String) -> Unit,

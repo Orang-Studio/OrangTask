@@ -2,7 +2,9 @@ import { Hono, type Context } from 'hono'
 import { setCookie, getCookie, deleteCookie } from 'hono/cookie'
 import { randomBytes, scryptSync, timingSafeEqual, createHmac, randomInt } from 'crypto'
 import sql from '../db/client.js'
-import { sendMagicLink, sendPasswordResetCode, sendPinResetCode } from '../services/email.js'
+import { sendMagicLink, sendPasswordResetCode, sendPinResetCode, sendEmailVerification, sendLoginCode } from '../services/email.js'
+import redis from '../services/redis.js'
+import { isCaptchaRequired, isVerificationCode, loginFailureCacheKey, verifyRecaptcha } from '../services/authSecurity.js'
 import { rateLimit } from '../middleware/rateLimit.js'
 import { authMiddleware } from '../middleware/auth.js'
 import type { AppEnv } from '../types.js'
@@ -12,6 +14,34 @@ const APP_URL = process.env.APP_URL || 'http://localhost:5173'
 
 function generateToken(bytes = 32) {
   return randomBytes(bytes).toString('hex')
+}
+
+function generateResetCode(): string {
+  return randomInt(0, 1_000_000).toString().padStart(6, '0')
+}
+
+async function issueEmailVerification(userId: string, email: string) {
+  await sql`UPDATE email_verifications SET used = true WHERE user_id = ${userId} AND used = false`
+  const token = generateToken()
+  await sql`
+    INSERT INTO email_verifications (user_id, token, expires_at)
+    VALUES (${userId}, ${token}, ${new Date(Date.now() + 24 * 60 * 60 * 1000)})
+  `
+  await sendEmailVerification(email, token)
+}
+
+async function issueLoginCode(userId: string, email: string) {
+  await sql`UPDATE email_login_codes SET used = true WHERE user_id = ${userId} AND used = false`
+  const code = generateResetCode()
+  await sql`
+    INSERT INTO email_login_codes (user_id, code_hash, expires_at)
+    VALUES (${userId}, ${hashPassword(code)}, ${new Date(Date.now() + 10 * 60 * 1000)})
+  `
+  await sendLoginCode(email, code)
+}
+
+function remoteIp(c: Context<AppEnv>): string | undefined {
+  return c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
 }
 
 function hashPassword(password: string): string {
@@ -27,13 +57,12 @@ function verifyPassword(password: string, stored: string): boolean {
   return timingSafeEqual(hashBuf, testBuf)
 }
 
-// access token: 1 hour Refresh token: 1 year, stored in httpOnly cookie On every API request that
 async function createTokenPair(userId: string) {
   const accessToken = generateToken(32)
   const refreshToken = generateToken(48)
 
-  const accessExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
-  const refreshExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year
+  const accessExpiry = new Date(Date.now() + 60 * 60 * 1000)
+  const refreshExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
 
   await sql`
     INSERT INTO sessions (user_id, token, expires_at)
@@ -47,7 +76,6 @@ async function createTokenPair(userId: string) {
   return { accessToken, refreshToken }
 }
 
-// native clients (Android app) cant use httpOnly cookies
 function isNative(c: Context<AppEnv>): boolean {
   return !!c.req.header('x-platform')
 }
@@ -56,10 +84,8 @@ function nativeTokens(c: Context<AppEnv>, accessToken: string, refreshToken: str
   return isNative(c) ? { access_token: accessToken, refresh_token: refreshToken } : {}
 }
 
-// the Android app cant receive an OAuth callback as a cookie-bearing web redirect
 const NATIVE_AUTH_REDIRECT = 'orangtask://auth-callback'
 
-// the platform is carried *inside* the OAuth `state` param (`<token>.android`) so it survives the
 function buildOAuthState(native: boolean): { token: string; state: string } {
   const token = generateToken()
   return { token, state: native ? `${token}.android` : token }
@@ -74,7 +100,6 @@ function nativeAuthRedirect(c: Context<AppEnv>, params: Record<string, string>) 
   return c.redirect(`${NATIVE_AUTH_REDIRECT}?${new URLSearchParams(params)}`)
 }
 
-// an OAuth failure: deep-link the native app back with ?error=…, else the web login
 function oauthError(c: Context<AppEnv>, native: boolean, code: string) {
   return native ? nativeAuthRedirect(c, { error: code }) : c.redirect(`${APP_URL}/login?error=${code}`)
 }
@@ -86,26 +111,23 @@ function bearerToken(c: Context<AppEnv>): string | undefined {
 function setAuthCookies(c: Parameters<typeof setCookie>[0], accessToken: string, refreshToken: string) {
   const isProd = process.env.NODE_ENV === 'production'
 
-  // short-lived access token in memory-readable cookie (JS reads it to set Auth header)
   setCookie(c, 'session', accessToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: 'Lax',
-    maxAge: 60 * 60, // 1 hour
+    maxAge: 60 * 60,
     path: '/',
   })
 
-  // long-lived refresh token - httpOnly, not readable by JS
   setCookie(c, 'refresh_token', refreshToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: 'Lax',
-    maxAge: 365 * 24 * 60 * 60, // 1 year
+    maxAge: 365 * 24 * 60 * 60,
     path: '/api/auth',
   })
 }
 
-// ---- PIN unlock cookie (server-side "unlocked for this session") ---- HMAC-signed so it cant be
 const PIN_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const pinSecret = () => process.env.SESSION_SECRET || 'change-me'
 
@@ -136,21 +158,21 @@ function setPinCookie(c: Parameters<typeof setCookie>[0], uid: string) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'Lax',
     path: '/',
-    // no maxAge session cookie (persists across reloads, clears with the session)
+
   })
 }
 
-// refresh access token using refresh token
 app.post('/refresh', async (c) => {
   const refreshToken = getCookie(c, 'refresh_token') || bearerToken(c)
   if (!refreshToken) return c.json({ error: 'No refresh token' }, 401)
 
   const [rt] = await sql`
-    SELECT * FROM refresh_tokens WHERE token = ${refreshToken} AND expires_at > now()
+    SELECT rt.* FROM refresh_tokens rt
+    JOIN users u ON u.id = rt.user_id
+    WHERE rt.token = ${refreshToken} AND rt.expires_at > now()
   `
   if (!rt) return c.json({ error: 'Invalid or expired refresh token' }, 401)
 
-  // clean up expired access tokens and issue a new one
   const accessToken = generateToken(32)
   const accessExpiry = new Date(Date.now() + 60 * 60 * 1000)
 
@@ -160,7 +182,6 @@ app.post('/refresh', async (c) => {
     VALUES (${rt.user_id}, ${accessToken}, ${accessExpiry})
   `
 
-  // slide the refresh token expiry (keeps renewing as long as user is active)
   const newRefreshExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
   await sql`UPDATE refresh_tokens SET expires_at = ${newRefreshExpiry} WHERE id = ${rt.id}`
 
@@ -176,7 +197,6 @@ app.post('/refresh', async (c) => {
   return c.json({ ok: true, ...(isNative(c) ? { access_token: accessToken } : {}) })
 })
 
-// magic link
 app.post('/magic-link', rateLimit({ windowMs: 60000, max: 5, keyPrefix: 'ml' }), async (c) => {
   const { email } = await c.req.json()
   if (!email || !email.includes('@')) return c.json({ error: 'Invalid email' }, 400)
@@ -220,6 +240,7 @@ app.get('/magic-link/verify', async (c) => {
     `
   }
 
+  await sql`UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = ${user.id}`
   const { accessToken, refreshToken } = await createTokenPair(user.id)
   setAuthCookies(c, accessToken, refreshToken)
 
@@ -232,16 +253,12 @@ app.get('/magic-link/verify', async (c) => {
     })
   }
 
-  // check if PIN is set - redirect to PIN entry if so
   if (user.pin_hash) {
     return c.redirect(`${APP_URL}/pin?next=/today`)
   }
   return c.redirect(`${APP_URL}/today`)
 })
 
-// ---- OAuth helpers (shared by GitHub + Google) ----
-
-// read the currently logged-in user id straight from the session cookie
 async function getSessionUserId(c: Parameters<typeof getCookie>[0]): Promise<string | null> {
   const token = getCookie(c, 'session') || c.req.header('Authorization')?.replace('Bearer ', '')
   if (!token) return null
@@ -258,7 +275,6 @@ async function upsertOAuthAccount(userId: string, provider: string, providerUser
   `
 }
 
-// when starting an OAuth flow to *link* (?link=1) while signed in, we drop a short-lived flag cookie
 function setLinkCookie(c: Parameters<typeof setCookie>[0]) {
   setCookie(c, 'oauth_link', '1', {
     httpOnly: true,
@@ -269,7 +285,6 @@ function setLinkCookie(c: Parameters<typeof setCookie>[0]) {
   })
 }
 
-// decide what an OAuth callback means: link to the current account, log into the already-linked
 async function finishOAuth(
   c: Context<AppEnv>,
   provider: 'github' | 'google',
@@ -287,7 +302,6 @@ async function finishOAuth(
     SELECT user_id FROM oauth_accounts WHERE provider = ${provider} AND provider_user_id = ${providerUserId}
   `
 
-  // explicit "connect this provider to my account" flow
   if (linkMode && currentUserId) {
     if (existingLink && existingLink.user_id !== currentUserId) {
       return native ? nativeAuthRedirect(c, { error: 'link_in_use' }) : c.redirect(`${APP_URL}/settings?link_error=in_use`)
@@ -296,7 +310,6 @@ async function finishOAuth(
     return native ? nativeAuthRedirect(c, { linked: provider }) : c.redirect(`${APP_URL}/settings?linked=${provider}`)
   }
 
-  // login / registration flow
   let userId: string
   let pinHash: string | null = null
 
@@ -305,15 +318,15 @@ async function finishOAuth(
     const [u] = await sql`SELECT pin_hash FROM users WHERE id = ${userId}`
     pinHash = u?.pin_hash ?? null
   } else {
-    // fall back to email so accounts created before linking still match
+
     let user: any = normalizedEmail
       ? (await sql`SELECT * FROM users WHERE email = ${normalizedEmail}`)[0]
       : null
     if (!user) {
       if (!normalizedEmail) return oauthError(c, native, 'no_email')
       ;[user] = await sql`
-        INSERT INTO users (email, name, avatar_url)
-        VALUES (${normalizedEmail}, ${create.name}, ${create.avatar_url || null})
+        INSERT INTO users (email, name, avatar_url, email_verified_at)
+        VALUES (${normalizedEmail}, ${create.name}, ${create.avatar_url || null}, now())
         RETURNING *
       `
       await sql`
@@ -326,15 +339,15 @@ async function finishOAuth(
     await upsertOAuthAccount(userId, provider, providerUserId, normalizedEmail)
   }
 
+  await sql`UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = ${userId}`
   const { accessToken, refreshToken } = await createTokenPair(userId)
-  // native: hand the tokens to the app; it applies its own local PIN gate
+
   if (native) return nativeAuthRedirect(c, { access: accessToken, refresh: refreshToken })
   setAuthCookies(c, accessToken, refreshToken)
   if (pinHash) return c.redirect(`${APP_URL}/pin?next=/today`)
   return c.redirect(`${APP_URL}/today`)
 }
 
-// which providers are configured lets the UI hide/disable unavailable buttons
 app.get('/providers', (c) =>
   c.json({
     github: !!process.env.GITHUB_CLIENT_ID,
@@ -342,7 +355,6 @@ app.get('/providers', (c) =>
   })
 )
 
-// list the current accounts linked providers (+ whether a password is set)
 app.get('/linked', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const accounts = await sql`
@@ -352,7 +364,6 @@ app.get('/linked', authMiddleware, async (c) => {
   return c.json({ accounts, has_password: !!u?.has_password })
 })
 
-// disconnect a provider Always safe: a magic link to the account email remains
 app.post('/unlink', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const { provider } = await c.req.json().catch(() => ({}))
@@ -361,7 +372,6 @@ app.post('/unlink', authMiddleware, async (c) => {
   return c.json({ ok: true })
 })
 
-// GitHub OAuth
 app.get('/github', async (c) => {
   const clientId = process.env.GITHUB_CLIENT_ID
   if (!clientId) return c.json({ error: 'GitHub OAuth not configured' }, 400)
@@ -417,7 +427,6 @@ app.get('/github/callback', async (c) => {
   }, native)
 })
 
-// google OAuth
 app.get('/google', async (c) => {
   const clientId = process.env.GOOGLE_CLIENT_ID
   if (!clientId) return c.json({ error: 'Google OAuth not configured' }, 400)
@@ -466,8 +475,8 @@ app.get('/google/callback', async (c) => {
   const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
     headers: { Authorization: `Bearer ${tokenData.access_token}` },
   })
-  const gUser = await userRes.json() as { id?: string; email?: string; name?: string; picture?: string }
-  if (!gUser.id) return oauthError(c, native, 'google')
+  const gUser = await userRes.json() as { id?: string; email?: string; verified_email?: boolean; name?: string; picture?: string }
+  if (!gUser.id || !gUser.email || gUser.verified_email === false) return oauthError(c, native, 'google')
 
   return finishOAuth(c, 'google', gUser.id, gUser.email, {
     name: gUser.name || (gUser.email ? gUser.email.split('@')[0] : 'Google user'),
@@ -475,63 +484,132 @@ app.get('/google/callback', async (c) => {
   }, native)
 })
 
-// email/password register
+app.get('/recaptcha/mobile', (c) => {
+  const siteKey = process.env.RECAPTCHA_SITE_KEY
+  if (!siteKey) return c.text('Google reCAPTCHA is not configured', 503)
+
+  return c.html(`<!doctype html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Security check</title>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<style>body{font-family:system-ui,sans-serif;margin:0;padding:32px;color:#172033;background:#f7f8fa}main{max-width:360px;margin:auto}p{line-height:1.5}</style>
+</head><body><main><h1>Security check</h1><p>Complete the Google reCAPTCHA check to return to OrangTask.</p>
+<div class="g-recaptcha" data-sitekey="${siteKey}" data-callback="done"></div>
+<script>function done(token){location.replace('orangtask://recaptcha?token='+encodeURIComponent(token))}</script>
+</main></body></html>`)
+})
+
 app.post('/register', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'reg' }), async (c) => {
-  const { email, password, name } = await c.req.json()
+  const { email, password, name, recaptcha_token } = await c.req.json().catch(() => ({}))
   if (!email || !password || !name) return c.json({ error: 'Missing fields' }, 400)
   if (password.length < 8) return c.json({ error: 'Password too short' }, 400)
+  if (!await verifyRecaptcha(recaptcha_token, remoteIp(c))) {
+    return c.json({ error: 'Complete the CAPTCHA challenge', recaptcha_required: true }, 400)
+  }
 
-  const [existing] = await sql`SELECT id FROM users WHERE email = ${email.toLowerCase()}`
+  const normalized = email.toLowerCase()
+  const [existing] = await sql`SELECT id FROM users WHERE email = ${normalized}`
   if (existing) return c.json({ error: 'Email already registered' }, 409)
 
-  const hash = hashPassword(password)
   const [user] = await sql`
     INSERT INTO users (email, password_hash, name)
-    VALUES (${email.toLowerCase()}, ${hash}, ${name})
+    VALUES (${normalized}, ${hashPassword(password)}, ${name})
     RETURNING *
   `
   await sql`
     INSERT INTO lists (owner_id, name, color, icon, position)
     VALUES (${user.id}, 'Personal', '#f97316', 'inbox', 0)
   `
-
+  await issueEmailVerification(user.id, user.email)
   const { accessToken, refreshToken } = await createTokenPair(user.id)
   setAuthCookies(c, accessToken, refreshToken)
-  return c.json({
-    user: { id: user.id, email: user.email, name: user.name },
-    ...nativeTokens(c, accessToken, refreshToken),
-  })
-})
-
-// email/password login
-app.post('/login', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'login' }), async (c) => {
-  const { email, password } = await c.req.json()
-  if (!email || !password) return c.json({ error: 'Missing fields' }, 400)
-
-  const [user] = await sql`SELECT * FROM users WHERE email = ${email.toLowerCase()}`
-  if (!user || !user.password_hash) return c.json({ error: 'Invalid credentials' }, 401)
-
-  const valid = verifyPassword(password, user.password_hash)
-  if (!valid) return c.json({ error: 'Invalid credentials' }, 401)
-
-  const { accessToken, refreshToken } = await createTokenPair(user.id)
-  setAuthCookies(c, accessToken, refreshToken)
-
-  if (user.pin_hash) {
-    return c.json({ requires_pin: true, ...nativeTokens(c, accessToken, refreshToken) })
-  }
-
   return c.json({
     user: { id: user.id, email: user.email, name: user.name, avatar_url: user.avatar_url },
     ...nativeTokens(c, accessToken, refreshToken),
   })
 })
 
-// ---- Password reset via emailed PIN code ---- 1
+app.get('/verify-email', async (c) => {
+  const token = c.req.query('token')
+  if (!token) return c.redirect(`${APP_URL}/login?verification=invalid`)
 
-function generateResetCode(): string {
-  return randomInt(0, 1_000_000).toString().padStart(6, '0')
-}
+  const [verification] = await sql`
+    SELECT * FROM email_verifications
+    WHERE token = ${token} AND used = false AND expires_at > now()
+  `
+  if (!verification) return c.redirect(`${APP_URL}/login?verification=invalid`)
+
+  await sql.begin(async (tx) => {
+    await tx`UPDATE email_verifications SET used = true WHERE id = ${verification.id}`
+    await tx`UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = ${verification.user_id}`
+  })
+  return c.redirect(`${APP_URL}/login?verification=success`)
+})
+
+app.post('/resend-verification', rateLimit({ windowMs: 60000, max: 3, keyPrefix: 'verify-resend' }), async (c) => {
+  const { email } = await c.req.json().catch(() => ({}))
+  if (!email || !email.includes('@')) return c.json({ error: 'Invalid email' }, 400)
+  const [user] = await sql`SELECT id, email, email_verified_at FROM users WHERE email = ${email.toLowerCase()}`
+  if (user && !user.email_verified_at) await issueEmailVerification(user.id, user.email)
+  return c.json({ ok: true })
+})
+
+app.post('/login', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'login' }), async (c) => {
+  const { email, password, recaptcha_token } = await c.req.json().catch(() => ({}))
+  if (!email || !password) return c.json({ error: 'Missing fields' }, 400)
+  const normalized = email.toLowerCase()
+  const failureKey = loginFailureCacheKey(normalized)
+  const failedAttempts = Number(await redis.get(failureKey) || 0)
+
+  if (isCaptchaRequired(failedAttempts) && !await verifyRecaptcha(recaptcha_token, remoteIp(c))) {
+    return c.json({ error: 'Complete the CAPTCHA challenge', recaptcha_required: true }, 400)
+  }
+
+  const [user] = await sql`SELECT * FROM users WHERE email = ${normalized}`
+  if (!user || !user.password_hash || !verifyPassword(password, user.password_hash)) {
+    const failures = await redis.incr(failureKey)
+    if (failures === 1) await redis.expire(failureKey, 15 * 60)
+    return c.json({ error: 'Invalid credentials', recaptcha_required: isCaptchaRequired(failures) }, 401)
+  }
+
+  await redis.del(failureKey)
+  await issueLoginCode(user.id, user.email)
+  return c.json({ ok: true, requires_email_2fa: true })
+})
+
+app.post('/login/2fa/verify', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'login-2fa' }), async (c) => {
+  const { email, code } = await c.req.json().catch(() => ({}))
+  if (!email || !isVerificationCode(code)) return c.json({ error: 'Enter a valid 6-digit code' }, 400)
+
+  const [user] = await sql`SELECT * FROM users WHERE email = ${email.toLowerCase()}`
+  if (!user) return c.json({ error: 'Invalid or expired code' }, 400)
+  const [challenge] = await sql`
+    SELECT * FROM email_login_codes
+    WHERE user_id = ${user.id} AND used = false AND expires_at > now()
+    ORDER BY created_at DESC LIMIT 1
+  `
+  if (!challenge || challenge.attempts >= 5) {
+    if (challenge) await sql`UPDATE email_login_codes SET used = true WHERE id = ${challenge.id}`
+    return c.json({ error: 'Invalid or expired code' }, 400)
+  }
+  if (!verifyPassword(code, challenge.code_hash)) {
+    await sql`UPDATE email_login_codes SET attempts = attempts + 1 WHERE id = ${challenge.id}`
+    return c.json({ error: 'Invalid or expired code' }, 400)
+  }
+
+  await sql`UPDATE email_login_codes SET used = true WHERE id = ${challenge.id}`
+  const { accessToken, refreshToken } = await createTokenPair(user.id)
+  setAuthCookies(c, accessToken, refreshToken)
+  if (user.pin_hash) return c.json({ requires_pin: true, ...nativeTokens(c, accessToken, refreshToken) })
+  return c.json({ user: { id: user.id, email: user.email, name: user.name, avatar_url: user.avatar_url }, ...nativeTokens(c, accessToken, refreshToken) })
+})
+
+app.post('/login/2fa/resend', rateLimit({ windowMs: 60000, max: 3, keyPrefix: 'login-2fa-resend' }), async (c) => {
+  const { email } = await c.req.json().catch(() => ({}))
+  if (!email || !email.includes('@')) return c.json({ error: 'Invalid email' }, 400)
+  const [user] = await sql`SELECT id, email FROM users WHERE email = ${email.toLowerCase()}`
+  if (user) await issueLoginCode(user.id, user.email)
+  return c.json({ ok: true })
+})
 
 app.post('/forgot-password', rateLimit({ windowMs: 60000, max: 3, keyPrefix: 'pwreset' }), async (c) => {
   const { email } = await c.req.json().catch(() => ({}))
@@ -540,9 +618,8 @@ app.post('/forgot-password', rateLimit({ windowMs: 60000, max: 3, keyPrefix: 'pw
   const normalized = email.toLowerCase()
   const [user] = await sql`SELECT id FROM users WHERE email = ${normalized}`
 
-  // only generate/send when the account exists but the response is identical either way to avoid
   if (user) {
-    // invalidate any previously issued codes so only the newest one works
+
     await sql`UPDATE password_resets SET used = true WHERE email = ${normalized} AND used = false`
 
     const code = generateResetCode()
@@ -573,7 +650,6 @@ app.post('/reset-password', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'pw
   `
   if (!reset) return c.json({ error: 'Invalid or expired code' }, 400)
 
-  // cap guesses so a 6-digit code cant be brute-forced
   if (reset.attempts >= 5) {
     await sql`UPDATE password_resets SET used = true WHERE id = ${reset.id}`
     return c.json({ error: 'Too many attempts, request a new code' }, 429)
@@ -591,20 +667,18 @@ app.post('/reset-password', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'pw
   await sql`UPDATE users SET password_hash = ${hash}, updated_at = now() WHERE id = ${user.id}`
   await sql`UPDATE password_resets SET used = true WHERE id = ${reset.id}`
 
-  // revoke existing logins so a stolen session cant outlive the reset
   await sql`DELETE FROM sessions WHERE user_id = ${user.id}`
   await sql`DELETE FROM refresh_tokens WHERE user_id = ${user.id}`
 
   return c.json({ ok: true })
 })
 
-// verify PIN (called after login if user has PIN set)
 app.post('/pin/verify', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const { pin } = await c.req.json()
 
   const [user] = await sql`SELECT pin_hash FROM users WHERE id = ${userId}`
-  if (!user?.pin_hash) return c.json({ ok: true }) // no PIN set, just pass through
+  if (!user?.pin_hash) return c.json({ ok: true })
 
   const [salt, hash] = user.pin_hash.split(':')
   const hashBuf = Buffer.from(hash, 'hex')
@@ -614,17 +688,14 @@ app.post('/pin/verify', authMiddleware, async (c) => {
     return c.json({ error: 'Wrong PIN' }, 401)
   }
 
-  // mark this device/session as unlocked so reloads dont re-prompt
   setPinCookie(c, userId)
   return c.json({ ok: true })
 })
 
-// ---- Forgot PIN recovery ---- The PIN is a soft lock on an already-authenticated session, so the
-
 app.post('/pin/forgot', authMiddleware, rateLimit({ windowMs: 60000, max: 3, keyPrefix: 'pinreset' }), async (c) => {
   const userId = c.get('userId')
   const [user] = await sql`SELECT email, pin_hash FROM users WHERE id = ${userId}`
-  if (!user?.pin_hash) return c.json({ ok: true }) // nothing to reset
+  if (!user?.pin_hash) return c.json({ ok: true })
 
   await sql`UPDATE password_resets SET used = true WHERE email = ${user.email} AND used = false`
 
@@ -665,11 +736,10 @@ app.post('/pin/reset', authMiddleware, rateLimit({ windowMs: 60000, max: 10, key
 
   await sql`UPDATE users SET pin_hash = null WHERE id = ${userId}`
   await sql`UPDATE password_resets SET used = true WHERE id = ${reset.id}`
-  setPinCookie(c, userId) // unlock this session so the app opens immediately
+  setPinCookie(c, userId)
   return c.json({ ok: true })
 })
 
-// logout - clear both tokens
 app.post('/logout', async (c) => {
   const body = await c.req.json().catch(() => ({} as Record<string, string>))
   const accessToken = getCookie(c, 'session') || bearerToken(c)
@@ -684,7 +754,6 @@ app.post('/logout', async (c) => {
   return c.json({ ok: true })
 })
 
-// me reports requires_pin so the client gates on startup
 app.get('/me', authMiddleware, async (c) => {
   const user = c.get('user')
   const [row] = await sql`SELECT pin_hash IS NOT NULL AS pin_enabled FROM users WHERE id = ${user.id}`

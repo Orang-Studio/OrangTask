@@ -7,14 +7,13 @@ import type { AppEnv } from '../types.js'
 async function authenticateApiKey(c: Context<AppEnv>, token: string): Promise<boolean> {
   const keyHash = hashApiKey(token)
   const [row] = await sql`
-    SELECT k.id as key_id, u.id as uid, u.email, u.name, u.avatar_url
+    SELECT k.id as key_id, u.id as uid, u.email, u.name, u.avatar_url, u.email_verified_at
     FROM api_keys k
     JOIN users u ON u.id = k.user_id
     WHERE k.key_hash = ${keyHash}
   `
   if (!row) return false
 
-  // best-effort a slow write here shouldnt hold up the request
   sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${row.key_id}`.catch(() => {})
 
   c.set('userId', row.uid)
@@ -29,7 +28,6 @@ export async function authMiddleware(c: Context<AppEnv>, next: Next) {
     return c.json({ error: 'Unauthorized' }, 401)
   }
 
-  // API keys (otk_...) are long-lived, unattended-integration credentials distinct from short-lived
   if (token.startsWith(API_KEY_PREFIX)) {
     if (await authenticateApiKey(c, token)) return next()
     return c.json({ error: 'Unauthorized' }, 401)

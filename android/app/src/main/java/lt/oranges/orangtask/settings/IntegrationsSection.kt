@@ -52,7 +52,6 @@ import lt.oranges.orangtask.ui.theme.Ink700
 import lt.oranges.orangtask.ui.theme.Ink900
 import lt.oranges.orangtask.ui.theme.Orange500
 
-/** SettingsPage.tsx IntegrationsSection, phone-shaped: personal API keys for direct REST access */
 @Composable
 fun IntegrationsSection(
     onError: (String) -> Unit,

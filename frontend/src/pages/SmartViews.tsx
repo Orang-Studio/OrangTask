@@ -36,10 +36,8 @@ function SmartPage({ config }: { config: SmartConfig }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const quickAddRef = useRef<HTMLInputElement>(null)
 
-  // default list for quick-add: first owned list
   const defaultList = lists?.[0]
 
-  // only register the quick-add while its actually rendered; clear it otherwise so the global "+" knows
   useEffect(() => {
     if (config.allowAdd && defaultList) {
       registerQuickAdd(() => quickAddRef.current?.focus())
@@ -57,7 +55,7 @@ function SmartPage({ config }: { config: SmartConfig }) {
 
   const handleAdd = (data: { title: string; due_date: string | null; priority: string; recurrence_rule: string | null }) => {
     if (!defaultList) return
-    // for "today" view, default due date to today if none parsed
+
     let due = data.due_date
     if (config.smart === 'today' && !due) {
       const t = new Date()
@@ -97,7 +95,7 @@ function SmartPage({ config }: { config: SmartConfig }) {
                     onToggleComplete={(t) => completeTask.mutate({ id: t.id, complete: t.status !== 'done' })}
                     onDelete={(t) => {
                       haptics.error()
-                      deleteTask.mutate(t.id)
+                      deleteTask.mutate(t)
                       if (selectedTask?.id === t.id) setSelectedTask(null)
                     }}
                     onOpen={(t) => setSelectedTask(t)}
@@ -120,7 +118,7 @@ function SmartPage({ config }: { config: SmartConfig }) {
             task={selectedTask}
             onClose={() => setSelectedTask(null)}
             onUpdate={(patch) => updateTask.mutate(patch)}
-            onDelete={(t) => deleteTask.mutate(t.id)}
+            onDelete={(t) => deleteTask.mutate(t)}
           />
         )}
       </AnimatePresence>

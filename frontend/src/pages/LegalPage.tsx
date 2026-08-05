@@ -23,7 +23,6 @@ export function LegalPage() {
 
         <div className="surface p-8 space-y-10 text-sm leading-relaxed text-gray-700 dark:text-ink-300">
 
-          {/* terms */}
           <section>
             <h2 className="text-base font-bold uppercase tracking-wider text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-ink-600 pb-2">
               Terms of Service
@@ -65,7 +64,6 @@ export function LegalPage() {
             </p>
           </section>
 
-          {/* privacy */}
           <section>
             <h2 className="text-base font-bold uppercase tracking-wider text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-ink-600 pb-2">
               Privacy Policy

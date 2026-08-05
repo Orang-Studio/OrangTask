@@ -7,6 +7,7 @@ import lt.oranges.orangtask.core.db.OrangDb
 import lt.oranges.orangtask.core.network.AuthApi
 import lt.oranges.orangtask.core.network.AuthResponse
 import lt.oranges.orangtask.core.network.CodeRequest
+import lt.oranges.orangtask.core.network.EmailCodeRequest
 import lt.oranges.orangtask.core.network.EmailRequest
 import lt.oranges.orangtask.core.network.LoginRequest
 import lt.oranges.orangtask.core.network.LogoutRequest
@@ -22,6 +23,8 @@ import javax.inject.Singleton
 sealed interface LoginOutcome {
     data class Success(val user: UserDto?) : LoginOutcome
     data object RequiresPin : LoginOutcome
+    data object RequiresEmail2fa : LoginOutcome
+    data object RequiresEmailVerification : LoginOutcome
 }
 
 @Singleton
@@ -32,30 +35,37 @@ class AuthRepository @Inject constructor(
     private val db: OrangDb,
 ) {
 
-    suspend fun login(email: String, password: String): LoginOutcome {
-        val res = api.login(LoginRequest(email.trim(), password))
-        storeTokensOrFail(res)
-        return if (res.requiresPin) LoginOutcome.RequiresPin else {
-            cacheUser(res.user)
-            LoginOutcome.Success(res.user)
+    suspend fun login(email: String, password: String, recaptchaToken: String? = null): LoginOutcome {
+        val res = api.login(LoginRequest(email.trim(), password, recaptchaToken))
+        return when {
+            res.requiresEmail2fa -> LoginOutcome.RequiresEmail2fa
+            res.requiresEmailVerification -> LoginOutcome.RequiresEmailVerification
+            else -> completeLogin(res)
         }
     }
 
-    suspend fun register(email: String, password: String, name: String): LoginOutcome {
-        val res = api.register(RegisterRequest(email.trim(), password, name.trim()))
-        storeTokensOrFail(res)
-        cacheUser(res.user)
-        return LoginOutcome.Success(res.user)
+    suspend fun register(email: String, password: String, name: String, recaptchaToken: String): LoginOutcome {
+        val res = api.register(RegisterRequest(email.trim(), password, name.trim(), recaptchaToken))
+        return completeLogin(res)
+    }
+
+    suspend fun verifyLoginCode(email: String, code: String): LoginOutcome =
+        completeLogin(api.verifyLoginCode(EmailCodeRequest(email.trim(), code)))
+
+    suspend fun resendLoginCode(email: String) {
+        api.resendLoginCode(EmailRequest(email.trim()))
+    }
+
+    suspend fun resendVerification(email: String) {
+        api.resendVerification(EmailRequest(email.trim()))
     }
 
     suspend fun sendMagicLink(email: String) {
         api.sendMagicLink(EmailRequest(email.trim()))
     }
 
-    /** which OAuth providers the backend has configured drives the login buttons */
     suspend fun providers() = api.providers()
 
-    /** completes magic-link sign-in from a pasted email link (or a bare token) */
     suspend fun verifyMagicLink(pasted: String): LoginOutcome {
         val token = Regex("token=([0-9a-fA-F]+)").find(pasted)?.groupValues?.get(1)
             ?: pasted.trim()
@@ -81,7 +91,6 @@ class AuthRepository @Inject constructor(
         return me
     }
 
-    /** the PIN gate is a local decision: the servers pin_ok cookie cant reach us */
     fun requiresPinLocally(user: UserDto): Boolean =
         user.pinEnabled && !tokenStore.pinUnlockValid
 
@@ -94,7 +103,6 @@ class AuthRepository @Inject constructor(
         api.pinForgot()
     }
 
-    /** removes the PIN entirely (backend behavior), so the session is unlocked */
     suspend fun resetPin(code: String) {
         api.pinReset(CodeRequest(code))
         tokenStore.markPinVerified()
@@ -103,11 +111,18 @@ class AuthRepository @Inject constructor(
     suspend fun logout() {
         runCatching { api.logout(LogoutRequest(tokenStore.refreshToken)) }
         tokenStore.clear()
-        // the next account must not see this ones cached tasks
+
         withContext(Dispatchers.IO) { db.clearAllTables() }
     }
 
-    /** a 200 auth response with no tokens in the body means the server doesnt have the native-client */
+    private fun completeLogin(res: AuthResponse): LoginOutcome {
+        storeTokensOrFail(res)
+        return if (res.requiresPin) LoginOutcome.RequiresPin else {
+            cacheUser(res.user)
+            LoginOutcome.Success(res.user)
+        }
+    }
+
     private fun storeTokensOrFail(res: AuthResponse) {
         if (res.accessToken == null || res.refreshToken == null) {
             throw IllegalStateException(

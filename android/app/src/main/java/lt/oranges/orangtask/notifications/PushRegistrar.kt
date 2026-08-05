@@ -11,7 +11,6 @@ import lt.oranges.orangtask.core.network.TokenStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** registers this devices FCM token with the backend so it can receive push */
 @Singleton
 class PushRegistrar @Inject constructor(
     private val api: OrangApi,
@@ -19,7 +18,6 @@ class PushRegistrar @Inject constructor(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    /** fetch the current token and register it call once the user is signed in */
     fun register() {
         if (!tokenStore.hasSession) return
         runCatching {
@@ -29,12 +27,10 @@ class PushRegistrar @Inject constructor(
         }
     }
 
-    /** FCM rotated the token (OrangMessagingService.onNewToken) */
     fun onNewToken(token: String) {
         if (tokenStore.hasSession && token.isNotBlank()) send(token)
     }
 
-    /** best-effort removal on sign-out so a shared device stops getting pushes */
     fun unregister() {
         runCatching {
             FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->

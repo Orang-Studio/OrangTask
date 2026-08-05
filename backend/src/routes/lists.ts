@@ -4,14 +4,15 @@ import { authMiddleware } from '../middleware/auth.js'
 import { createNotification } from '../services/notifications.js'
 import { fireWebhooks } from '../services/webhooks.js'
 import { broadcastToListMembers, publishToUser } from '../ws/pubsub.js'
+import { MAX, MEMBER_ROLES, enumField, firstError, pageParams, textField } from '../lib/validate.js'
 import type { AppEnv } from '../types.js'
 
 const app = new Hono<AppEnv>()
 app.use('*', authMiddleware)
 
-// get all lists for current user
 app.get('/', async (c) => {
   const userId = c.get('userId')
+  const { limit, offset } = pageParams(c.req.query())
 
   const lists = await sql`
     SELECT l.*,
@@ -22,16 +23,22 @@ app.get('/', async (c) => {
     LEFT JOIN list_members lm ON lm.list_id = l.id AND lm.user_id = ${userId}
     WHERE l.owner_id = ${userId} OR lm.user_id = ${userId}
     ORDER BY l.position, l.created_at
+    LIMIT ${limit} OFFSET ${offset}
   `
 
-  return c.json({ lists })
+  return c.json({ lists, nextOffset: lists.length === limit ? offset + limit : null })
 })
 
-// create list
 app.post('/', async (c) => {
   const userId = c.get('userId')
   const { name, color, icon } = await c.req.json()
-  if (!name) return c.json({ error: 'Name required' }, 400)
+
+  const invalid = firstError(
+    textField(name, 'name', MAX.listName, { required: true }),
+    textField(color, 'color', MAX.listColor),
+    textField(icon, 'icon', MAX.listIcon),
+  )
+  if (invalid) return c.json({ error: invalid }, 400)
 
   const [maxPos] = await sql`SELECT COALESCE(MAX(position), -1) + 1 as pos FROM lists WHERE owner_id = ${userId}`
 
@@ -45,11 +52,17 @@ app.post('/', async (c) => {
   return c.json({ list }, 201)
 })
 
-// update list
 app.patch('/:id', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
   const updates = await c.req.json()
+
+  const invalid = firstError(
+    textField(updates.name, 'name', MAX.listName),
+    textField(updates.color, 'color', MAX.listColor),
+    textField(updates.icon, 'icon', MAX.listIcon),
+  )
+  if (invalid) return c.json({ error: invalid }, 400)
 
   const [list] = await sql`SELECT * FROM lists WHERE id = ${id} AND owner_id = ${userId}`
   if (!list) return c.json({ error: 'Not found' }, 404)
@@ -78,7 +91,6 @@ app.patch('/:id', async (c) => {
   return c.json({ list: updated })
 })
 
-// delete list
 app.delete('/:id', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
@@ -91,10 +103,10 @@ app.delete('/:id', async (c) => {
   return c.json({ ok: true })
 })
 
-// get members
 app.get('/:id/members', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
+  const { limit, offset } = pageParams(c.req.query())
 
   const [access] = await sql`
     SELECT 1 FROM lists WHERE id = ${id} AND owner_id = ${userId}
@@ -114,16 +126,22 @@ app.get('/:id/members', async (c) => {
     JOIN users u ON u.id = lm.user_id
     WHERE lm.list_id = ${id}
     ORDER BY created_at
+    LIMIT ${limit} OFFSET ${offset}
   `
 
-  return c.json({ members })
+  return c.json({ members, nextOffset: members.length === limit ? offset + limit : null })
 })
 
-// invite member by email
 app.post('/:id/members', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
   const { email, role = 'editor' } = await c.req.json()
+
+  const invalid = firstError(
+    textField(email, 'email', 320, { required: true }),
+    enumField(role, 'role', MEMBER_ROLES),
+  )
+  if (invalid) return c.json({ error: invalid }, 400)
 
   const [list] = await sql`SELECT * FROM lists WHERE id = ${id} AND owner_id = ${userId}`
   if (!list) return c.json({ error: 'Not found or not owner' }, 404)
@@ -154,12 +172,17 @@ app.post('/:id/members', async (c) => {
   return c.json({ member }, 201)
 })
 
-// update member role
 app.patch('/:id/members/:userId', async (c) => {
   const ownerId = c.get('userId')
   const id = c.req.param('id')
   const memberId = c.req.param('userId')
   const { role } = await c.req.json()
+
+  const invalid = firstError(
+    role === undefined || role === null ? 'role is required' : null,
+    enumField(role, 'role', MEMBER_ROLES),
+  )
+  if (invalid) return c.json({ error: invalid }, 400)
 
   const [list] = await sql`SELECT * FROM lists WHERE id = ${id} AND owner_id = ${ownerId}`
   if (!list) return c.json({ error: 'Not found or not owner' }, 404)
@@ -174,13 +197,11 @@ app.patch('/:id/members/:userId', async (c) => {
   return c.json({ ok: true })
 })
 
-// remove member
 app.delete('/:id/members/:userId', async (c) => {
   const ownerId = c.get('userId')
   const id = c.req.param('id')
   const memberId = c.req.param('userId')
 
-  // owner can remove anyone, members can remove themselves
   const [list] = await sql`SELECT * FROM lists WHERE id = ${id}`
   if (!list) return c.json({ error: 'Not found' }, 404)
 

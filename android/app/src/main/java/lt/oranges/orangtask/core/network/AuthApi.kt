@@ -12,10 +12,18 @@ interface AuthApi {
     @POST("api/auth/register")
     suspend fun register(@Body body: RegisterRequest): AuthResponse
 
+    @POST("api/auth/login/2fa/verify")
+    suspend fun verifyLoginCode(@Body body: EmailCodeRequest): AuthResponse
+
+    @POST("api/auth/login/2fa/resend")
+    suspend fun resendLoginCode(@Body body: EmailRequest): OkResponse
+
+    @POST("api/auth/resend-verification")
+    suspend fun resendVerification(@Body body: EmailRequest): OkResponse
+
     @POST("api/auth/magic-link")
     suspend fun sendMagicLink(@Body body: EmailRequest): OkResponse
 
-    // with the X-Platform header the backend answers this with JSON tokens instead of a browser redirect
     @GET("api/auth/magic-link/verify")
     suspend fun verifyMagicLink(@Query("token") token: String): AuthResponse
 

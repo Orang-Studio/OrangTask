@@ -37,7 +37,7 @@ export function SettingsPage() {
 
   return (
     <div className="h-full flex flex-col md:flex-row max-w-4xl mx-auto w-full">
-      {/* section nav */}
+
       <div className="md:w-52 flex-shrink-0 border-b md:border-b-0 md:border-r border-gray-200 dark:border-ink-700">
         <div className="flex items-center gap-2 px-4 h-14 border-b border-gray-200 dark:border-ink-700">
           <button onClick={() => navigate(-1)} className="p-1 text-gray-400">
@@ -62,7 +62,6 @@ export function SettingsPage() {
         </nav>
       </div>
 
-      {/* section content */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-20">
         {section === 'profile' && <ProfileSection user={user} setUser={setUser} />}
         {section === 'appearance' && (
@@ -247,7 +246,6 @@ function ConnectedAccounts() {
     load()
     api.get<{ github: boolean; google: boolean }>('/auth/providers').then(setProviders).catch(() => {})
 
-    // surface the result of a connect round-trip, then clean the URL
     const linked = searchParams.get('linked')
     const err = searchParams.get('link_error')
     if (linked) setBanner(`Connected your ${PROVIDER_LABEL[linked] || linked} account.`)
@@ -405,7 +403,6 @@ function NotificationsSection() {
     <div className="max-w-lg space-y-5">
       <SectionTitle title="Notifications" />
 
-      {/* device push enable / disable */}
       <div className="surface p-4 flex items-center justify-between gap-4">
         <div>
           <div className="text-sm font-medium">Push on this device</div>
@@ -429,7 +426,6 @@ function NotificationsSection() {
         )}
       </div>
 
-      {/* test push */}
       {pushState === 'subscribed' && (
         <div className="flex items-center gap-3 -mt-2">
           <button onClick={sendTest} className="btn-secondary text-sm">Send test notification</button>
@@ -437,7 +433,6 @@ function NotificationsSection() {
         </div>
       )}
 
-      {/* per-type channel table */}
       <div>
         <div className="grid grid-cols-[1fr_3rem_3rem] items-center gap-x-3 px-1 pb-2 text-[11px] uppercase tracking-wider text-gray-400 font-semibold border-b border-gray-200 dark:border-ink-700">
           <span>Notify me about</span>
@@ -618,7 +613,6 @@ Authorization: Bearer <api-key>`}</pre>
   )
 }
 
-// google Keep import The user picks the Google Takeout .zip directly; we unzip it in the browser
 function KeepImport() {
   const qc = useQueryClient()
   const haptics = useHaptics()
@@ -646,7 +640,7 @@ function KeepImport() {
     setParsing(true)
     try {
       const buf = new Uint8Array(await file.arrayBuffer())
-      // only inflate the .json note files - skip the bundled images/HTML so a large export with attachments
+
       const entries = unzipSync(buf, { filter: (f) => f.name.toLowerCase().endsWith('.json') })
       const decoder = new TextDecoder()
       const parsed: any[] = []
@@ -655,7 +649,7 @@ function KeepImport() {
           const obj = JSON.parse(decoder.decode(entries[path]))
           if (isKeepNote(obj)) parsed.push(obj)
         } catch {
-          // skip non-note JSON (Takeout metadata, etc.)
+
         }
       }
       if (parsed.length === 0) {

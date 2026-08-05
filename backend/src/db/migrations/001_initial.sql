@@ -1,7 +1,5 @@
--- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Users
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
@@ -12,7 +10,6 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Sessions
 CREATE TABLE IF NOT EXISTS sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -21,7 +18,6 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Magic links
 CREATE TABLE IF NOT EXISTS magic_links (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL,
@@ -31,7 +27,6 @@ CREATE TABLE IF NOT EXISTS magic_links (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Lists
 CREATE TABLE IF NOT EXISTS lists (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -43,7 +38,6 @@ CREATE TABLE IF NOT EXISTS lists (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- List members
 CREATE TABLE IF NOT EXISTS list_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   list_id UUID REFERENCES lists(id) ON DELETE CASCADE,
@@ -54,7 +48,6 @@ CREATE TABLE IF NOT EXISTS list_members (
   UNIQUE(list_id, user_id)
 );
 
--- Tasks
 CREATE TABLE IF NOT EXISTS tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   list_id UUID REFERENCES lists(id) ON DELETE CASCADE,
@@ -74,7 +67,6 @@ CREATE TABLE IF NOT EXISTS tasks (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Tags
 CREATE TABLE IF NOT EXISTS tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -83,14 +75,12 @@ CREATE TABLE IF NOT EXISTS tags (
   UNIQUE(owner_id, name)
 );
 
--- Task tags
 CREATE TABLE IF NOT EXISTS task_tags (
   task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
   tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
   PRIMARY KEY(task_id, tag_id)
 );
 
--- Webhooks
 CREATE TABLE IF NOT EXISTS webhooks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -104,7 +94,6 @@ CREATE TABLE IF NOT EXISTS webhooks (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Webhook deliveries
 CREATE TABLE IF NOT EXISTS webhook_deliveries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   webhook_id UUID REFERENCES webhooks(id) ON DELETE CASCADE,
@@ -117,7 +106,6 @@ CREATE TABLE IF NOT EXISTS webhook_deliveries (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Notifications
 CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -129,7 +117,6 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Indexes
 CREATE INDEX IF NOT EXISTS idx_tasks_list_id ON tasks(list_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
@@ -140,7 +127,6 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id);
 
--- Full text search index
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS search_vector tsvector
   GENERATED ALWAYS AS (to_tsvector('english', coalesce(title, '') || ' ' || coalesce(notes, ''))) STORED;
 

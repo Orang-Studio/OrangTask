@@ -17,7 +17,7 @@ object DbModule {
     @Singleton
     fun provideDb(@ApplicationContext context: Context): OrangDb =
         Room.databaseBuilder(context, OrangDb::class.java, "orangtask.db")
-            // local data is a cache of the server; on schema change, resync
+
             .fallbackToDestructiveMigration()
             .build()
 

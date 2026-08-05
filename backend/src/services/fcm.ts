@@ -2,7 +2,6 @@ import { createSign } from 'crypto'
 import sql from '../db/client.js'
 import type { PushPayload } from './push.js'
 
-// firebase Cloud Messaging (HTTP v1) for native Android push
 const PROJECT_ID = process.env.FCM_PROJECT_ID || ''
 const CLIENT_EMAIL = process.env.FCM_CLIENT_EMAIL || ''
 const PRIVATE_KEY = (process.env.FCM_PRIVATE_KEY || '').replace(/\\n/g, '\n')
@@ -18,8 +17,8 @@ export async function saveDeviceToken(userId: string, token: string, platform = 
   `
 }
 
-export async function removeDeviceToken(token: string) {
-  await sql`DELETE FROM device_tokens WHERE token = ${token}`
+export async function removeDeviceToken(userId: string, token: string) {
+  await sql`DELETE FROM device_tokens WHERE token = ${token} AND user_id = ${userId}`
 }
 
 export async function deviceTokenCount(userId: string): Promise<number> {
@@ -27,7 +26,6 @@ export async function deviceTokenCount(userId: string): Promise<number> {
   return row?.n ?? 0
 }
 
-// --- OAuth2 access token minted from the service account, cached ~55 min ---
 let cachedToken: { value: string; expiresAt: number } | null = null
 
 function base64url(input: Buffer | string): string {
@@ -77,7 +75,6 @@ export async function sendFcm(userId: string, payload: PushPayload) {
     return
   }
 
-  // data-only message: the app builds the notification (with Mark done / Snooze action buttons) in
   const data: Record<string, string> = {
     title: payload.title,
     body: payload.body ?? '',
@@ -98,7 +95,7 @@ export async function sendFcm(userId: string, payload: PushPayload) {
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as any
         const code = body?.error?.details?.[0]?.errorCode || body?.error?.status
-        // stale/invalid registration token drop it so we stop trying
+
         if (res.status === 404 || code === 'UNREGISTERED' || code === 'INVALID_ARGUMENT') {
           await sql`DELETE FROM device_tokens WHERE token = ${t.token}`.catch(() => {})
         } else {

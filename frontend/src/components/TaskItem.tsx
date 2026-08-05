@@ -7,6 +7,7 @@ import { PriorityDot } from './PriorityDot'
 import { formatDueDate, isOverdue } from '../lib/date'
 import { useHaptics } from '../hooks/useHaptics'
 import { useIsMobile } from '../hooks/useMediaQuery'
+import { crossesTaskSwipeThreshold } from '../lib/swipeThreshold'
 
 interface Props {
   task: Task
@@ -23,13 +24,13 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
   const [completing, setCompleting] = useState(false)
   const done = task.status === 'done'
   const overdue = !done && isOverdue(task.due_date)
-  const dragStartX = useRef(0)
+  const rowRef = useRef<HTMLDivElement>(null)
 
   const handleComplete = () => {
     if (!done) {
       haptics.success()
       setCompleting(true)
-      // let the strike-through + fade play before notifying parent
+
       setTimeout(() => {
         onToggleComplete(task)
         setCompleting(false)
@@ -41,11 +42,13 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
   }
 
   const handleSwipeEnd = (_e: unknown, info: { offset: { x: number } }) => {
-    const threshold = 80
-    if (info.offset.x < -threshold) {
+    const rowWidth = rowRef.current?.getBoundingClientRect().width ?? 0
+    const reachedThreshold = crossesTaskSwipeThreshold(info.offset.x, rowWidth)
+
+    if (info.offset.x < 0 && reachedThreshold) {
       haptics.swipe()
       controls.start({ x: -500, opacity: 0, transition: { duration: 0.2 } }).then(() => onDelete(task))
-    } else if (info.offset.x > threshold && !done) {
+    } else if (info.offset.x > 0 && reachedThreshold && !done) {
       haptics.swipe()
       controls.start({ x: 0 })
       handleComplete()
@@ -56,7 +59,7 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
 
   return (
     <div className="relative overflow-hidden">
-      {/* swipe action backgrounds (mobile) */}
+
       {isMobile && (
         <>
           <div className="absolute inset-y-0 left-0 w-1/2 bg-orange-500 flex items-center pl-5">
@@ -69,6 +72,7 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
       )}
 
       <motion.div
+        ref={rowRef}
         drag={isMobile ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.6}
@@ -80,7 +84,7 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
           ${completing ? 'animate-fade-out' : ''}`}
         onClick={() => onOpen(task)}
       >
-        {/* checkbox */}
+
         <button
           onClick={(e) => {
             e.stopPropagation()
@@ -94,7 +98,6 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
           {done && <Check size={14} className="text-white" strokeWidth={3} />}
         </button>
 
-        {/* content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <PriorityDot priority={task.priority} />
@@ -149,7 +152,6 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
           )}
         </div>
 
-        {/* desktop delete on hover */}
         {!isMobile && (
           <button
             onClick={(e) => {
