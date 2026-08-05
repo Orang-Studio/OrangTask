@@ -9,6 +9,7 @@ import { useTasks } from '../hooks/useTasks'
 import { useAuthStore } from '../stores/auth'
 import { Logo } from './Logo'
 import { ListIcon, DEFAULT_LIST_ICON } from '../lib/listIcons'
+import { safeHttpUrl } from '../lib/safeUrl'
 import { useHaptics } from '../hooks/useHaptics'
 
 const SMART_VIEWS = [
@@ -37,6 +38,7 @@ export function Sidebar() {
   const hasSharedLists = lists?.some((l) => l.is_shared || (l.my_role && l.my_role !== 'owner')) ?? false
   const createList = useCreateList()
   const { user, logout } = useAuthStore()
+  const safeAvatarUrl = safeHttpUrl(user?.avatar_url)
   const navigate = useNavigate()
   const haptics = useHaptics()
   const [adding, setAdding] = useState(false)
@@ -165,8 +167,8 @@ export function Sidebar() {
             aria-label="Account"
             title={collapsed ? user?.name : undefined}
           >
-            {user?.avatar_url ? (
-              <img src={user.avatar_url} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+            {safeAvatarUrl ? (
+              <img src={safeAvatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
             ) : (
               <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                 {user?.name?.[0]?.toUpperCase()}

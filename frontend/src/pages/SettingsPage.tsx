@@ -13,6 +13,7 @@ import { WebhookManager } from '../components/WebhookManager'
 import { useApiKeys, useCreateApiKey, useDeleteApiKey } from '../hooks/useApiKeys'
 import { api } from '../lib/api'
 import { formatDueDate } from '../lib/date'
+import { safeHttpUrl } from '../lib/safeUrl'
 import { getPushState, enablePush, disablePush, sendTestPush, showLocalTestNotification, type PushState } from '../lib/push'
 import { useHaptics } from '../hooks/useHaptics'
 
@@ -151,12 +152,14 @@ function ProfileSection({ user, setUser }: { user: any; setUser: (u: any) => voi
     setHasPin(false)
   }
 
+  const safeAvatarUrl = safeHttpUrl(avatarUrl)
+
   return (
     <div className="max-w-md space-y-4">
       <SectionTitle title="Profile" />
       <div className="flex items-center gap-4">
-        {avatarUrl ? (
-          <img src={avatarUrl} className="w-16 h-16 rounded-full object-cover" alt="" />
+        {safeAvatarUrl ? (
+          <img src={safeAvatarUrl} className="w-16 h-16 rounded-full object-cover" alt="" />
         ) : (
           <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center text-white text-2xl font-bold">
             {name?.[0]?.toUpperCase()}

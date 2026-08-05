@@ -1,3 +1,5 @@
+import { safeHttpUrl } from '../lib/safeUrl'
+
 interface Props {
   name?: string | null
   url?: string | null
@@ -5,10 +7,11 @@ interface Props {
 }
 
 export function Avatar({ name, url, size = 24 }: Props) {
-  if (url) {
+  const safeUrl = safeHttpUrl(url)
+  if (safeUrl) {
     return (
       <img
-        src={url}
+        src={safeUrl}
         className="rounded-full object-cover flex-shrink-0"
         style={{ width: size, height: size }}
         alt={name || ''}
