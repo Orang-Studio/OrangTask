@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.auth.AuthRepository
 import lt.oranges.orangtask.core.db.ListEntity
 import lt.oranges.orangtask.core.db.TagEntity
@@ -45,9 +46,9 @@ private fun Throwable.localizedErrorMessage(context: Context): String = when (th
         response()?.errorBody()?.string()
             ?.let { taskErrorJson.decodeFromString(ApiErrorBody.serializer(), it).error }
             ?.takeIf { it.isNotBlank() }
-    }.getOrNull() ?: context.getString(R.string.request_failed, code())
-    is IOException -> context.getString(R.string.network_error)
-    else -> context.getString(R.string.something_went_wrong)
+    }.getOrNull() ?: AppStrings.get(context, R.string.request_failed, code())
+    is IOException -> AppStrings.get(context, R.string.network_error)
+    else -> AppStrings.get(context, R.string.something_went_wrong)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -146,7 +147,7 @@ class TaskListViewModel @Inject constructor(
         if (parsed.title.isBlank()) return
         val targetList = listId ?: lists.value.firstOrNull()?.id
         if (targetList == null) {
-            errors.tryEmit(context.getString(R.string.create_list_first))
+            errors.tryEmit(AppStrings.get(context, R.string.create_list_first))
             return
         }
 

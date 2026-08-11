@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.network.ProvidersResponse
 import lt.oranges.orangtask.core.network.userMessage
 import javax.inject.Inject
@@ -88,7 +89,7 @@ class LoginViewModel @Inject constructor(
     fun completeMagicLink() {
         val pasted = _state.value.pastedLink.trim()
         if (pasted.isEmpty()) {
-            _state.update { it.copy(error = context.getString(R.string.paste_magic_link_error)) }
+            _state.update { it.copy(error = AppStrings.get(context, R.string.paste_magic_link_error)) }
             return
         }
         launchBusy { handleOutcome(repo.verifyMagicLink(pasted)) }
@@ -98,14 +99,14 @@ class LoginViewModel @Inject constructor(
         val s = _state.value
         if (!s.email.contains("@")) return showEmailError()
         if (s.password.length < 8) {
-            _state.update { it.copy(error = context.getString(R.string.password_min_length_error)) }
+            _state.update { it.copy(error = AppStrings.get(context, R.string.password_min_length_error)) }
             return
         }
         if (s.mode == LoginMode.REGISTER && s.captchaToken == null) {
             _state.update {
                 it.copy(
                     captchaRequired = true,
-                    error = context.getString(R.string.captcha_create_account_error),
+                    error = AppStrings.get(context, R.string.captcha_create_account_error),
                 )
             }
             return
@@ -125,7 +126,7 @@ class LoginViewModel @Inject constructor(
     fun verifyEmailCode() {
         val s = _state.value
         if (!Regex("^\\d{6}$").matches(s.emailCode)) {
-            _state.update { it.copy(error = context.getString(R.string.six_digit_code_error)) }
+            _state.update { it.copy(error = AppStrings.get(context, R.string.six_digit_code_error)) }
             return
         }
         launchBusy { handleOutcome(repo.verifyLoginCode(s.email, s.emailCode)) }
@@ -146,11 +147,11 @@ class LoginViewModel @Inject constructor(
     fun submitReset() {
         val s = _state.value
         if (!Regex("^\\d{6}$").matches(s.resetCode)) {
-            _state.update { it.copy(error = context.getString(R.string.six_digit_code_error)) }
+            _state.update { it.copy(error = AppStrings.get(context, R.string.six_digit_code_error)) }
             return
         }
         if (s.password.length < 8) {
-            _state.update { it.copy(error = context.getString(R.string.password_min_length_error)) }
+            _state.update { it.copy(error = AppStrings.get(context, R.string.password_min_length_error)) }
             return
         }
         launchBusy {
@@ -168,7 +169,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun showEmailError() {
-        _state.update { it.copy(error = context.getString(R.string.valid_email_error)) }
+        _state.update { it.copy(error = AppStrings.get(context, R.string.valid_email_error)) }
     }
 
     private fun launchBusy(block: suspend () -> Unit) {

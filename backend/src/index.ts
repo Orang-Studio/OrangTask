@@ -21,6 +21,7 @@ import searchRoutes from './routes/search.js'
 import userRoutes from './routes/user.js'
 import pushRoutes from './routes/push.js'
 import apiKeysRoutes from './routes/apiKeys.js'
+import i18nRoutes from './routes/i18n.js'
 import { webhooks as webhookRoutes } from './routes/webhooks.js'
 import webhookIncoming from './routes/webhooks.js'
 
@@ -57,6 +58,7 @@ app.route('/api/user', userRoutes)
 app.route('/api/push', pushRoutes)
 app.route('/api/webhooks', webhookRoutes)
 app.route('/api/api-keys', apiKeysRoutes)
+app.route('/api/i18n', i18nRoutes)
 
 app.route('/api', webhookIncoming)
 

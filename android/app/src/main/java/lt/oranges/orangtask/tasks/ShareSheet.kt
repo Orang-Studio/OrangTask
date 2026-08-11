@@ -37,7 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -96,7 +96,7 @@ fun ShareSheet(
                 modifier = Modifier.fillMaxWidth().height(56.dp).padding(start = 16.dp, end = 4.dp),
             ) {
                 Text(
-                    stringResource(R.string.share_list_title, listName.uppercase()),
+                    tr(R.string.share_list_title, listName.uppercase()),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
@@ -107,7 +107,7 @@ fun ShareSheet(
                 IconButton(onClick = onDismiss) {
                     Icon(
                         Icons.Outlined.Close,
-                        contentDescription = stringResource(R.string.close),
+                        contentDescription = tr(R.string.close),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -120,12 +120,12 @@ fun ShareSheet(
             ) {
                 if (isOwner) {
                     Column {
-                        FieldLabel(stringResource(R.string.invite_by_email))
+                        FieldLabel(tr(R.string.invite_by_email))
                         Spacer(Modifier.height(6.dp))
                         OrangTextField(
                             value = email,
                             onValueChange = { email = it },
-                            placeholder = stringResource(R.string.teammate_email_placeholder),
+                            placeholder = tr(R.string.teammate_email_placeholder),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email,
                                 imeAction = ImeAction.Done,
@@ -136,7 +136,7 @@ fun ShareSheet(
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             RolePicker(role = role, onRole = { role = it })
                             BrandButton(
-                                text = stringResource(R.string.invite),
+                                text = tr(R.string.invite),
                                 icon = Icons.Outlined.PersonAdd,
                                 enabled = email.isNotBlank(),
                                 onClick = { invite() },
@@ -147,11 +147,11 @@ fun ShareSheet(
                 }
 
                 Column {
-                    FieldLabel(stringResource(R.string.members))
+                    FieldLabel(tr(R.string.members))
                     Spacer(Modifier.height(4.dp))
                     if (members.none { it.role != "owner" }) {
                         Text(
-                            stringResource(R.string.just_you_invite_collaborate),
+                            tr(R.string.just_you_invite_collaborate),
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 8.dp),
@@ -173,7 +173,7 @@ fun ShareSheet(
                 if (!isOwner) {
                     HorizontalDivider(color = if (dark) Ink700 else Color(0xFFE5E7EB))
                     Text(
-                        stringResource(R.string.leave_list),
+                        tr(R.string.leave_list),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFFEF4444),
@@ -189,16 +189,16 @@ fun ShareSheet(
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text(stringResource(R.string.leave_list)) },
-            text = { Text(stringResource(R.string.leave_list_confirmation, listName)) },
+            title = { Text(tr(R.string.leave_list)) },
+            text = { Text(tr(R.string.leave_list_confirmation, listName)) },
             confirmButton = {
                 TextButton(onClick = {
                     haptics.error()
                     confirmLeave = false
                     onLeave()
-                }) { Text(stringResource(R.string.leave), color = Color(0xFFEF4444)) }
+                }) { Text(tr(R.string.leave), color = Color(0xFFEF4444)) }
             },
-            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(tr(R.string.cancel)) } },
         )
     }
 }
@@ -233,7 +233,7 @@ private fun MemberRow(
             IconButton(onClick = onRemove) {
                 Icon(
                     Icons.Outlined.Delete,
-                    contentDescription = stringResource(R.string.remove_member_description, member.name),
+                    contentDescription = tr(R.string.remove_member_description, member.name),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp),
                 )
@@ -268,9 +268,9 @@ private fun RoleBadge(text: String, highlight: Boolean = false) {
 
 @Composable
 private fun roleLabel(role: String): String = when (role) {
-    "owner" -> stringResource(R.string.role_owner)
-    "editor" -> stringResource(R.string.role_editor)
-    "viewer" -> stringResource(R.string.role_viewer)
+    "owner" -> tr(R.string.role_owner)
+    "editor" -> tr(R.string.role_editor)
+    "viewer" -> tr(R.string.role_viewer)
     else -> role.replaceFirstChar { it.uppercase() }
 }
 
@@ -280,7 +280,7 @@ private fun RolePicker(role: String, onRole: (String) -> Unit, compact: Boolean 
     val dark = isDarkTheme()
     Box {
         Text(
-            stringResource(R.string.role_picker_label, roleLabel(role)),
+            tr(R.string.role_picker_label, roleLabel(role)),
             fontSize = if (compact) 12.sp else 13.sp,
             fontWeight = FontWeight.Medium,
             color = if (dark) Color.White else Color(0xFF111827),

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.serialization.json.Json
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.network.ApiErrorBody
 import lt.oranges.orangtask.core.network.OrangApi
 import lt.oranges.orangtask.core.network.SearchResultDto
@@ -31,9 +32,9 @@ private fun Throwable.localizedErrorMessage(context: Context): String = when (th
         response()?.errorBody()?.string()
             ?.let { searchErrorJson.decodeFromString(ApiErrorBody.serializer(), it).error }
             ?.takeIf { it.isNotBlank() }
-    }.getOrNull() ?: context.getString(R.string.request_failed, code())
-    is IOException -> context.getString(R.string.network_error)
-    else -> context.getString(R.string.something_went_wrong)
+    }.getOrNull() ?: AppStrings.get(context, R.string.request_failed, code())
+    is IOException -> AppStrings.get(context, R.string.network_error)
+    else -> AppStrings.get(context, R.string.something_went_wrong)
 }
 
 sealed interface SearchUiState {

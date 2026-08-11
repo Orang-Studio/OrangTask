@@ -30,7 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,11 +67,11 @@ fun NotificationsScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = stringResource(R.string.content_description_back),
+                    contentDescription = tr(R.string.content_description_back),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(stringResource(R.string.notifications_heading), fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(tr(R.string.notifications_heading), fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             if (unread > 0) {
                 Text(
                     pluralStringResource(R.plurals.new_notifications, unread, unread),
@@ -87,7 +87,7 @@ fun NotificationsScreen(
                 }) {
                     Icon(
                         Icons.Outlined.DoneAll,
-                        contentDescription = stringResource(R.string.mark_all_read),
+                        contentDescription = tr(R.string.mark_all_read),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -101,12 +101,12 @@ fun NotificationsScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    Text(stringResource(R.string.loading), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(tr(R.string.loading), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 items.isEmpty() -> EmptyState(
                     icon = Icons.Outlined.Notifications,
-                    title = stringResource(R.string.no_notifications),
-                    description = stringResource(R.string.notifications_caught_up),
+                    title = tr(R.string.no_notifications),
+                    description = tr(R.string.notifications_caught_up),
                 )
                 else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(items, key = { it.id }) { notification ->

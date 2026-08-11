@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.SideEffect
@@ -20,13 +19,14 @@ import lt.oranges.orangtask.auth.CaptchaCallback
 import lt.oranges.orangtask.auth.CaptchaTokenStore
 import lt.oranges.orangtask.auth.SessionState
 import lt.oranges.orangtask.auth.SessionViewModel
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.navigation.AppNavHost
 import lt.oranges.orangtask.ui.components.isDarkTheme
 import lt.oranges.orangtask.ui.theme.OrangTaskTheme
 import lt.oranges.orangtask.ui.theme.ThemePrefs
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : LocalizedActivity() {
     private val sessionViewModel: SessionViewModel by viewModels()
 
     @Inject
@@ -97,18 +97,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
             data.path == "/login" && data.getQueryParameter("verification") == "success" -> {
-                Toast.makeText(this, getString(R.string.email_verified_sign_in), Toast.LENGTH_LONG).show()
+                Toast.makeText(this, AppStrings.get(this, R.string.email_verified_sign_in), Toast.LENGTH_LONG).show()
             }
             data.path == "/login" && data.getQueryParameter("verification") == "invalid" -> {
-                Toast.makeText(this, getString(R.string.verification_link_invalid), Toast.LENGTH_LONG).show()
+                Toast.makeText(this, AppStrings.get(this, R.string.verification_link_invalid), Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun oauthErrorMessage(code: String): String = when (code) {
-        "no_email" -> getString(R.string.oauth_no_email)
-        "link_in_use" -> getString(R.string.oauth_link_in_use)
-        "state" -> getString(R.string.oauth_state)
-        else -> getString(R.string.oauth_generic)
+        "no_email" -> AppStrings.get(this, R.string.oauth_no_email)
+        "link_in_use" -> AppStrings.get(this, R.string.oauth_link_in_use)
+        "state" -> AppStrings.get(this, R.string.oauth_state)
+        else -> AppStrings.get(this, R.string.oauth_generic)
     }
 }

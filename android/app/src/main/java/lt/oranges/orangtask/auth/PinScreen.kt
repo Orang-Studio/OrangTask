@@ -19,7 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -78,7 +78,7 @@ fun PinScreen(
             if (state.recoverMessage != null) {
 
                 Text(
-                    stringResource(R.string.reset_pin_title),
+                    tr(R.string.reset_pin_title),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp,
@@ -95,7 +95,7 @@ fun PinScreen(
                 OrangTextField(
                     value = state.recoverCode,
                     onValueChange = viewModel::onRecoverCodeChange,
-                    placeholder = stringResource(R.string.pin_reset_code_placeholder),
+                    placeholder = tr(R.string.pin_reset_code_placeholder),
                     centered = true,
                     textStyle = pinTextStyle,
                     minHeight = 64.dp,
@@ -108,22 +108,22 @@ fun PinScreen(
 
                 Spacer(Modifier.height(24.dp))
                 BrandButton(
-                    text = if (state.recoverBusy) stringResource(R.string.sending_reset_code)
-                    else stringResource(R.string.remove_pin_and_continue),
+                    text = if (state.recoverBusy) tr(R.string.sending_reset_code)
+                    else tr(R.string.remove_pin_and_continue),
                     onClick = viewModel::submitPinReset,
                     enabled = state.recoverCode.length == 6 && !state.recoverBusy,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 TextButton(onClick = viewModel::requestPinReset, enabled = !state.recoverBusy, modifier = Modifier.padding(top = 8.dp)) {
-                    Text(stringResource(R.string.resend_code), fontSize = 14.sp, color = Gray400)
+                    Text(tr(R.string.resend_code), fontSize = 14.sp, color = Gray400)
                 }
                 TextButton(onClick = viewModel::backToPinEntry) {
-                    Text(stringResource(R.string.back_to_pin_entry), fontSize = 14.sp, color = Gray400)
+                    Text(tr(R.string.back_to_pin_entry), fontSize = 14.sp, color = Gray400)
                 }
             } else {
 
                 Text(
-                    stringResource(R.string.enter_your_pin),
+                    tr(R.string.enter_your_pin),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp,
@@ -131,7 +131,7 @@ fun PinScreen(
                     modifier = Modifier.padding(top = 16.dp),
                 )
                 Text(
-                    stringResource(R.string.unlock_your_tasks),
+                    tr(R.string.unlock_your_tasks),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp, bottom = 32.dp),
@@ -140,7 +140,7 @@ fun PinScreen(
                 OrangTextField(
                     value = state.pin,
                     onValueChange = viewModel::onPinChange,
-                    placeholder = stringResource(R.string.pin_placeholder),
+                    placeholder = tr(R.string.pin_placeholder),
                     centered = true,
                     isError = state.error,
                     isPassword = true,
@@ -151,7 +151,7 @@ fun PinScreen(
 
                 if (state.error) {
                     Text(
-                        stringResource(R.string.wrong_pin_try_again),
+                        tr(R.string.wrong_pin_try_again),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(top = 16.dp),
@@ -160,7 +160,7 @@ fun PinScreen(
 
                 Spacer(Modifier.height(24.dp))
                 BrandButton(
-                    text = stringResource(R.string.unlock),
+                    text = tr(R.string.unlock),
                     onClick = viewModel::verify,
                     enabled = state.pin.length >= 4 && !state.submitting,
                     modifier = Modifier.fillMaxWidth(),
@@ -168,8 +168,8 @@ fun PinScreen(
 
                 TextButton(onClick = viewModel::requestPinReset, enabled = !state.recoverBusy, modifier = Modifier.padding(top = 16.dp)) {
                     Text(
-                        if (state.recoverBusy) stringResource(R.string.sending_reset_code)
-                        else stringResource(R.string.forgot_pin),
+                        if (state.recoverBusy) tr(R.string.sending_reset_code)
+                        else tr(R.string.forgot_pin),
                         fontSize = 14.sp,
                         color = Gray400,
                     )
@@ -178,7 +178,7 @@ fun PinScreen(
                     Text(it, fontSize = 14.sp, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 4.dp))
                 }
                 TextButton(onClick = onSignOut) {
-                    Text(stringResource(R.string.sign_out_instead), fontSize = 14.sp, color = Gray400)
+                    Text(tr(R.string.sign_out_instead), fontSize = 14.sp, color = Gray400)
                 }
             }
         }

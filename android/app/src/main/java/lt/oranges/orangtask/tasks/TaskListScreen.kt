@@ -55,7 +55,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -165,7 +165,7 @@ fun TaskListScreen(
                     Icon(smart!!.icon, contentDescription = null, tint = Orange500, modifier = Modifier.size(20.dp))
                 }
                 Text(
-                    text = (if (isListRoute) list?.name ?: "" else stringResource(smart!!.titleRes)).uppercase(),
+                    text = (if (isListRoute) list?.name ?: "" else tr(smart!!.titleRes)).uppercase(),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
@@ -207,10 +207,10 @@ fun TaskListScreen(
                     viewModel.initialLoading && tasks.isEmpty() -> TaskListSkeleton()
                     tasks.isEmpty() -> EmptyState(
                         icon = if (isListRoute) listIconFor(list?.icon) else smart!!.icon,
-                        title = if (isListRoute) stringResource(R.string.no_tasks_in_list)
-                        else stringResource(smart!!.emptyTitleRes),
-                        description = if (isListRoute) stringResource(R.string.list_empty_description)
-                        else stringResource(smart!!.emptyDescriptionRes),
+                        title = if (isListRoute) tr(R.string.no_tasks_in_list)
+                        else tr(smart!!.emptyTitleRes),
+                        description = if (isListRoute) tr(R.string.list_empty_description)
+                        else tr(smart!!.emptyDescriptionRes),
                     )
                     else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(tasks, key = { it.id }) { task ->
@@ -292,7 +292,7 @@ private fun QuickAddBar(focusRequester: FocusRequester, onAdd: (String) -> Unit)
                     ParseChip(Icons.Outlined.Flag, priorityLabel(parsed.priority))
                 }
                 if (parsed.recurrenceRule != null) {
-                    ParseChip(Icons.Outlined.Repeat, stringResource(R.string.recurring))
+                    ParseChip(Icons.Outlined.Repeat, tr(R.string.recurring))
                 }
             }
         }
@@ -304,7 +304,7 @@ private fun QuickAddBar(focusRequester: FocusRequester, onAdd: (String) -> Unit)
             OrangTextField(
                 value = text,
                 onValueChange = { text = it },
-                placeholder = stringResource(R.string.quick_add_placeholder),
+                placeholder = tr(R.string.quick_add_placeholder),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { submit() }),
                 modifier = Modifier.weight(1f).focusRequester(focusRequester),
@@ -316,7 +316,7 @@ private fun QuickAddBar(focusRequester: FocusRequester, onAdd: (String) -> Unit)
                     .background(if (text.isBlank()) Orange500.copy(alpha = 0.5f) else Orange500)
                     .clickable(enabled = text.isNotBlank()) { submit() },
             ) {
-                Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.add_task), tint = Color.White)
+                Icon(Icons.Outlined.Add, contentDescription = tr(R.string.add_task), tint = Color.White)
             }
         }
     }
@@ -369,33 +369,33 @@ private fun ListMenu(
         IconButton(onClick = { haptics.tap(); menuOpen = true }) {
             Icon(
                 Icons.Outlined.MoreVert,
-                contentDescription = stringResource(R.string.list_options),
+                contentDescription = tr(R.string.list_options),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = {
+            DropdownMenuItem(text = { Text(tr(R.string.share)) }, onClick = {
                 onShare()
                 menuOpen = false
             })
             if (canEdit) {
-                DropdownMenuItem(text = { Text(stringResource(R.string.rename)) }, onClick = {
+                DropdownMenuItem(text = { Text(tr(R.string.rename)) }, onClick = {
                     renameValue = listName
                     renameOpen = true
                     menuOpen = false
                 })
-                DropdownMenuItem(text = { Text(stringResource(R.string.change_icon)) }, onClick = {
+                DropdownMenuItem(text = { Text(tr(R.string.change_icon)) }, onClick = {
                     iconOpen = true
                     menuOpen = false
                 })
-                DropdownMenuItem(text = { Text(stringResource(R.string.change_color)) }, onClick = {
+                DropdownMenuItem(text = { Text(tr(R.string.change_color)) }, onClick = {
                     colorOpen = true
                     menuOpen = false
                 })
             }
             if (isOwner) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.delete_list), color = Color(0xFFEF4444)) },
+                    text = { Text(tr(R.string.delete_list), color = Color(0xFFEF4444)) },
                     onClick = {
                         confirmDelete = true
                         menuOpen = false
@@ -408,28 +408,28 @@ private fun ListMenu(
     if (renameOpen) {
         AlertDialog(
             onDismissRequest = { renameOpen = false },
-            title = { Text(stringResource(R.string.rename_list)) },
+            title = { Text(tr(R.string.rename_list)) },
             text = {
                 OrangTextField(
                     value = renameValue,
                     onValueChange = { renameValue = it },
-                    placeholder = stringResource(R.string.list_name_placeholder),
+                    placeholder = tr(R.string.list_name_placeholder),
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     if (renameValue.isNotBlank()) onRename(renameValue)
                     renameOpen = false
-                }) { Text(stringResource(R.string.rename)) }
+                }) { Text(tr(R.string.rename)) }
             },
-            dismissButton = { TextButton(onClick = { renameOpen = false }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(onClick = { renameOpen = false }) { Text(tr(R.string.cancel)) } },
         )
     }
 
     if (iconOpen) {
         AlertDialog(
             onDismissRequest = { iconOpen = false },
-            title = { Text(stringResource(R.string.change_icon)) },
+            title = { Text(tr(R.string.change_icon)) },
             text = {
                 LazyVerticalGrid(columns = GridCells.Fixed(6), modifier = Modifier.height(240.dp)) {
                     items(LIST_ICONS.keys.toList()) { key ->
@@ -445,7 +445,7 @@ private fun ListMenu(
                         ) {
                             Icon(
                                 LIST_ICONS.getValue(key),
-                                contentDescription = stringResource(R.string.list_icon),
+                                contentDescription = tr(R.string.list_icon),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp),
                             )
@@ -454,14 +454,14 @@ private fun ListMenu(
                 }
             },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = { iconOpen = false }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(onClick = { iconOpen = false }) { Text(tr(R.string.cancel)) } },
         )
     }
 
     if (colorOpen) {
         AlertDialog(
             onDismissRequest = { colorOpen = false },
-            title = { Text(stringResource(R.string.change_color)) },
+            title = { Text(tr(R.string.change_color)) },
             text = {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     LIST_COLORS.forEach { hex ->
@@ -478,23 +478,23 @@ private fun ListMenu(
                 }
             },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = { colorOpen = false }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(onClick = { colorOpen = false }) { Text(tr(R.string.cancel)) } },
         )
     }
 
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(stringResource(R.string.delete_list)) },
-            text = { Text(stringResource(R.string.delete_list_confirmation, listName)) },
+            title = { Text(tr(R.string.delete_list)) },
+            text = { Text(tr(R.string.delete_list_confirmation, listName)) },
             confirmButton = {
                 TextButton(onClick = {
                     haptics.error()
                     confirmDelete = false
                     onDelete()
-                }) { Text(stringResource(R.string.delete), color = Color(0xFFEF4444)) }
+                }) { Text(tr(R.string.delete), color = Color(0xFFEF4444)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(tr(R.string.cancel)) } },
         )
     }
 }

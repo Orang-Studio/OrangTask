@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -56,7 +56,7 @@ fun isDarkTheme(): Boolean = MaterialTheme.colorScheme.background == Ink800
 fun Logo(size: Dp = 56.dp, modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(R.drawable.orangtask_logo),
-        contentDescription = stringResource(R.string.app_name),
+        contentDescription = tr(R.string.app_name),
         modifier = modifier.size(size),
     )
 }

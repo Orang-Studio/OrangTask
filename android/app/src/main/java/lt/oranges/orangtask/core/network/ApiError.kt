@@ -3,6 +3,7 @@ package lt.oranges.orangtask.core.network
 import android.content.Context
 import kotlinx.serialization.json.Json
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -14,8 +15,8 @@ fun Throwable.userMessage(context: Context): String = when (this) {
             response()?.errorBody()?.string()
                 ?.let { errorJson.decodeFromString(ApiErrorBody.serializer(), it).error }
         }.getOrNull()
-        serverError ?: context.getString(R.string.request_failed, code())
+        serverError ?: AppStrings.get(context, R.string.request_failed, code())
     }
-    is IOException -> context.getString(R.string.network_error)
-    else -> message ?: context.getString(R.string.something_went_wrong)
+    is IOException -> AppStrings.get(context, R.string.network_error)
+    else -> message ?: AppStrings.get(context, R.string.something_went_wrong)
 }

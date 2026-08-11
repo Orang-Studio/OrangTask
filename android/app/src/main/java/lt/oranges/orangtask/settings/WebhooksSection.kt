@@ -42,7 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -80,13 +80,13 @@ fun WebhooksSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
-            stringResource(R.string.webhooks_description),
+            tr(R.string.webhooks_description),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         if (viewModel.loading) {
-            Text(stringResource(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         viewModel.webhooks.forEach { webhook ->
             WebhookCard(webhook, viewModel)
@@ -117,7 +117,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
             ) {
                 Icon(
                     if (incoming) Icons.Outlined.ArrowDownward else Icons.Outlined.ArrowUpward,
-                    contentDescription = stringResource(if (incoming) R.string.incoming else R.string.outgoing),
+                    contentDescription = tr(if (incoming) R.string.incoming else R.string.outgoing),
                     tint = if (incoming) Color(0xFF3B82F6) else Orange500,
                     modifier = Modifier.size(18.dp),
                 )
@@ -131,7 +131,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            stringResource(if (webhook.enabled) R.string.enabled else R.string.disabled),
+                            tr(if (webhook.enabled) R.string.enabled else R.string.disabled),
                             fontSize = 10.sp,
                             color = if (webhook.enabled) Color(0xFF22C55E) else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -158,7 +158,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                 }) {
                     Icon(
                         if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                        contentDescription = stringResource(if (expanded) R.string.collapse else R.string.expand),
+                        contentDescription = tr(if (expanded) R.string.collapse else R.string.expand),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -172,7 +172,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                 ) {
                     if (incomingUrl != null) {
                         Column {
-                            FieldLabel(stringResource(R.string.incoming_url))
+                            FieldLabel(tr(R.string.incoming_url))
                             Spacer(Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(
@@ -192,7 +192,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                                 }) {
                                     Icon(
                                         Icons.Outlined.ContentCopy,
-                                        contentDescription = stringResource(R.string.copy_url),
+                                        contentDescription = tr(R.string.copy_url),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(16.dp),
                                     )
@@ -204,7 +204,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                     if (!incoming) {
                         webhook.events?.takeIf { it.isNotEmpty() }?.let { events ->
                             Column {
-                                FieldLabel(stringResource(R.string.events))
+                                FieldLabel(tr(R.string.events))
                                 Spacer(Modifier.height(4.dp))
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -217,7 +217,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
 
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             BrandButton(
-                                text = stringResource(R.string.send_test),
+                                text = tr(R.string.send_test),
                                 icon = Icons.Outlined.Send,
                                 secondary = true,
                                 onClick = {
@@ -231,12 +231,12 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                         }
 
                         Column {
-                            FieldLabel(stringResource(R.string.delivery_log))
+                            FieldLabel(tr(R.string.delivery_log))
                             Spacer(Modifier.height(4.dp))
                             val log = viewModel.deliveries[webhook.id]
                             when {
-                                log == null -> Text(stringResource(R.string.loading), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                log.isEmpty() -> Text(stringResource(R.string.no_deliveries), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                log == null -> Text(tr(R.string.loading), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                log.isEmpty() -> Text(tr(R.string.no_deliveries), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 else -> log.take(10).forEach { delivery ->
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -246,7 +246,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                                         val code = delivery.statusCodeInt
                                         val ok = code != null && code < 400
                                         Text(
-                                            code?.toString() ?: stringResource(R.string.webhook_delivery_error_code),
+                                            code?.toString() ?: tr(R.string.webhook_delivery_error_code),
                                             fontSize = 10.sp,
                                             fontFamily = FontFamily.Monospace,
                                             color = if (ok) Color(0xFF22C55E) else Color(0xFFEF4444),
@@ -270,7 +270,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                     }
 
                     Text(
-                        stringResource(R.string.delete_webhook),
+                        tr(R.string.delete_webhook),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFFEF4444),
@@ -286,16 +286,16 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(stringResource(R.string.delete_webhook)) },
-            text = { Text(stringResource(R.string.delete_webhook_confirmation, webhook.name)) },
+            title = { Text(tr(R.string.delete_webhook)) },
+            text = { Text(tr(R.string.delete_webhook_confirmation, webhook.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     haptics.error()
                     confirmDelete = false
                     viewModel.delete(webhook.id)
-                }) { Text(stringResource(R.string.delete), color = Color(0xFFEF4444)) }
+                }) { Text(tr(R.string.delete), color = Color(0xFFEF4444)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(tr(R.string.cancel)) } },
         )
     }
 }
@@ -312,7 +312,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
 
     if (!showForm) {
         BrandButton(
-            text = stringResource(R.string.add_webhook),
+            text = tr(R.string.add_webhook),
             icon = Icons.Outlined.Add,
             secondary = true,
             onClick = {
@@ -333,7 +333,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
                 listOf("outgoing" to R.string.outgoing, "incoming" to R.string.incoming).forEach { (value, labelRes) ->
                     val selected = direction == value
                     Text(
-                        stringResource(labelRes),
+                        tr(labelRes),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -357,17 +357,17 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
             OrangTextField(
                 value = name,
                 onValueChange = { name = it },
-                placeholder = stringResource(R.string.webhook_name_placeholder),
+                placeholder = tr(R.string.webhook_name_placeholder),
             )
 
             if (direction == "outgoing") {
                 OrangTextField(
                     value = url,
                     onValueChange = { url = it },
-                    placeholder = stringResource(R.string.webhook_url_placeholder),
+                    placeholder = tr(R.string.webhook_url_placeholder),
                 )
                 Column {
-                    FieldLabel(stringResource(R.string.events))
+                    FieldLabel(tr(R.string.events))
                     Spacer(Modifier.height(6.dp))
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -385,7 +385,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
                 }
             } else {
                 Text(
-                    stringResource(R.string.incoming_webhook_description),
+                    tr(R.string.incoming_webhook_description),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -393,7 +393,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BrandButton(
-                    text = if (viewModel.creating) stringResource(R.string.creating) else stringResource(R.string.create),
+                    text = if (viewModel.creating) tr(R.string.creating) else tr(R.string.create),
                     enabled = !viewModel.creating && name.isNotBlank() &&
                         (direction == "incoming" || url.isNotBlank()),
                     onClick = {
@@ -412,7 +412,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
                     },
                     modifier = Modifier.weight(1f),
                 )
-                BrandButton(text = stringResource(R.string.cancel), secondary = true, onClick = { showForm = false })
+                BrandButton(text = tr(R.string.cancel), secondary = true, onClick = { showForm = false })
             }
         }
     }

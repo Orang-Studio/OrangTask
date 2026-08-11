@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.network.userMessage
 import javax.inject.Inject
 
@@ -63,7 +64,7 @@ class PinViewModel @Inject constructor(
             try {
                 repo.requestPinReset()
                 _state.update {
-                    it.copy(recoverMessage = context.getString(R.string.pin_reset_message))
+                    it.copy(recoverMessage = AppStrings.get(context, R.string.pin_reset_message))
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(recoverError = e.userMessage(context)) }
@@ -80,7 +81,7 @@ class PinViewModel @Inject constructor(
     fun submitPinReset() {
         val s = _state.value
         if (!Regex("^\\d{6}$").matches(s.recoverCode)) {
-            _state.update { it.copy(recoverError = context.getString(R.string.six_digit_code_error)) }
+            _state.update { it.copy(recoverError = AppStrings.get(context, R.string.six_digit_code_error)) }
             return
         }
         viewModelScope.launch {
