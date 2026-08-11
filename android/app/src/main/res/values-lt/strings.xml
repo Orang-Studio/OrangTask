@@ -67,7 +67,6 @@
     <string name="delete_list_confirmation">Ištrinti %1$s ir jo visas užduotis?</string>
     <string name="delete_subtask">Ištrinti paužduotį</string>
     <string name="delete_task">Ištrinti užduotį</string>
-    <string name="delete_webhook"></string>
     <string name="email_label">El. Paštas</string>
     <string name="email_placeholder">tu@pavyzdys.lt</string>
     <string name="email_security_code_label">El. pašto saugumo kodas</string>
