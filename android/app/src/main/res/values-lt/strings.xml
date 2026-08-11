@@ -1,3 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="add_due_date">Pridėti terminą</string>
+    <string name="add_label">Pridėti</string>
+    <string name="add_notes_placeholder">Pridėti užrašus</string>
+    <string name="add_subtask_placeholder">Pridėti papildomą užduotį...</string>
+    <string name="add_task">Pridėti užduotį</string>
+    <string name="all_tasks">Visos užduotys</string>
+    <string name="all_tasks_empty_description">Sukurk sąrašą ir pradėk daryti užduotis.</string>
+    <string name="already_have_account_sign_in">Jau turi paskyrą? Prisijungti</string>
+    <string name="api_key_copy_warning">Kopijuok ji dabar, dėl tavo saugumo, jis nebebus daugiau parodytas.</string>
+    <string name="api_key_created">API raktas sukurtas: %1$s</string>
+    <string name="api_key_last_used">%1$s...­ · paskutinį kartą naudotas %2$s</string>
+    <string name="api_key_name_placeholder">P.v.z. \"n8n\" integracija</string>
+    <string name="api_key_never_used">%1$s... · Nenaudota</string>
 </resources>
