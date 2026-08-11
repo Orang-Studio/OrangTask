@@ -14,6 +14,10 @@ val keystoreProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
+// Release builds are driven by the git tag in CI: -PversionName=1.2.3 -PversionCode=10203
+val appVersionName = (findProperty("versionName") as String?) ?: "1.0.0"
+val appVersionCode = (findProperty("versionCode") as String?)?.toInt() ?: 1
+
 android {
     namespace = "lt.oranges.orangtask"
     compileSdk = 35
@@ -22,8 +26,8 @@ android {
         applicationId = "lt.oranges.orangtask"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         buildConfigField("String", "API_BASE_URL", "\"https://task.oranges.lt\"")
     }

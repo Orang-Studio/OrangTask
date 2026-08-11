@@ -9,12 +9,12 @@
     <string name="all_tasks">All Tasks</string>
     <string name="all_tasks_empty_description">Create a list and start adding tasks.</string>
     <string name="already_have_account_sign_in">Already have an account? Sign in</string>
-    <string name="api_key_copy_warning">Copy it now, for your security, it won&apos;t be shown again.</string>
+    <string name="api_key_copy_warning">Copy it now, for your security, it won\'t be shown again.</string>
     <string name="api_key_created">API key created: %1$s</string>
     <string name="api_key_last_used">%1$s&#8230; &#183; last used %2$s</string>
     <string name="api_key_name_placeholder">e.g. n8n integration</string>
     <string name="api_key_never_used">%1$s&#8230; &#183; never used</string>
-    <string name="api_keys_description">Generate a personal API key to call the full OrangTask API directly (read/write lists, tasks, tags) from scripts or tools that need more than the one-way incoming webhook below. Keys don&apos;t expire like a login session, revoke one any time it&apos;s no longer needed.</string>
+    <string name="api_keys_description">Generate a personal API key to call the full OrangTask API directly (read/write lists, tasks, tags) from scripts or tools that need more than the one-way incoming webhook below. Keys don\'t expire like a login session, revoke one any time it\'s no longer needed.</string>
     <string name="api_keys_heading">API KEYS</string>
     <string name="app_name">OrangTask</string>
     <string name="app_pin">App PIN</string>
@@ -45,7 +45,7 @@
     <string name="continue_with_google">Continue with Google</string>
     <string name="copy_key">Copy key</string>
     <string name="copy_url">Copy URL</string>
-    <string name="could_not_read_keep_zip">Could not read that file. Select the .zip from Google Takeout (don&apos;t unzip it).</string>
+    <string name="could_not_read_keep_zip">Could not read that file. Select the .zip from Google Takeout (don\'t unzip it).</string>
     <string name="create">Create</string>
     <string name="create_account">Create account</string>
     <string name="create_account_arrow">Create account &#8594;</string>
@@ -64,11 +64,11 @@
     <string name="delete_account_description">Permanently delete your account and all data. This cannot be undone.</string>
     <string name="delete_forever">Delete forever</string>
     <string name="delete_list">Delete list</string>
-    <string name="delete_list_confirmation">Delete &quot;%1$s&quot; and all its tasks?</string>
+    <string name="delete_list_confirmation">Delete \"%1$s\" and all its tasks?</string>
     <string name="delete_subtask">Delete subtask</string>
     <string name="delete_task">Delete task</string>
     <string name="delete_webhook">Delete webhook</string>
-    <string name="delete_webhook_confirmation">Delete &quot;%1$s&quot;?</string>
+    <string name="delete_webhook_confirmation">Delete \"%1$s\"?</string>
     <string name="deleting">Deleting&#8230;</string>
     <string name="delivery_log">Delivery log</string>
     <string name="direct_api_access_example_label">Direct API access example</string>
@@ -104,7 +104,7 @@
         <item quantity="one">and %1$d checklist item</item>
         <item quantity="other">and %1$d checklist items</item>
     </plurals>
-    <string name="imported_into_list">into &quot;%1$s&quot;.</string>
+    <string name="imported_into_list">into \"%1$s\".</string>
     <plurals name="imported_notes">
         <item quantity="one">Imported %1$d note</item>
         <item quantity="other">Imported %1$d notes</item>
@@ -125,7 +125,7 @@
     </plurals>
     <string name="leave">Leave</string>
     <string name="leave_list">Leave list</string>
-    <string name="leave_list_confirmation">Leave &quot;%1$s&quot;? You&apos;ll lose access until you&apos;re invited again.</string>
+    <string name="leave_list_confirmation">Leave \"%1$s\"? You\'ll lose access until you\'re invited again.</string>
     <string name="list_empty_description">Add your first task using the box below.</string>
     <string name="list_icon">List icon</string>
     <string name="list_name_placeholder">List name...</string>
@@ -155,12 +155,12 @@
     <string name="new_tag_placeholder">New tag...</string>
     <string name="next">Next</string>
     <string name="no_deliveries">No deliveries yet.</string>
-    <string name="no_google_keep_notes">No Google Keep notes found in that zip. Pick the Takeout archive that contains a &quot;Keep&quot; folder.</string>
-    <string name="no_lists_description">Tap &quot;%1$s&quot; above to create your first list, then add tasks.</string>
+    <string name="no_google_keep_notes">No Google Keep notes found in that zip. Pick the Takeout archive that contains a \"Keep\" folder.</string>
+    <string name="no_lists_description">Tap \"%1$s\" above to create your first list, then add tasks.</string>
     <string name="no_lists_yet">No lists yet</string>
     <string name="no_notifications">No notifications</string>
     <string name="no_overdue_tasks">No overdue tasks</string>
-    <string name="no_search_results">No results for &quot;%1$s&quot;</string>
+    <string name="no_search_results">No results for \"%1$s\"</string>
     <string name="no_tasks_in_list">No tasks in this list</string>
     <string name="no_tasks_yet">No tasks yet</string>
     <string name="no_upcoming_tasks">No upcoming tasks</string>
@@ -171,9 +171,9 @@
     <string name="notification_action_snooze_one_hour">Snooze 1h</string>
     <string name="notification_channel_description">Task reminders and updates</string>
     <string name="notification_channel_name">Reminders</string>
-    <string name="notification_delivery_description">Push delivers to devices where you&apos;ve enabled it (browser push today, native Android push arrives in a later update). Email goes to your account address.</string>
+    <string name="notification_delivery_description">Push delivers to devices where you\'ve enabled it (browser push today, native Android push arrives in a later update). Email goes to your account address.</string>
     <string name="notifications">Notifications</string>
-    <string name="notifications_caught_up">You&apos;re all caught up. New activity will show here.</string>
+    <string name="notifications_caught_up">You\'re all caught up. New activity will show here.</string>
     <string name="notifications_heading">NOTIFICATIONS</string>
     <string name="notify_me_about">Notify me about</string>
     <string name="oauth_generic">Couldn\'t sign in with that provider. Please try again.</string>
@@ -199,7 +199,7 @@
     <string name="priority_medium">Medium</string>
     <string name="priority_none">None</string>
     <string name="push">Push</string>
-    <string name="quick_add_placeholder">Add a task...  (try &quot;report friday 5pm !high&quot;)</string>
+    <string name="quick_add_placeholder">Add a task...  (try \"report friday 5pm !high\")</string>
     <string name="reading_zip">Reading zip&#8230;</string>
     <string name="recurrence_rule_placeholder">Recurrence rule (e.g. FREQ=DAILY)</string>
     <string name="recurring">Recurring</string>
@@ -219,7 +219,7 @@
     <string name="reset_pin_title">RESET YOUR PIN</string>
     <string name="revoke">Revoke</string>
     <string name="revoke_api_key">Revoke API key</string>
-    <string name="revoke_api_key_confirmation">Revoke &quot;%1$s&quot;? Any integration using it will stop working.</string>
+    <string name="revoke_api_key_confirmation">Revoke \"%1$s\"? Any integration using it will stop working.</string>
     <string name="revoke_api_key_content_description">Revoke %1$s</string>
     <string name="role_editor">Editor</string>
     <string name="role_owner">Owner</string>
@@ -250,7 +250,7 @@
     <string name="settings_profile">Profile</string>
     <string name="settings_webhooks">Webhooks</string>
     <string name="share">Share</string>
-    <string name="share_list_title">SHARE &quot;%1$s&quot;</string>
+    <string name="share_list_title">SHARE \"%1$s\"</string>
     <string name="sign_in">Sign in</string>
     <string name="sign_in_link_label">Paste the sign-in link</string>
     <string name="sign_in_link_sent">We sent a sign-in link to %1$s</string>
