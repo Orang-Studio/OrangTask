@@ -1,1 +1,9 @@
-{}
+{
+    "allTasks.emptyDescription": "Sukurk sąrašą ir pradėk daryti užduotis.",
+    "allTasks.title": "Visos užduotys",
+    "common.add": "Pridėti",
+    "common.addTask": "Pridėti užduotį",
+    "login.haveAccountSignIn": "Jau turi paskyrą? Prisijungti",
+    "settings.apiKeyCopyWarning": "Kopijuok ji dabar, dėl tavo saugumo, jis nebebus daugiau parodytas.",
+    "settings.apiKeyPlaceholder": "P.v.z. \"n8n\" integracija"
+}
