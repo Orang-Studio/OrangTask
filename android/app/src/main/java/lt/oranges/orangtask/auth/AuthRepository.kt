@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.db.OrangDb
 import lt.oranges.orangtask.core.network.AuthApi
 import lt.oranges.orangtask.core.network.AuthResponse
@@ -129,7 +130,7 @@ class AuthRepository @Inject constructor(
 
     private fun storeTokensOrFail(res: AuthResponse) {
         if (res.accessToken == null || res.refreshToken == null) {
-            throw IllegalStateException(context.getString(R.string.session_tokens_missing))
+            throw IllegalStateException(AppStrings.get(context, R.string.session_tokens_missing))
         }
         tokenStore.storeTokens(res.accessToken, res.refreshToken)
     }

@@ -12,6 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.network.WebhookDeliveryDto
 import lt.oranges.orangtask.core.network.WebhookDto
 import lt.oranges.orangtask.core.network.userMessage
@@ -97,14 +98,14 @@ class WebhooksViewModel @Inject constructor(
 
     fun test(id: String) {
         viewModelScope.launch {
-            testResults[id] = context.getString(R.string.sending)
+            testResults[id] = AppStrings.get(context, R.string.sending)
             try {
                 val res = repo.testWebhook(id)
                 val error = res.error
                 testResults[id] = if (!error.isNullOrEmpty()) {
-                    context.getString(R.string.webhook_test_error, error)
+                    AppStrings.get(context, R.string.webhook_test_error, error)
                 } else {
-                    context.getString(R.string.webhook_test_success, res.statusCode)
+                    AppStrings.get(context, R.string.webhook_test_success, res.statusCode)
                 }
                 loadDeliveries(id)
             } catch (e: Exception) {

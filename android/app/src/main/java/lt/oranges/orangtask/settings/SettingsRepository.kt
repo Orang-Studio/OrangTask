@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.network.ApiKeyDto
 import lt.oranges.orangtask.core.network.ChannelPref
 import lt.oranges.orangtask.core.network.CreateApiKeyRequest
@@ -128,7 +129,7 @@ class SettingsRepository @Inject constructor(
     ): KeepImportResult = api.importGoogleKeep(
         KeepImportRequest(
             notes,
-            listName.trim().ifEmpty { context.getString(R.string.google_keep) },
+            listName.trim().ifEmpty { AppStrings.get(context, R.string.google_keep) },
             includeArchived,
             includeTrashed,
         )

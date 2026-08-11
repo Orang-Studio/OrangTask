@@ -11,6 +11,8 @@ WORKDIR /app/backend
 COPY backend/package.json backend/bun.lock* ./
 RUN bun install --production
 COPY backend/ ./
+COPY android/app/src/main/res /app/android/app/src/main/res
+RUN bun run i18n:build
 
 # Final image
 FROM oven/bun:1.3-alpine

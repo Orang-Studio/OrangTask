@@ -38,7 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -232,7 +232,7 @@ private fun OrangTabBar(
                 ) {
                     Icon(
                         Icons.Outlined.Add,
-                        contentDescription = stringResource(R.string.add_task),
+                        contentDescription = tr(R.string.add_task),
                         tint = Color.White,
                         modifier = Modifier.size(28.dp),
                     )
@@ -253,7 +253,7 @@ private fun TabSlot(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val label = stringResource(labelRes)
+    val label = tr(labelRes)
     val tint = if (active) Orange500 else MaterialTheme.colorScheme.onSurfaceVariant
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -76,7 +76,7 @@ fun SearchScreen(
             OrangTextField(
                 value = query,
                 onValueChange = viewModel::onQueryChange,
-                placeholder = stringResource(R.string.search_tasks_placeholder),
+                placeholder = tr(R.string.search_tasks_placeholder),
                 modifier = Modifier.weight(1f).focusRequester(focusRequester),
             )
         }
@@ -84,16 +84,16 @@ fun SearchScreen(
 
         Box(modifier = Modifier.fillMaxSize()) {
             when (val s = state) {
-                SearchUiState.Idle -> CenteredHint(stringResource(R.string.type_at_least_two_characters))
-                SearchUiState.Searching -> CenteredHint(stringResource(R.string.searching))
+                SearchUiState.Idle -> CenteredHint(tr(R.string.type_at_least_two_characters))
+                SearchUiState.Searching -> CenteredHint(tr(R.string.searching))
                 is SearchUiState.Error -> EmptyState(
                     icon = Icons.Outlined.CloudOff,
-                    title = stringResource(R.string.search_unavailable),
+                    title = tr(R.string.search_unavailable),
                     description = s.message,
                 )
                 is SearchUiState.Results ->
                     if (s.results.isEmpty()) {
-                        CenteredHint(stringResource(R.string.no_search_results, s.query))
+                        CenteredHint(tr(R.string.no_search_results, s.query))
                     } else {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(s.results, key = { it.id }) { result ->

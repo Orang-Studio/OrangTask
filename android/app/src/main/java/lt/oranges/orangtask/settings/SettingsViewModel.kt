@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.network.ChannelPref
 import lt.oranges.orangtask.core.network.UserDto
 import lt.oranges.orangtask.core.network.userMessage
@@ -130,12 +131,12 @@ class SettingsViewModel @Inject constructor(
                         ?: emptyList()
                 }
                 if (notes.isEmpty()) {
-                    keepError = context.getString(R.string.no_google_keep_notes)
+                    keepError = AppStrings.get(context, R.string.no_google_keep_notes)
                 } else {
                     keepNotes = notes
                 }
             } catch (e: Exception) {
-                keepError = context.getString(R.string.could_not_read_keep_zip)
+                keepError = AppStrings.get(context, R.string.could_not_read_keep_zip)
             } finally {
                 keepParsing = false
             }
@@ -168,7 +169,7 @@ class SettingsViewModel @Inject constructor(
                         )
                     }
                     append(" ")
-                    append(context.getString(R.string.imported_into_list, res.list.name))
+                    append(AppStrings.get(context, R.string.imported_into_list, res.list.name))
                     if (res.skipped > 0) {
                         append(" ")
                         append(

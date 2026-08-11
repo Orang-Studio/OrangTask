@@ -133,6 +133,12 @@
     <string name="list_shared_description">When someone shares a list with you</string>
     <string name="list_shared_label">List shared</string>
     <string name="lists">Lists</string>
+    <string name="language_english">English</string>
+    <string name="language_hint">Translations update automatically when new versions are published.</string>
+    <string name="language_lithuanian">Lietuvių</string>
+    <string name="language_subtitle">Choose the language used by OrangTask</string>
+    <string name="language_system">System default</string>
+    <string name="language_title">Language</string>
     <string name="loading">Loading&#8230;</string>
     <string name="login_footer">Free and open source. Self-host it yourself.</string>
     <string name="login_tagline">Tasks that sync everywhere</string>

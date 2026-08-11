@@ -31,7 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -65,9 +65,9 @@ fun IntegrationsSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.api_keys_heading), fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(tr(R.string.api_keys_heading), fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(
-                stringResource(R.string.api_keys_description),
+                tr(R.string.api_keys_description),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -76,18 +76,18 @@ fun IntegrationsSection(
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
-                stringResource(R.string.webhooks_integrations_heading),
+                tr(R.string.webhooks_integrations_heading),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
             )
             Text(
-                stringResource(R.string.webhooks_integrations_description),
+                tr(R.string.webhooks_integrations_description),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             CodeBlock(
-                label = stringResource(R.string.incoming_webhook_payload_label),
+                label = tr(R.string.incoming_webhook_payload_label),
                 code = "POST /api/hooks/<incoming-webhook-token>\n" +
                     "{\n" +
                     "  \"title\": \"Review PR\",\n" +
@@ -98,7 +98,7 @@ fun IntegrationsSection(
                     "}",
             )
             CodeBlock(
-                label = stringResource(R.string.direct_api_access_example_label),
+                label = tr(R.string.direct_api_access_example_label),
                 code = "GET ${BuildConfig.API_BASE_URL.trimEnd('/')}/api/tasks\n" +
                     "Authorization: Bearer <api-key>",
             )
@@ -139,7 +139,7 @@ private fun ApiKeysManager(viewModel: ApiKeysViewModel) {
         }
 
         if (viewModel.loading) {
-            Text(stringResource(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         viewModel.keys.forEach { key ->
@@ -158,11 +158,11 @@ private fun ApiKeysManager(viewModel: ApiKeysViewModel) {
                     OrangTextField(
                         value = name,
                         onValueChange = { name = it },
-                        placeholder = stringResource(R.string.api_key_name_placeholder),
+                        placeholder = tr(R.string.api_key_name_placeholder),
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         BrandButton(
-                            text = if (viewModel.creating) stringResource(R.string.creating) else stringResource(R.string.create_key),
+                            text = if (viewModel.creating) tr(R.string.creating) else tr(R.string.create_key),
                             enabled = !viewModel.creating && name.isNotBlank(),
                             onClick = {
                                 haptics.tap()
@@ -173,13 +173,13 @@ private fun ApiKeysManager(viewModel: ApiKeysViewModel) {
                             },
                             modifier = Modifier.weight(1f),
                         )
-                        BrandButton(text = stringResource(R.string.cancel), secondary = true, onClick = { showForm = false })
+                        BrandButton(text = tr(R.string.cancel), secondary = true, onClick = { showForm = false })
                     }
                 }
             }
         } else {
             BrandButton(
-                text = stringResource(R.string.new_api_key),
+                text = tr(R.string.new_api_key),
                 icon = Icons.Outlined.Add,
                 secondary = true,
                 onClick = {
@@ -201,9 +201,9 @@ private fun RevealedKeyCard(name: String, rawKey: String, onDismiss: () -> Unit)
 
     SurfaceCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(stringResource(R.string.api_key_created, name), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(tr(R.string.api_key_created, name), fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Text(
-                stringResource(R.string.api_key_copy_warning),
+                tr(R.string.api_key_copy_warning),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
@@ -227,14 +227,14 @@ private fun RevealedKeyCard(name: String, rawKey: String, onDismiss: () -> Unit)
                 }) {
                     Icon(
                         Icons.Outlined.ContentCopy,
-                        contentDescription = stringResource(R.string.copy_key),
+                        contentDescription = tr(R.string.copy_key),
                         tint = if (copied) Orange500 else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp),
                     )
                 }
             }
             Text(
-                stringResource(R.string.done),
+                tr(R.string.done),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -259,9 +259,9 @@ private fun ApiKeyRow(key: ApiKeyDto, onDelete: () -> Unit) {
                 val lastUsedMillis = isoToMillis(key.lastUsedAt)
                 Text(
                     if (lastUsedMillis == null) {
-                        stringResource(R.string.api_key_never_used, key.keyPrefix)
+                        tr(R.string.api_key_never_used, key.keyPrefix)
                     } else {
-                        stringResource(R.string.api_key_last_used, key.keyPrefix, formatDueDate(lastUsedMillis))
+                        tr(R.string.api_key_last_used, key.keyPrefix, formatDueDate(lastUsedMillis))
                     },
                     fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace,
@@ -271,7 +271,7 @@ private fun ApiKeyRow(key: ApiKeyDto, onDelete: () -> Unit) {
             IconButton(onClick = { confirmDelete = true }) {
                 Icon(
                     Icons.Outlined.Delete,
-                    contentDescription = stringResource(R.string.revoke_api_key_content_description, key.name),
+                    contentDescription = tr(R.string.revoke_api_key_content_description, key.name),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp),
                 )
@@ -282,15 +282,15 @@ private fun ApiKeyRow(key: ApiKeyDto, onDelete: () -> Unit) {
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(stringResource(R.string.revoke_api_key)) },
-            text = { Text(stringResource(R.string.revoke_api_key_confirmation, key.name)) },
+            title = { Text(tr(R.string.revoke_api_key)) },
+            text = { Text(tr(R.string.revoke_api_key_confirmation, key.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = false
                     onDelete()
-                }) { Text(stringResource(R.string.revoke), color = Color(0xFFEF4444)) }
+                }) { Text(tr(R.string.revoke), color = Color(0xFFEF4444)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(tr(R.string.cancel)) } },
         )
     }
 }

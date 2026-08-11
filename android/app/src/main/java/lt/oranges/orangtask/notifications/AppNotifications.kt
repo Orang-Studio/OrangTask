@@ -13,6 +13,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import lt.oranges.orangtask.MainActivity
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 
 object AppNotifications {
     const val CHANNEL_ID = "orangtask_reminders"
@@ -31,10 +32,10 @@ object AppNotifications {
         mgr.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                context.getString(R.string.notification_channel_name),
+                AppStrings.get(context, R.string.notification_channel_name),
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
-                description = context.getString(R.string.notification_channel_description)
+                description = AppStrings.get(context, R.string.notification_channel_description)
             }
         )
     }
@@ -55,12 +56,12 @@ object AppNotifications {
         if (taskId != null && type in TASK_TYPES) {
             builder.addAction(
                 0,
-                context.getString(R.string.notification_action_mark_done),
+                AppStrings.get(context, R.string.notification_action_mark_done),
                 actionIntent(context, ACTION_DONE, taskId, notifId),
             )
             builder.addAction(
                 0,
-                context.getString(R.string.notification_action_snooze_one_hour),
+                AppStrings.get(context, R.string.notification_action_snooze_one_hour),
                 actionIntent(context, ACTION_SNOOZE, taskId, notifId),
             )
         }

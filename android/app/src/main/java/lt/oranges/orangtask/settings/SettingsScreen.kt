@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.IntegrationInstructions
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Person
@@ -56,7 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -81,6 +82,7 @@ import lt.oranges.orangtask.ui.theme.ThemeMode
 
 private const val SECTION_PROFILE = "profile"
 private const val SECTION_APPEARANCE = "appearance"
+private const val SECTION_LANGUAGE = "language"
 private const val SECTION_NOTIFICATIONS = "notifications"
 private const val SECTION_WEBHOOKS = "webhooks"
 private const val SECTION_INTEGRATIONS = "integrations"
@@ -91,6 +93,7 @@ private data class SectionInfo(val key: String, val labelRes: Int, val icon: Ima
 private val SECTIONS = listOf(
     SectionInfo(SECTION_PROFILE, R.string.settings_profile, Icons.Outlined.Person),
     SectionInfo(SECTION_APPEARANCE, R.string.settings_appearance, Icons.Outlined.Palette),
+    SectionInfo(SECTION_LANGUAGE, R.string.language_title, Icons.Outlined.Language),
     SectionInfo(SECTION_NOTIFICATIONS, R.string.settings_notifications, Icons.Outlined.Notifications),
     SectionInfo(SECTION_WEBHOOKS, R.string.settings_webhooks, Icons.Outlined.Webhook),
     SectionInfo(SECTION_INTEGRATIONS, R.string.settings_integrations, Icons.Outlined.IntegrationInstructions),
@@ -139,18 +142,18 @@ fun SettingsScreen(
             ) {
                 if (section.isEmpty()) {
                     Icon(Icons.Outlined.Settings, contentDescription = null, tint = Orange500, modifier = Modifier.size(20.dp))
-                    Text(stringResource(R.string.settings_heading), fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(tr(R.string.settings_heading), fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 } else {
                     IconButton(onClick = { section = "" }) {
                         Icon(
                             Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.content_description_back),
+                            contentDescription = tr(R.string.content_description_back),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     val sectionLabelRes = SECTIONS.firstOrNull { it.key == section }?.labelRes
                     Text(
-                        (if (sectionLabelRes == null) "" else stringResource(sectionLabelRes)).uppercase(),
+                        (if (sectionLabelRes == null) "" else tr(sectionLabelRes)).uppercase(),
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
@@ -176,6 +179,7 @@ fun SettingsScreen(
                     )
                     SECTION_PROFILE -> ProfileSection(user, viewModel, onUserChanged)
                     SECTION_APPEARANCE -> AppearanceSection(viewModel)
+                    SECTION_LANGUAGE -> LanguageSection()
                     SECTION_NOTIFICATIONS -> NotificationPrefsSection(viewModel)
 
                     SECTION_WEBHOOKS -> WebhooksSection(onError = { viewModel.errors.tryEmit(it) })
@@ -227,7 +231,7 @@ private fun SettingsIndex(user: UserDto?, onOpen: (String) -> Unit, onLogout: ()
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
                     )
-                    Text(stringResource(info.labelRes), fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                    Text(tr(info.labelRes), fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                     Icon(
                         Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                         contentDescription = null,
@@ -239,7 +243,7 @@ private fun SettingsIndex(user: UserDto?, onOpen: (String) -> Unit, onLogout: ()
         }
 
         BrandButton(
-            text = stringResource(R.string.sign_out),
+            text = tr(R.string.sign_out),
             secondary = true,
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth(),
@@ -278,24 +282,24 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
         }
 
         Column {
-            FieldLabel(stringResource(R.string.name))
+            FieldLabel(tr(R.string.name))
             Spacer(Modifier.height(6.dp))
             OrangTextField(value = name, onValueChange = { name = it })
         }
         Column {
-            FieldLabel(stringResource(R.string.avatar_url))
+            FieldLabel(tr(R.string.avatar_url))
             Spacer(Modifier.height(6.dp))
             OrangTextField(
                 value = avatarUrl,
                 onValueChange = { avatarUrl = it },
-                placeholder = stringResource(R.string.avatar_url_placeholder),
+                placeholder = tr(R.string.avatar_url_placeholder),
             )
         }
         BrandButton(
             text = when {
-                viewModel.profileSaving -> stringResource(R.string.saving)
-                viewModel.profileSaved -> stringResource(R.string.saved)
-                else -> stringResource(R.string.save_profile)
+                viewModel.profileSaving -> tr(R.string.saving)
+                viewModel.profileSaved -> tr(R.string.saved)
+                else -> tr(R.string.save_profile)
             },
             enabled = !viewModel.profileSaving && name.isNotBlank(),
             onClick = {
@@ -308,10 +312,10 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.app_pin), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(tr(R.string.app_pin), fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 if (viewModel.hasPin == true) {
                     Text(
-                        stringResource(R.string.enabled),
+                        tr(R.string.enabled),
                         fontSize = 10.sp,
                         color = Color(0xFF22C55E),
                         modifier = Modifier
@@ -321,13 +325,13 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
                 }
             }
             Text(
-                stringResource(R.string.pin_description),
+                tr(R.string.pin_description),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             when (viewModel.hasPin) {
-                null -> Text(stringResource(R.string.checking), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                true -> BrandButton(text = stringResource(R.string.remove_pin), secondary = true, onClick = {
+                null -> Text(tr(R.string.checking), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                true -> BrandButton(text = tr(R.string.remove_pin), secondary = true, onClick = {
                     haptics.tap()
                     viewModel.removePin()
                 })
@@ -336,13 +340,13 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
                         OrangTextField(
                             value = pinInput,
                             onValueChange = { pinInput = it.filter(Char::isDigit).take(6) },
-                            placeholder = stringResource(R.string.pin_digits_placeholder),
+                            placeholder = tr(R.string.pin_digits_placeholder),
                             isPassword = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                             modifier = Modifier.weight(1f),
                         )
                         BrandButton(
-                            text = stringResource(R.string.set_pin),
+                            text = tr(R.string.set_pin),
                             enabled = pinInput.length in 4..6,
                             onClick = {
                                 haptics.tap()
@@ -353,7 +357,7 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
                         )
                     }
                 } else {
-                    BrandButton(text = stringResource(R.string.set_up_pin), secondary = true, onClick = {
+                    BrandButton(text = tr(R.string.set_up_pin), secondary = true, onClick = {
                         haptics.tap()
                         showPinForm = true
                     })
@@ -368,13 +372,13 @@ private fun AppearanceSection(viewModel: SettingsViewModel) {
     val haptics = rememberHaptics()
     val dark = isDarkTheme()
     Column {
-        FieldLabel(stringResource(R.string.theme))
+        FieldLabel(tr(R.string.theme))
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ThemeMode.entries.forEach { mode ->
                 val selected = viewModel.themePrefs.mode == mode
                 Text(
-                    text = stringResource(themeLabelRes(mode)),
+                    text = tr(themeLabelRes(mode)),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = if (selected) Orange500 else MaterialTheme.colorScheme.onSurface,
@@ -400,21 +404,21 @@ private fun NotificationPrefsSection(viewModel: SettingsViewModel) {
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            stringResource(R.string.notification_delivery_description),
+            tr(R.string.notification_delivery_description),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         val prefs = viewModel.prefs
         if (prefs == null) {
-            Text(stringResource(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@Column
         }
 
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp)) {
-            FieldLabel(stringResource(R.string.notify_me_about), modifier = Modifier.weight(1f))
-            FieldLabel(stringResource(R.string.push), modifier = Modifier.padding(end = 26.dp))
-            FieldLabel(stringResource(R.string.email))
+            FieldLabel(tr(R.string.notify_me_about), modifier = Modifier.weight(1f))
+            FieldLabel(tr(R.string.push), modifier = Modifier.padding(end = 26.dp))
+            FieldLabel(tr(R.string.email))
         }
         HorizontalDivider(color = if (dark) Ink700 else Color(0xFFE5E7EB))
 
@@ -426,8 +430,8 @@ private fun NotificationPrefsSection(viewModel: SettingsViewModel) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(type.labelRes), fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                    Text(stringResource(type.descRes), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(tr(type.labelRes), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(tr(type.descRes), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(
                     checked = pref?.push == true,
@@ -455,18 +459,18 @@ private fun DataSection(user: UserDto?, viewModel: SettingsViewModel, onLogout: 
     val haptics = rememberHaptics()
     val dark = isDarkTheme()
     val context = LocalContext.current
-    val exportChooserTitle = stringResource(R.string.export_orangtask_data)
+    val exportChooserTitle = tr(R.string.export_orangtask_data)
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(stringResource(R.string.export_your_data), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(tr(R.string.export_your_data), fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Text(
-                stringResource(R.string.export_data_description),
+                tr(R.string.export_data_description),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             BrandButton(
-                text = if (viewModel.exporting) stringResource(R.string.exporting) else stringResource(R.string.export_json),
+                text = if (viewModel.exporting) tr(R.string.exporting) else tr(R.string.export_json),
                 secondary = true,
                 enabled = !viewModel.exporting,
                 onClick = {
@@ -499,7 +503,7 @@ private fun DataSection(user: UserDto?, viewModel: SettingsViewModel, onLogout: 
 @Composable
 private fun KeepImportBlock(viewModel: SettingsViewModel) {
     val haptics = rememberHaptics()
-    val googleKeep = stringResource(R.string.google_keep)
+    val googleKeep = tr(R.string.google_keep)
     var listName by rememberSaveable { mutableStateOf(googleKeep) }
     var includeArchived by rememberSaveable { mutableStateOf(true) }
     var includeTrashed by rememberSaveable { mutableStateOf(false) }
@@ -509,15 +513,15 @@ private fun KeepImportBlock(viewModel: SettingsViewModel) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.import_from_google_keep), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        Text(tr(R.string.import_from_google_keep), fontSize = 14.sp, fontWeight = FontWeight.Medium)
         Text(
-            stringResource(R.string.import_google_keep_description),
+            tr(R.string.import_google_keep_description),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         BrandButton(
-            text = if (viewModel.keepParsing) stringResource(R.string.reading_zip) else stringResource(R.string.choose_takeout_zip),
+            text = if (viewModel.keepParsing) tr(R.string.reading_zip) else tr(R.string.choose_takeout_zip),
             icon = Icons.Outlined.Upload,
             secondary = true,
             enabled = !viewModel.keepParsing && !viewModel.keepImporting,
@@ -542,7 +546,7 @@ private fun KeepImportBlock(viewModel: SettingsViewModel) {
                         fontSize = 13.sp,
                     )
                     Column {
-                        FieldLabel(stringResource(R.string.import_into_list))
+                        FieldLabel(tr(R.string.import_into_list))
                         Spacer(Modifier.height(4.dp))
                         OrangTextField(
                             value = listName,
@@ -550,12 +554,12 @@ private fun KeepImportBlock(viewModel: SettingsViewModel) {
                             placeholder = googleKeep,
                         )
                     }
-                    CheckboxRow(stringResource(R.string.include_archived_notes), includeArchived) { includeArchived = it }
-                    CheckboxRow(stringResource(R.string.include_trashed_notes), includeTrashed) { includeTrashed = it }
+                    CheckboxRow(tr(R.string.include_archived_notes), includeArchived) { includeArchived = it }
+                    CheckboxRow(tr(R.string.include_trashed_notes), includeTrashed) { includeTrashed = it }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         BrandButton(
                             text = if (viewModel.keepImporting) {
-                                stringResource(R.string.importing)
+                                tr(R.string.importing)
                             } else {
                                 pluralStringResource(R.plurals.import_notes, viewModel.keepNotes.size, viewModel.keepNotes.size)
                             },
@@ -566,7 +570,7 @@ private fun KeepImportBlock(viewModel: SettingsViewModel) {
                             },
                             modifier = Modifier.weight(1f),
                         )
-                        BrandButton(text = stringResource(R.string.cancel), secondary = true, onClick = { viewModel.clearKeepSelection() })
+                        BrandButton(text = tr(R.string.cancel), secondary = true, onClick = { viewModel.clearKeepSelection() })
                     }
                 }
             }
@@ -605,13 +609,13 @@ private fun DeleteAccountBlock(user: UserDto?, viewModel: SettingsViewModel, onL
     val matches = confirmEmail.trim().equals(user?.email ?: "", ignoreCase = true)
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.delete_account), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFFEF4444))
+        Text(tr(R.string.delete_account), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFFEF4444))
         Text(
-            stringResource(R.string.delete_account_description),
+            tr(R.string.delete_account_description),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        BrandButton(text = stringResource(R.string.delete_account), secondary = true, onClick = {
+        BrandButton(text = tr(R.string.delete_account), secondary = true, onClick = {
             haptics.error()
             confirmEmail = ""
             showConfirm = true
@@ -621,13 +625,13 @@ private fun DeleteAccountBlock(user: UserDto?, viewModel: SettingsViewModel, onL
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { if (!viewModel.deletingAccount) showConfirm = false },
-            title = { Text(stringResource(R.string.delete_account)) },
+            title = { Text(tr(R.string.delete_account)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        stringResource(
+                        tr(
                             R.string.type_email_to_confirm,
-                            user?.email ?: stringResource(R.string.your_email),
+                            user?.email ?: tr(R.string.your_email),
                         )
                     )
                     OrangTextField(
@@ -650,7 +654,7 @@ private fun DeleteAccountBlock(user: UserDto?, viewModel: SettingsViewModel, onL
                     },
                 ) {
                     Text(
-                        if (viewModel.deletingAccount) stringResource(R.string.deleting) else stringResource(R.string.delete_forever),
+                        if (viewModel.deletingAccount) tr(R.string.deleting) else tr(R.string.delete_forever),
                         color = if (matches) Color(0xFFEF4444) else Color(0xFFEF4444).copy(alpha = 0.4f),
                     )
                 }
@@ -659,7 +663,7 @@ private fun DeleteAccountBlock(user: UserDto?, viewModel: SettingsViewModel, onL
                 TextButton(
                     enabled = !viewModel.deletingAccount,
                     onClick = { showConfirm = false },
-                ) { Text(stringResource(R.string.cancel)) }
+                ) { Text(tr(R.string.cancel)) }
             },
         )
     }
