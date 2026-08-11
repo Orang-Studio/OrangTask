@@ -1,5 +1,6 @@
 package lt.oranges.orangtask.settings
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -7,8 +8,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.network.WebhookDeliveryDto
 import lt.oranges.orangtask.core.network.WebhookDto
 import lt.oranges.orangtask.core.network.userMessage
@@ -17,6 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class WebhooksViewModel @Inject constructor(
     private val repo: SettingsRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     val errors = MutableSharedFlow<String>(extraBufferCapacity = 4)
@@ -38,7 +42,7 @@ class WebhooksViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             runCatching { webhooks = repo.webhooks() }
-                .onFailure { errors.tryEmit(it.userMessage()) }
+                .onFailure { errors.tryEmit(it.userMessage(context)) }
             loading = false
         }
     }
@@ -51,7 +55,7 @@ class WebhooksViewModel @Inject constructor(
                 webhooks = listOf(webhook) + webhooks
                 onDone()
             } catch (e: Exception) {
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             } finally {
                 creating = false
             }
@@ -67,7 +71,7 @@ class WebhooksViewModel @Inject constructor(
                 webhooks = webhooks.map { if (it.id == id) updated else it }
             } catch (e: Exception) {
                 webhooks = webhooks.map { if (it.id == id) it.copy(enabled = !enabled) else it }
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             }
         }
     }
@@ -80,7 +84,7 @@ class WebhooksViewModel @Inject constructor(
                 repo.deleteWebhook(id)
             } catch (e: Exception) {
                 webhooks = before
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             }
         }
     }
@@ -93,14 +97,18 @@ class WebhooksViewModel @Inject constructor(
 
     fun test(id: String) {
         viewModelScope.launch {
-            testResults[id] = "Sending…"
+            testResults[id] = context.getString(R.string.sending)
             try {
                 val res = repo.testWebhook(id)
-                testResults[id] =
-                    if (!res.error.isNullOrEmpty()) "Error: ${res.error}" else "${res.statusCode} OK"
+                val error = res.error
+                testResults[id] = if (!error.isNullOrEmpty()) {
+                    context.getString(R.string.webhook_test_error, error)
+                } else {
+                    context.getString(R.string.webhook_test_success, res.statusCode)
+                }
                 loadDeliveries(id)
             } catch (e: Exception) {
-                testResults[id] = e.userMessage()
+                testResults[id] = e.userMessage(context)
             }
         }
     }

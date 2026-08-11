@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import lt.oranges.orangtask.BuildConfig
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.db.isoToMillis
 import lt.oranges.orangtask.core.network.WebhookDto
 import lt.oranges.orangtask.ui.components.BrandButton
@@ -78,13 +80,13 @@ fun WebhooksSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
-            "Send task events to external services, or create tasks from incoming requests.",
+            stringResource(R.string.webhooks_description),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         if (viewModel.loading) {
-            Text("Loading…", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         viewModel.webhooks.forEach { webhook ->
             WebhookCard(webhook, viewModel)
@@ -115,7 +117,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
             ) {
                 Icon(
                     if (incoming) Icons.Outlined.ArrowDownward else Icons.Outlined.ArrowUpward,
-                    contentDescription = if (incoming) "Incoming" else "Outgoing",
+                    contentDescription = stringResource(if (incoming) R.string.incoming else R.string.outgoing),
                     tint = if (incoming) Color(0xFF3B82F6) else Orange500,
                     modifier = Modifier.size(18.dp),
                 )
@@ -129,7 +131,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            if (webhook.enabled) "Enabled" else "Disabled",
+                            stringResource(if (webhook.enabled) R.string.enabled else R.string.disabled),
                             fontSize = 10.sp,
                             color = if (webhook.enabled) Color(0xFF22C55E) else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -156,7 +158,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                 }) {
                     Icon(
                         if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        contentDescription = stringResource(if (expanded) R.string.collapse else R.string.expand),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -170,7 +172,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                 ) {
                     if (incomingUrl != null) {
                         Column {
-                            FieldLabel("Incoming URL")
+                            FieldLabel(stringResource(R.string.incoming_url))
                             Spacer(Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(
@@ -190,7 +192,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                                 }) {
                                     Icon(
                                         Icons.Outlined.ContentCopy,
-                                        contentDescription = "Copy URL",
+                                        contentDescription = stringResource(R.string.copy_url),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(16.dp),
                                     )
@@ -202,7 +204,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                     if (!incoming) {
                         webhook.events?.takeIf { it.isNotEmpty() }?.let { events ->
                             Column {
-                                FieldLabel("Events")
+                                FieldLabel(stringResource(R.string.events))
                                 Spacer(Modifier.height(4.dp))
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -215,7 +217,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
 
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             BrandButton(
-                                text = "Send test",
+                                text = stringResource(R.string.send_test),
                                 icon = Icons.Outlined.Send,
                                 secondary = true,
                                 onClick = {
@@ -229,12 +231,12 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                         }
 
                         Column {
-                            FieldLabel("Delivery log")
+                            FieldLabel(stringResource(R.string.delivery_log))
                             Spacer(Modifier.height(4.dp))
                             val log = viewModel.deliveries[webhook.id]
                             when {
-                                log == null -> Text("Loading…", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                log.isEmpty() -> Text("No deliveries yet.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                log == null -> Text(stringResource(R.string.loading), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                log.isEmpty() -> Text(stringResource(R.string.no_deliveries), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 else -> log.take(10).forEach { delivery ->
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -244,7 +246,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                                         val code = delivery.statusCodeInt
                                         val ok = code != null && code < 400
                                         Text(
-                                            code?.toString() ?: "ERR",
+                                            code?.toString() ?: stringResource(R.string.webhook_delivery_error_code),
                                             fontSize = 10.sp,
                                             fontFamily = FontFamily.Monospace,
                                             color = if (ok) Color(0xFF22C55E) else Color(0xFFEF4444),
@@ -268,7 +270,7 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
                     }
 
                     Text(
-                        "Delete webhook",
+                        stringResource(R.string.delete_webhook),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFFEF4444),
@@ -284,16 +286,16 @@ private fun WebhookCard(webhook: WebhookDto, viewModel: WebhooksViewModel) {
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete webhook") },
-            text = { Text("Delete \"${webhook.name}\"?") },
+            title = { Text(stringResource(R.string.delete_webhook)) },
+            text = { Text(stringResource(R.string.delete_webhook_confirmation, webhook.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     haptics.error()
                     confirmDelete = false
                     viewModel.delete(webhook.id)
-                }) { Text("Delete", color = Color(0xFFEF4444)) }
+                }) { Text(stringResource(R.string.delete), color = Color(0xFFEF4444)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 }
@@ -310,7 +312,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
 
     if (!showForm) {
         BrandButton(
-            text = "Add webhook",
+            text = stringResource(R.string.add_webhook),
             icon = Icons.Outlined.Add,
             secondary = true,
             onClick = {
@@ -328,10 +330,10 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
             modifier = Modifier.padding(12.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("outgoing" to "Outgoing", "incoming" to "Incoming").forEach { (value, label) ->
+                listOf("outgoing" to R.string.outgoing, "incoming" to R.string.incoming).forEach { (value, labelRes) ->
                     val selected = direction == value
                     Text(
-                        label,
+                        stringResource(labelRes),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -352,12 +354,20 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
                 }
             }
 
-            OrangTextField(value = name, onValueChange = { name = it }, placeholder = "Webhook name")
+            OrangTextField(
+                value = name,
+                onValueChange = { name = it },
+                placeholder = stringResource(R.string.webhook_name_placeholder),
+            )
 
             if (direction == "outgoing") {
-                OrangTextField(value = url, onValueChange = { url = it }, placeholder = "https://example.com/webhook")
+                OrangTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    placeholder = stringResource(R.string.webhook_url_placeholder),
+                )
                 Column {
-                    FieldLabel("Events")
+                    FieldLabel(stringResource(R.string.events))
                     Spacer(Modifier.height(6.dp))
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -375,7 +385,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
                 }
             } else {
                 Text(
-                    "An incoming URL will be generated. POST a JSON task to it to create tasks from external tools.",
+                    stringResource(R.string.incoming_webhook_description),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -383,7 +393,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BrandButton(
-                    text = if (viewModel.creating) "Creating…" else "Create",
+                    text = if (viewModel.creating) stringResource(R.string.creating) else stringResource(R.string.create),
                     enabled = !viewModel.creating && name.isNotBlank() &&
                         (direction == "incoming" || url.isNotBlank()),
                     onClick = {
@@ -402,7 +412,7 @@ private fun CreateWebhookForm(viewModel: WebhooksViewModel) {
                     },
                     modifier = Modifier.weight(1f),
                 )
-                BrandButton(text = "Cancel", secondary = true, onClick = { showForm = false })
+                BrandButton(text = stringResource(R.string.cancel), secondary = true, onClick = { showForm = false })
             }
         }
     }

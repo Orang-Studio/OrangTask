@@ -1,11 +1,13 @@
 package lt.oranges.orangtask.settings
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import lt.oranges.orangtask.core.network.ApiKeyDto
@@ -16,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ApiKeysViewModel @Inject constructor(
     private val repo: SettingsRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     val errors = MutableSharedFlow<String>(extraBufferCapacity = 4)
@@ -37,7 +40,7 @@ class ApiKeysViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             runCatching { keys = repo.apiKeys() }
-                .onFailure { errors.tryEmit(it.userMessage()) }
+                .onFailure { errors.tryEmit(it.userMessage(context)) }
             loading = false
         }
     }
@@ -52,7 +55,7 @@ class ApiKeysViewModel @Inject constructor(
                 refresh()
                 onDone()
             } catch (e: Exception) {
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             } finally {
                 creating = false
             }
@@ -71,7 +74,7 @@ class ApiKeysViewModel @Inject constructor(
                 repo.deleteApiKey(id)
             } catch (e: Exception) {
                 keys = before
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             }
         }
     }

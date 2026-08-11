@@ -57,11 +57,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.db.TagEntity
 import lt.oranges.orangtask.core.db.TaskEntity
 import lt.oranges.orangtask.core.network.MemberDto
@@ -152,7 +154,7 @@ fun TaskDetailSheet(
                         modifier = Modifier.size(15.dp),
                     )
                     Text(
-                        text = if (task.done) "COMPLETED" else "COMPLETE",
+                        text = stringResource(if (task.done) R.string.completed else R.string.complete),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
@@ -161,7 +163,7 @@ fun TaskDetailSheet(
                 }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = { dismiss() }) {
-                    Icon(Icons.Outlined.Close, contentDescription = "Close", tint = muted)
+                    Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.close), tint = muted)
                 }
             }
 
@@ -188,7 +190,8 @@ fun TaskDetailSheet(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = task.dueAtMillis?.let { formatDueDate(it) } ?: "Add due date",
+                        text = task.dueAtMillis?.let { formatDueDate(it) }
+                            ?: stringResource(R.string.add_due_date),
                         fontSize = 14.sp,
                         color = if (task.dueAtMillis != null) MaterialTheme.colorScheme.onSurface else muted,
                         modifier = Modifier
@@ -199,7 +202,7 @@ fun TaskDetailSheet(
                     if (task.dueAtMillis != null) {
                         Icon(
                             Icons.Outlined.Close,
-                            contentDescription = "Clear due date",
+                            contentDescription = stringResource(R.string.clear_due_date),
                             tint = muted,
                             modifier = Modifier
                                 .size(18.dp)
@@ -253,7 +256,7 @@ fun TaskDetailSheet(
                                 Avatar(name = assignee.name, url = assignee.avatarUrl, size = 20.dp)
                                 Text(assignee.name, fontSize = 14.sp)
                             } else {
-                                Text("Assign to...", fontSize = 14.sp, color = muted)
+                                Text(stringResource(R.string.assign_to), fontSize = 14.sp, color = muted)
                             }
                         }
                         DropdownMenu(
@@ -261,7 +264,7 @@ fun TaskDetailSheet(
                             onDismissRequest = { showAssignPicker = false },
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Unassigned") },
+                                text = { Text(stringResource(R.string.unassigned)) },
                                 onClick = {
                                     viewModel.setAssignee(task.id, null)
                                     showAssignPicker = false
@@ -306,7 +309,7 @@ fun TaskDetailSheet(
                                 )
                                 Icon(
                                     Icons.Outlined.Close,
-                                    contentDescription = "Remove tag",
+                                    contentDescription = stringResource(R.string.remove_tag),
                                     tint = muted,
                                     modifier = Modifier
                                         .size(12.dp)
@@ -323,7 +326,7 @@ fun TaskDetailSheet(
                                 .padding(horizontal = 8.dp, vertical = 4.dp),
                         ) {
                             Icon(Icons.Outlined.Add, contentDescription = null, tint = muted, modifier = Modifier.size(12.dp))
-                            Text("Tag", fontSize = 13.sp, color = muted)
+                            Text(stringResource(R.string.tag), fontSize = 13.sp, color = muted)
                         }
                     }
                     if (showTagPicker) {
@@ -345,7 +348,7 @@ fun TaskDetailSheet(
                         OrangTextField(
                             value = newTagName,
                             onValueChange = { newTagName = it },
-                            placeholder = "New tag...",
+                            placeholder = stringResource(R.string.new_tag_placeholder),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = {
                                 if (newTagName.isNotBlank()) {
@@ -360,12 +363,12 @@ fun TaskDetailSheet(
             }
 
             Column {
-                FieldLabel("Notes")
+                FieldLabel(stringResource(R.string.notes))
                 Spacer(Modifier.height(6.dp))
                 OrangTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    placeholder = "Add notes...",
+                    placeholder = stringResource(R.string.add_notes_placeholder),
                     singleLine = false,
                     minHeight = 96.dp,
                     modifier = Modifier.onFocusChanged { state ->
@@ -380,7 +383,7 @@ fun TaskDetailSheet(
                 OrangTextField(
                     value = recurrence,
                     onValueChange = { recurrence = it },
-                    placeholder = "Recurrence rule (e.g. FREQ=DAILY)",
+                    placeholder = stringResource(R.string.recurrence_rule_placeholder),
                     modifier = Modifier.onFocusChanged { state ->
                         if (!state.isFocused && recurrence.trim() != (task.recurrenceRule ?: "")) {
                             viewModel.setRecurrence(task.id, recurrence)
@@ -390,7 +393,7 @@ fun TaskDetailSheet(
             }
 
             Column {
-                FieldLabel("Subtasks")
+                FieldLabel(stringResource(R.string.subtasks))
                 Spacer(Modifier.height(8.dp))
                 subtasks.forEach { subtask ->
                     Row(
@@ -415,7 +418,7 @@ fun TaskDetailSheet(
                         )
                         Icon(
                             Icons.Outlined.Delete,
-                            contentDescription = "Delete subtask",
+                            contentDescription = stringResource(R.string.delete_subtask),
                             tint = muted,
                             modifier = Modifier
                                 .size(16.dp)
@@ -445,7 +448,11 @@ fun TaskDetailSheet(
                         decorationBox = { inner ->
                             Box {
                                 if (newSubtask.isEmpty()) {
-                                    Text("Add subtask...", fontSize = 14.sp, color = muted.copy(alpha = 0.6f))
+                                    Text(
+                                        stringResource(R.string.add_subtask_placeholder),
+                                        fontSize = 14.sp,
+                                        color = muted.copy(alpha = 0.6f),
+                                    )
                                 }
                                 inner()
                             }
@@ -466,7 +473,12 @@ fun TaskDetailSheet(
                     .padding(vertical = 8.dp),
             ) {
                 Icon(Icons.Outlined.Delete, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
-                Text("Delete task", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFFEF4444))
+                Text(
+                    stringResource(R.string.delete_task),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFFEF4444),
+                )
             }
 
             Spacer(Modifier.height(8.dp))
@@ -484,10 +496,10 @@ fun TaskDetailSheet(
                     pendingDayMillis = dateState.selectedDateMillis
                     showDatePicker = false
                     if (pendingDayMillis != null) showTimePicker = true
-                }) { Text("Next") }
+                }) { Text(stringResource(R.string.next)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
             },
         ) {
             DatePicker(state = dateState)
@@ -514,10 +526,10 @@ fun TaskDetailSheet(
                         viewModel.setDueDate(task.id, due)
                     }
                     showTimePicker = false
-                }) { Text("Set") }
+                }) { Text(stringResource(R.string.set)) }
             },
             dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.cancel)) }
             },
             text = { TimePicker(state = timeState) },
         )

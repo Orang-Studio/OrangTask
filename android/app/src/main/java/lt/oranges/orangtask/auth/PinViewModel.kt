@@ -1,12 +1,15 @@
 package lt.oranges.orangtask.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.network.userMessage
 import javax.inject.Inject
 
@@ -25,6 +28,7 @@ data class PinUiState(
 @HiltViewModel
 class PinViewModel @Inject constructor(
     private val repo: AuthRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PinUiState())
@@ -59,10 +63,10 @@ class PinViewModel @Inject constructor(
             try {
                 repo.requestPinReset()
                 _state.update {
-                    it.copy(recoverMessage = "We emailed a reset code to your account address.")
+                    it.copy(recoverMessage = context.getString(R.string.pin_reset_message))
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(recoverError = e.userMessage()) }
+                _state.update { it.copy(recoverError = e.userMessage(context)) }
             } finally {
                 _state.update { it.copy(recoverBusy = false) }
             }
@@ -76,7 +80,7 @@ class PinViewModel @Inject constructor(
     fun submitPinReset() {
         val s = _state.value
         if (!Regex("^\\d{6}$").matches(s.recoverCode)) {
-            _state.update { it.copy(recoverError = "Enter the 6-digit code from your email") }
+            _state.update { it.copy(recoverError = context.getString(R.string.six_digit_code_error)) }
             return
         }
         viewModelScope.launch {
@@ -85,7 +89,7 @@ class PinViewModel @Inject constructor(
                 repo.resetPin(s.recoverCode)
                 _state.update { it.copy(unlocked = true) }
             } catch (e: Exception) {
-                _state.update { it.copy(recoverError = e.userMessage()) }
+                _state.update { it.copy(recoverError = e.userMessage(context)) }
             } finally {
                 _state.update { it.copy(recoverBusy = false) }
             }

@@ -13,6 +13,7 @@ import { NotificationsPage } from './pages/NotificationsPage'
 import { LegalPage } from './pages/LegalPage'
 import { useAuthStore } from './stores/auth'
 import { useTheme } from './hooks/useTheme'
+import { useLangStore, resolveLanguage, applyLanguage } from './lib/i18n'
 import { Logo } from './components/Logo'
 import { UndoableTaskDeleteProvider } from './components/UndoableTaskDelete'
 
@@ -25,6 +26,12 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+function LanguageGate({ children }: { children: React.ReactNode }) {
+  const pref = useLangStore((s) => s.pref)
+  applyLanguage(resolveLanguage(pref))
+  return <>{children}</>
+}
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading, requiresPin } = useAuthStore()
@@ -100,7 +107,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AppRoutes />
+        <LanguageGate>
+          <AppRoutes />
+        </LanguageGate>
       </BrowserRouter>
     </QueryClientProvider>
   )

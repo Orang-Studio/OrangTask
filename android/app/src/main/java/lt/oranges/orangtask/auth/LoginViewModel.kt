@@ -1,13 +1,16 @@
 package lt.oranges.orangtask.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.network.ProvidersResponse
 import lt.oranges.orangtask.core.network.userMessage
 import javax.inject.Inject
@@ -36,6 +39,7 @@ data class LoginUiState(
 class LoginViewModel @Inject constructor(
     private val repo: AuthRepository,
     private val captchaTokenStore: CaptchaTokenStore,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
@@ -84,7 +88,7 @@ class LoginViewModel @Inject constructor(
     fun completeMagicLink() {
         val pasted = _state.value.pastedLink.trim()
         if (pasted.isEmpty()) {
-            _state.update { it.copy(error = "Paste the link from your email") }
+            _state.update { it.copy(error = context.getString(R.string.paste_magic_link_error)) }
             return
         }
         launchBusy { handleOutcome(repo.verifyMagicLink(pasted)) }
@@ -94,11 +98,16 @@ class LoginViewModel @Inject constructor(
         val s = _state.value
         if (!s.email.contains("@")) return showEmailError()
         if (s.password.length < 8) {
-            _state.update { it.copy(error = "Password must be at least 8 characters") }
+            _state.update { it.copy(error = context.getString(R.string.password_min_length_error)) }
             return
         }
         if (s.mode == LoginMode.REGISTER && s.captchaToken == null) {
-            _state.update { it.copy(captchaRequired = true, error = "Complete the security check to create your account") }
+            _state.update {
+                it.copy(
+                    captchaRequired = true,
+                    error = context.getString(R.string.captcha_create_account_error),
+                )
+            }
             return
         }
         launchBusy {
@@ -116,7 +125,7 @@ class LoginViewModel @Inject constructor(
     fun verifyEmailCode() {
         val s = _state.value
         if (!Regex("^\\d{6}$").matches(s.emailCode)) {
-            _state.update { it.copy(error = "Enter the 6-digit code from your email") }
+            _state.update { it.copy(error = context.getString(R.string.six_digit_code_error)) }
             return
         }
         launchBusy { handleOutcome(repo.verifyLoginCode(s.email, s.emailCode)) }
@@ -137,11 +146,11 @@ class LoginViewModel @Inject constructor(
     fun submitReset() {
         val s = _state.value
         if (!Regex("^\\d{6}$").matches(s.resetCode)) {
-            _state.update { it.copy(error = "Enter the 6-digit code from your email") }
+            _state.update { it.copy(error = context.getString(R.string.six_digit_code_error)) }
             return
         }
         if (s.password.length < 8) {
-            _state.update { it.copy(error = "Password must be at least 8 characters") }
+            _state.update { it.copy(error = context.getString(R.string.password_min_length_error)) }
             return
         }
         launchBusy {
@@ -159,7 +168,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun showEmailError() {
-        _state.update { it.copy(error = "Enter a valid email") }
+        _state.update { it.copy(error = context.getString(R.string.valid_email_error)) }
     }
 
     private fun launchBusy(block: suspend () -> Unit) {
@@ -168,7 +177,7 @@ class LoginViewModel @Inject constructor(
             try {
                 block()
             } catch (e: Exception) {
-                val message = e.userMessage()
+                val message = e.userMessage(context)
                 _state.update {
                     when {
                         message.contains("CAPTCHA", ignoreCase = true) -> it.copy(captchaRequired = true, error = message)

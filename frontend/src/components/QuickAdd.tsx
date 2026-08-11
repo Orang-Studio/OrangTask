@@ -3,6 +3,7 @@ import { Plus, Calendar, Flag, Repeat } from 'lucide-react'
 import { parseQuickAdd } from '../lib/chrono'
 import { formatDueDate } from '../lib/date'
 import { useHaptics } from '../hooks/useHaptics'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface Props {
   onAdd: (data: { title: string; due_date: string | null; priority: string; recurrence_rule: string | null }) => void
@@ -10,7 +11,7 @@ interface Props {
 }
 
 export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
-  { onAdd, placeholder = 'Add a task...  (try "report friday high priority")' },
+  { onAdd, placeholder = t('quickAdd.placeholder' as MessageKey) },
   ref
 ) {
   const [value, setValue] = useState('')
@@ -68,7 +69,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
           {preview.recurrence_rule && (
             <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 dark:bg-ink-700 dark:text-ink-300 rounded">
               <Repeat size={11} />
-              Recurring
+              {t('quickAdd.recurring' as MessageKey)}
             </span>
           )}
         </div>

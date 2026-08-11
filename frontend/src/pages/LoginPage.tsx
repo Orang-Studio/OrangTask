@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Mail, Github, Lock, ArrowRight, Check, KeyRound } from 'lucide-react'
 import { api } from '../lib/api'
+import { t, tNodes, type MessageKey } from '../lib/i18n'
 import { useAuthStore } from '../stores/auth'
 import { Logo } from '../components/Logo'
 import { Recaptcha } from '../components/Recaptcha'
@@ -38,7 +39,7 @@ export function LoginPage() {
 
   const sendMagic = async () => {
     if (!email.includes('@')) {
-      setError('Enter a valid email')
+      setError(t('login.validEmail' as MessageKey))
       return
     }
     setLoading(true)
@@ -47,7 +48,7 @@ export function LoginPage() {
       await api.post('/auth/magic-link', { email })
       setMagicSent(true)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to send link')
+      setError(e instanceof Error ? e.message : t('login.sendLinkError' as MessageKey))
     } finally {
       setLoading(false)
     }
@@ -74,7 +75,7 @@ export function LoginPage() {
         }
       }
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Authentication failed'
+      const message = e instanceof Error ? e.message : t('login.authError' as MessageKey)
       setError(message)
       if (message.includes('CAPTCHA')) setCaptchaRequired(true)
       if (message.includes('Verify your email')) setMode('verifyEmail')
@@ -85,7 +86,7 @@ export function LoginPage() {
 
   const verifyTwoFactor = async () => {
     if (!/^\d{6}$/.test(twoFactorCode)) {
-      setError('Enter the 6-digit code from your email')
+      setError(t('login.codeFromEmail' as MessageKey))
       return
     }
     setLoading(true)
@@ -100,7 +101,7 @@ export function LoginPage() {
         navigate('/today')
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not verify sign-in code')
+      setError(e instanceof Error ? e.message : t('login.verifyCodeError' as MessageKey))
     } finally {
       setLoading(false)
     }
@@ -112,7 +113,7 @@ export function LoginPage() {
     try {
       await api.post('/auth/resend-verification', { email })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not resend verification email')
+      setError(e instanceof Error ? e.message : t('login.resendVerificationError' as MessageKey))
     } finally {
       setLoading(false)
     }
@@ -124,7 +125,7 @@ export function LoginPage() {
     try {
       await api.post('/auth/login/2fa/resend', { email })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not resend sign-in code')
+      setError(e instanceof Error ? e.message : t('login.resendCodeError' as MessageKey))
     } finally {
       setLoading(false)
     }
@@ -132,7 +133,7 @@ export function LoginPage() {
 
   const requestReset = async () => {
     if (!email.includes('@')) {
-      setError('Enter a valid email')
+      setError(t('login.validEmail' as MessageKey))
       return
     }
     setLoading(true)
@@ -141,7 +142,7 @@ export function LoginPage() {
       await api.post('/auth/forgot-password', { email })
       setResetStep('confirm')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to send code')
+      setError(e instanceof Error ? e.message : t('login.sendCodeError' as MessageKey))
     } finally {
       setLoading(false)
     }
@@ -149,11 +150,11 @@ export function LoginPage() {
 
   const doReset = async () => {
     if (!/^\d{6}$/.test(resetCode)) {
-      setError('Enter the 6-digit code from your email')
+      setError(t('login.codeFromEmail' as MessageKey))
       return
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError(t('login.passwordMin' as MessageKey))
       return
     }
     setLoading(true)
@@ -170,7 +171,7 @@ export function LoginPage() {
         navigate('/today')
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not reset password')
+      setError(e instanceof Error ? e.message : t('login.resetError' as MessageKey))
     } finally {
       setLoading(false)
     }
@@ -183,13 +184,13 @@ export function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <Logo size={56} />
           <h1 className="mt-4 text-2xl font-bold uppercase tracking-wider">OrangTask</h1>
-          <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">Tasks that sync everywhere</p>
+          <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">{t('login.tagline' as MessageKey)}</p>
         </div>
 
         <div className="surface p-6">
           {(urlError || error || verification) && (
             <div className="mb-4 px-3 py-2 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 text-sm">
-              {error || (verification === 'success' ? 'Email verified — sign in to continue.' : verification === 'invalid' ? 'This verification link is invalid or expired.' : urlError === 'expired' ? 'Link expired, request a new one' : 'Sign in failed, try again')}
+              {error || (verification === 'success' ? t('login.verificationSuccess' as MessageKey) : verification === 'invalid' ? t('login.verificationInvalid' as MessageKey) : urlError === 'expired' ? t('login.linkExpired' as MessageKey) : t('login.signInFailed' as MessageKey))}
             </div>
           )}
 
@@ -198,34 +199,34 @@ export function LoginPage() {
               <div className="w-12 h-12 mx-auto bg-orange-500 flex items-center justify-center mb-4">
                 <Check size={24} className="text-white" strokeWidth={3} />
               </div>
-              <h2 className="font-bold mb-1">Check your email</h2>
+              <h2 className="font-bold mb-1">{t('login.checkYourEmail' as MessageKey)}</h2>
               <p className="text-sm text-gray-500 dark:text-ink-400">
-                We sent a sign-in link to <strong>{email}</strong>
+                {tNodes('login.sentLinkTo' as MessageKey, { email: <strong>{email}</strong> })}
               </p>
               <button
                 onClick={() => setMagicSent(false)}
                 className="mt-4 text-sm text-orange-500 hover:underline"
               >
-                Use a different email
+                {t('login.useDifferentEmail' as MessageKey)}
               </button>
             </div>
           ) : (
             <>
               {mode === 'magic' && (
                 <div className="space-y-3">
-                  <label className="text-xs uppercase tracking-wide text-gray-400">Email</label>
+                  <label className="text-xs uppercase tracking-wide text-gray-400">{t('common.email' as MessageKey)}</label>
                   <input
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && sendMagic()}
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder={t('login.emailPlaceholder' as MessageKey)}
                     className="input-field"
                     autoFocus
                   />
                   <button onClick={sendMagic} disabled={loading} className="btn-primary w-full">
                     <Mail size={16} className="mr-2" />
-                    {loading ? 'Sending...' : 'Send magic link'}
+                    {loading ? t('login.sending' as MessageKey) : t('login.sendMagicLink' as MessageKey)}
                   </button>
                 </div>
               )}
@@ -234,24 +235,24 @@ export function LoginPage() {
                 <div className="space-y-3">
                   {mode === 'register' && (
                     <>
-                      <label className="text-xs uppercase tracking-wide text-gray-400">Name</label>
+                      <label className="text-xs uppercase tracking-wide text-gray-400">{t('common.name' as MessageKey)}</label>
                       <input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
+                        placeholder={t('login.namePlaceholder' as MessageKey)}
                         className="input-field"
                       />
                     </>
                   )}
-                  <label className="text-xs uppercase tracking-wide text-gray-400">Email</label>
+                  <label className="text-xs uppercase tracking-wide text-gray-400">{t('common.email' as MessageKey)}</label>
                   <input
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder={t('login.emailPlaceholder' as MessageKey)}
                     className="input-field"
                   />
-                  <label className="text-xs uppercase tracking-wide text-gray-400">Password</label>
+                  <label className="text-xs uppercase tracking-wide text-gray-400">{t('common.password' as MessageKey)}</label>
                   <input
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -263,7 +264,7 @@ export function LoginPage() {
                   <Recaptcha active={mode === 'register' || captchaRequired} onChange={setRecaptchaToken} />
                   <button onClick={doPassword} disabled={loading || ((mode === 'register' || captchaRequired) && !recaptchaToken)} className="btn-primary w-full">
                     <Lock size={16} className="mr-2" />
-                    {loading ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Sign in'}
+                    {loading ? t('login.waiting' as MessageKey) : mode === 'register' ? t('login.createAccount' as MessageKey) : t('login.signIn' as MessageKey)}
                   </button>
                 </div>
               )}
@@ -272,16 +273,16 @@ export function LoginPage() {
                 <div className="space-y-3">
                   <p className="text-sm text-gray-500 dark:text-ink-400">
                     {resetStep === 'request'
-                      ? 'Enter your email and we’ll send you a 6-digit code to reset your password.'
-                      : `Enter the code we sent to ${email} and choose a new password.`}
+                      ? t('login.resetInstruction' as MessageKey)
+                      : t('login.resetEnterCode' as MessageKey, { email })}
                   </p>
-                  <label className="text-xs uppercase tracking-wide text-gray-400">Email</label>
+                  <label className="text-xs uppercase tracking-wide text-gray-400">{t('common.email' as MessageKey)}</label>
                   <input
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && resetStep === 'request' && requestReset()}
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder={t('login.emailPlaceholder' as MessageKey)}
                     disabled={resetStep === 'confirm'}
                     className="input-field disabled:opacity-60"
                     autoFocus
@@ -289,11 +290,11 @@ export function LoginPage() {
                   {resetStep === 'request' ? (
                     <button onClick={requestReset} disabled={loading} className="btn-primary w-full">
                       <KeyRound size={16} className="mr-2" />
-                      {loading ? 'Sending...' : 'Send reset code'}
+                      {loading ? t('login.sending' as MessageKey) : t('login.sendResetCode' as MessageKey)}
                     </button>
                   ) : (
                     <>
-                      <label className="text-xs uppercase tracking-wide text-gray-400">Reset code</label>
+                      <label className="text-xs uppercase tracking-wide text-gray-400">{t('login.resetCode' as MessageKey)}</label>
                       <input
                         value={resetCode}
                         onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -302,25 +303,25 @@ export function LoginPage() {
                         className="input-field tracking-[0.3em] text-center"
                         autoFocus
                       />
-                      <label className="text-xs uppercase tracking-wide text-gray-400">New password</label>
+                      <label className="text-xs uppercase tracking-wide text-gray-400">{t('login.newPassword' as MessageKey)}</label>
                       <input
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && doReset()}
                         type="password"
-                        placeholder="At least 8 characters"
+                        placeholder={t('login.passwordHint' as MessageKey)}
                         className="input-field"
                       />
                       <button onClick={doReset} disabled={loading} className="btn-primary w-full">
                         <Lock size={16} className="mr-2" />
-                        {loading ? 'Please wait...' : 'Reset password & sign in'}
+                        {loading ? t('login.waiting' as MessageKey) : t('login.resetAndSignIn' as MessageKey)}
                       </button>
                       <button
                         onClick={requestReset}
                         disabled={loading}
                         className="text-xs text-gray-400 hover:text-orange-500"
                       >
-                        Resend code
+                        {t('login.resendCode' as MessageKey)}
                       </button>
                     </>
                   )}
@@ -329,8 +330,8 @@ export function LoginPage() {
 
               {mode === 'twoFactor' && (
                 <div className="space-y-3 text-center">
-                  <h2 className="font-bold">Check your email</h2>
-                  <p className="text-sm text-gray-500 dark:text-ink-400">Enter the 6-digit sign-in code sent to <strong>{email}</strong>.</p>
+                  <h2 className="font-bold">{t('login.checkYourEmail' as MessageKey)}</h2>
+                  <p className="text-sm text-gray-500 dark:text-ink-400">{tNodes('login.sentCodeTo' as MessageKey, { email: <strong>{email}</strong> })}</p>
                   <input
                     value={twoFactorCode}
                     onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -342,19 +343,19 @@ export function LoginPage() {
                     autoFocus
                   />
                   <button onClick={verifyTwoFactor} disabled={loading} className="btn-primary w-full">
-                    <Lock size={16} className="mr-2" /> {loading ? 'Verifying...' : 'Verify & sign in'}
+                    <Lock size={16} className="mr-2" /> {loading ? t('login.verifying' as MessageKey) : t('login.verifyAndSignIn' as MessageKey)}
                   </button>
-                  <button onClick={resendTwoFactor} disabled={loading} className="text-xs text-gray-400 hover:text-orange-500">Resend code</button>
+                  <button onClick={resendTwoFactor} disabled={loading} className="text-xs text-gray-400 hover:text-orange-500">{t('login.resendCode' as MessageKey)}</button>
                 </div>
               )}
 
               {mode === 'verifyEmail' && (
                 <div className="space-y-3 text-center">
                   <div className="w-12 h-12 mx-auto bg-orange-500 flex items-center justify-center"><Mail size={24} className="text-white" /></div>
-                  <h2 className="font-bold">Check your email</h2>
-                  <p className="text-sm text-gray-500 dark:text-ink-400">We sent a verification link to <strong>{email}</strong>. You can verify it later; it does not block task access.</p>
-                  <button onClick={resendVerification} disabled={loading} className="btn-secondary w-full">{loading ? 'Sending...' : 'Resend verification email'}</button>
-                  <button onClick={() => setMode('password')} className="text-xs text-gray-400 hover:text-orange-500">Back to sign in</button>
+                  <h2 className="font-bold">{t('login.checkYourEmail' as MessageKey)}</h2>
+                  <p className="text-sm text-gray-500 dark:text-ink-400">{tNodes('login.sentVerificationTo' as MessageKey, { email: <strong>{email}</strong> })}</p>
+                  <button onClick={resendVerification} disabled={loading} className="btn-secondary w-full">{loading ? t('login.sending' as MessageKey) : t('login.resendVerification' as MessageKey)}</button>
+                  <button onClick={() => setMode('password')} className="text-xs text-gray-400 hover:text-orange-500">{t('login.backToSignIn' as MessageKey)}</button>
                 </div>
               )}
 
@@ -362,13 +363,13 @@ export function LoginPage() {
                 <>
                   <div className="flex items-center gap-3 my-5">
                     <div className="flex-1 h-px bg-gray-200 dark:bg-ink-600" />
-                    <span className="text-xs text-gray-400 uppercase">or</span>
+                    <span className="text-xs text-gray-400 uppercase">{t('login.or' as MessageKey)}</span>
                     <div className="flex-1 h-px bg-gray-200 dark:bg-ink-600" />
                   </div>
 
                   <div className="space-y-2">
                     <a href="/api/auth/github" className="btn-secondary w-full">
-                      <Github size={16} className="mr-2" /> Continue with GitHub
+                      <Github size={16} className="mr-2" /> {t('login.continueWithGithub' as MessageKey)}
                     </a>
                     <a href="/api/auth/google" className="btn-secondary w-full">
                       <svg className="mr-2" width="16" height="16" viewBox="0 0 24 24">
@@ -377,7 +378,7 @@ export function LoginPage() {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                       </svg>
-                      Continue with Google
+                      {t('login.continueWithGoogle' as MessageKey)}
                     </a>
                   </div>
                 </>
@@ -386,32 +387,32 @@ export function LoginPage() {
               <div className="mt-5 text-center text-sm space-y-1">
                 {mode === 'magic' && (
                   <button onClick={() => setMode('password')} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">
-                    Use password instead
+                    {t('login.usePasswordInstead' as MessageKey)}
                   </button>
                 )}
                 {mode === 'password' && (
                   <div className="space-y-2">
                     <div className="space-x-3">
                       <button onClick={() => setMode('magic')} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">
-                        Magic link
+                        {t('login.magicLink' as MessageKey)}
                       </button>
                       <button onClick={() => setMode('register')} className="text-orange-500 hover:underline inline-flex items-center gap-1">
-                        Create account <ArrowRight size={13} />
+                        {t('login.createAccount' as MessageKey)} <ArrowRight size={13} />
                       </button>
                     </div>
                     <button onClick={openReset} className="block w-full text-gray-400 hover:text-orange-500">
-                      Forgot password?
+                      {t('login.forgotPassword' as MessageKey)}
                     </button>
                   </div>
                 )}
                 {mode === 'register' && (
                   <button onClick={() => setMode('password')} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">
-                    Already have an account? Sign in
+                    {t('login.haveAccountSignIn' as MessageKey)}
                   </button>
                 )}
                 {mode === 'reset' && (
                   <button onClick={() => { setMode('password'); setError('') }} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">
-                    Back to sign in
+                    {t('login.backToSignIn' as MessageKey)}
                   </button>
                 )}
               </div>
@@ -420,10 +421,10 @@ export function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Free and open source. Self-host it yourself.
+          {t('login.freeOpenSource' as MessageKey)}
         </p>
         <p className="text-center text-xs text-gray-400 mt-2">
-          <a href="/legal" className="hover:text-orange-500 underline">Terms &amp; Privacy</a>
+          <a href="/legal" className="hover:text-orange-500 underline">{t('login.termsPrivacy' as MessageKey)}</a>
         </p>
       </div>
     </div>

@@ -1,8 +1,10 @@
 package lt.oranges.orangtask.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,6 +28,7 @@ class SessionViewModel @Inject constructor(
     private val repo: AuthRepository,
     private val tokenStore: TokenStore,
     private val pushRegistrar: PushRegistrar,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<SessionState>(SessionState.Loading)
@@ -63,7 +66,7 @@ class SessionViewModel @Inject constructor(
                 _state.value = SessionState.Loading
                 load()
             } catch (e: Exception) {
-                onError(e.userMessage())
+                onError(e.userMessage(context))
             }
         }
     }

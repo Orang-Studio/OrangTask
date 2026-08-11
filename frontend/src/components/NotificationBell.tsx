@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useNotifications } from '../hooks/useNotifications'
 import { useHaptics } from '../hooks/useHaptics'
+import { t, type MessageKey } from '../lib/i18n'
 
 export function NotificationBell() {
   const navigate = useNavigate()
@@ -15,7 +16,7 @@ export function NotificationBell() {
         haptics.tap()
         navigate('/notifications')
       }}
-      aria-label="Notifications"
+      aria-label={t('notifBell.notifications' as MessageKey)}
       className="relative p-2 text-gray-500 dark:text-ink-300 hover:text-orange-500 transition-colors"
     >
       <Bell size={20} />

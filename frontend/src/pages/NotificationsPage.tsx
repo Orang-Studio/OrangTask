@@ -4,6 +4,7 @@ import { useNotifications, useMarkRead, useMarkAllRead } from '../hooks/useNotif
 import { EmptyState } from '../components/EmptyState'
 import { TaskListSkeleton } from '../components/Skeleton'
 import { formatDueDate } from '../lib/date'
+import { t, type MessageKey } from '../lib/i18n'
 
 export function NotificationsPage() {
   const navigate = useNavigate()
@@ -20,15 +21,15 @@ export function NotificationsPage() {
           <button onClick={() => navigate(-1)} className="md:hidden p-1 text-gray-400">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-lg font-bold uppercase tracking-wide">Notifications</h1>
-          {unread > 0 && <span className="text-sm text-orange-500">{unread} new</span>}
+          <h1 className="text-lg font-bold uppercase tracking-wide">{t('notifications.title' as MessageKey)}</h1>
+          {unread > 0 && <span className="text-sm text-orange-500">{t('notifications.newCount' as MessageKey, { count: unread })}</span>}
         </div>
         {unread > 0 && (
           <button
             onClick={() => markAllRead.mutate()}
             className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-orange-500"
           >
-            <CheckCheck size={16} /> Mark all read
+            <CheckCheck size={16} /> {t('notifications.markAllRead' as MessageKey)}
           </button>
         )}
       </div>
@@ -58,7 +59,7 @@ export function NotificationsPage() {
             </button>
           ))
         ) : (
-          <EmptyState icon={Bell} title="No notifications" description="You're all caught up. New activity will show here." pose="happy" />
+          <EmptyState icon={Bell} title={t('notifications.emptyTitle' as MessageKey)} description={t('notifications.emptyDescription' as MessageKey)} pose="happy" />
         )}
       </div>
     </div>

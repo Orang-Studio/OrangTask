@@ -1,5 +1,6 @@
 package lt.oranges.orangtask.tasks
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -7,6 +8,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -18,24 +20,41 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.auth.AuthRepository
 import lt.oranges.orangtask.core.db.ListEntity
 import lt.oranges.orangtask.core.db.TagEntity
 import lt.oranges.orangtask.core.db.TaskEntity
 import lt.oranges.orangtask.core.network.MemberDto
-import lt.oranges.orangtask.core.network.userMessage
+import lt.oranges.orangtask.core.network.ApiErrorBody
 import lt.oranges.orangtask.lists.ListRepository
 import lt.oranges.orangtask.ui.format.DAY_MILLIS
 import lt.oranges.orangtask.ui.format.dayStartMillis
+import retrofit2.HttpException
+import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
 
+private val taskErrorJson = Json { ignoreUnknownKeys = true }
+
+private fun Throwable.localizedErrorMessage(context: Context): String = when (this) {
+    is HttpException -> runCatching {
+        response()?.errorBody()?.string()
+            ?.let { taskErrorJson.decodeFromString(ApiErrorBody.serializer(), it).error }
+            ?.takeIf { it.isNotBlank() }
+    }.getOrNull() ?: context.getString(R.string.request_failed, code())
+    is IOException -> context.getString(R.string.network_error)
+    else -> context.getString(R.string.something_went_wrong)
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class TaskListViewModel @Inject constructor(
     savedState: SavedStateHandle,
+    @ApplicationContext private val context: Context,
     private val taskRepository: TaskRepository,
     private val listRepository: ListRepository,
     authRepository: AuthRepository,
@@ -127,7 +146,7 @@ class TaskListViewModel @Inject constructor(
         if (parsed.title.isBlank()) return
         val targetList = listId ?: lists.value.firstOrNull()?.id
         if (targetList == null) {
-            errors.tryEmit("Create a list first")
+            errors.tryEmit(context.getString(R.string.create_list_first))
             return
         }
 
@@ -241,7 +260,7 @@ class TaskListViewModel @Inject constructor(
         try {
             block()
         } catch (e: Exception) {
-            errors.tryEmit(e.userMessage())
+            errors.tryEmit(e.localizedErrorMessage(context))
         }
     }
 }

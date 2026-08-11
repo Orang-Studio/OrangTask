@@ -1,8 +1,11 @@
 package lt.oranges.orangtask.auth
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.db.OrangDb
 import lt.oranges.orangtask.core.network.AuthApi
 import lt.oranges.orangtask.core.network.AuthResponse
@@ -33,6 +36,7 @@ class AuthRepository @Inject constructor(
     private val tokenStore: TokenStore,
     private val json: Json,
     private val db: OrangDb,
+    @ApplicationContext private val context: Context,
 ) {
 
     suspend fun login(email: String, password: String, recaptchaToken: String? = null): LoginOutcome {
@@ -125,11 +129,7 @@ class AuthRepository @Inject constructor(
 
     private fun storeTokensOrFail(res: AuthResponse) {
         if (res.accessToken == null || res.refreshToken == null) {
-            throw IllegalStateException(
-                "The server didn't return session tokens, it's running an " +
-                    "older OrangTask backend without native app support. " +
-                    "Update and restart the backend, then try again."
-            )
+            throw IllegalStateException(context.getString(R.string.session_tokens_missing))
         }
         tokenStore.storeTokens(res.accessToken, res.refreshToken)
     }

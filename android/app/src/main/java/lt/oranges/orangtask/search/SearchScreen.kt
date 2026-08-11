@@ -29,12 +29,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.db.isoToMillis
 import lt.oranges.orangtask.core.network.SearchResultDto
 import lt.oranges.orangtask.ui.components.EmptyState
@@ -74,7 +76,7 @@ fun SearchScreen(
             OrangTextField(
                 value = query,
                 onValueChange = viewModel::onQueryChange,
-                placeholder = "Search tasks...",
+                placeholder = stringResource(R.string.search_tasks_placeholder),
                 modifier = Modifier.weight(1f).focusRequester(focusRequester),
             )
         }
@@ -82,16 +84,16 @@ fun SearchScreen(
 
         Box(modifier = Modifier.fillMaxSize()) {
             when (val s = state) {
-                SearchUiState.Idle -> CenteredHint("Type at least 2 characters")
-                SearchUiState.Searching -> CenteredHint("Searching…")
+                SearchUiState.Idle -> CenteredHint(stringResource(R.string.type_at_least_two_characters))
+                SearchUiState.Searching -> CenteredHint(stringResource(R.string.searching))
                 is SearchUiState.Error -> EmptyState(
                     icon = Icons.Outlined.CloudOff,
-                    title = "Search unavailable",
+                    title = stringResource(R.string.search_unavailable),
                     description = s.message,
                 )
                 is SearchUiState.Results ->
                     if (s.results.isEmpty()) {
-                        CenteredHint("No results for \"${s.query}\"")
+                        CenteredHint(stringResource(R.string.no_search_results, s.query))
                     } else {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(s.results, key = { it.id }) { result ->

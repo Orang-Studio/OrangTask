@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -53,6 +54,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.network.UserDto
 import lt.oranges.orangtask.core.sync.SyncCoordinator
 import lt.oranges.orangtask.lists.ListsScreen
@@ -216,8 +218,8 @@ private fun OrangTabBar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().height(64.dp),
         ) {
-            TabSlot(Icons.Outlined.WbSunny, "Today", todayActive, onToday, Modifier.weight(1f))
-            TabSlot(Icons.Outlined.Layers, "Lists", listsActive, onLists, Modifier.weight(1f))
+            TabSlot(Icons.Outlined.WbSunny, R.string.today, todayActive, onToday, Modifier.weight(1f))
+            TabSlot(Icons.Outlined.Layers, R.string.lists, listsActive, onLists, Modifier.weight(1f))
 
             Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
                 Box(
@@ -230,15 +232,15 @@ private fun OrangTabBar(
                 ) {
                     Icon(
                         Icons.Outlined.Add,
-                        contentDescription = "Add task",
+                        contentDescription = stringResource(R.string.add_task),
                         tint = Color.White,
                         modifier = Modifier.size(28.dp),
                     )
                 }
             }
 
-            TabSlot(Icons.Outlined.Search, "Search", searchActive, onSearch, Modifier.weight(1f))
-            TabSlot(Icons.Outlined.Settings, "Settings", settingsActive, onSettings, Modifier.weight(1f))
+            TabSlot(Icons.Outlined.Search, R.string.search, searchActive, onSearch, Modifier.weight(1f))
+            TabSlot(Icons.Outlined.Settings, R.string.settings, settingsActive, onSettings, Modifier.weight(1f))
         }
     }
 }
@@ -246,11 +248,12 @@ private fun OrangTabBar(
 @Composable
 private fun TabSlot(
     icon: ImageVector,
-    label: String,
+    labelRes: Int,
     active: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val label = stringResource(labelRes)
     val tint = if (active) Orange500 else MaterialTheme.colorScheme.onSurfaceVariant
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

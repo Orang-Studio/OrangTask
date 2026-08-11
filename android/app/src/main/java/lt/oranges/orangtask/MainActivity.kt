@@ -97,18 +97,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
             data.path == "/login" && data.getQueryParameter("verification") == "success" -> {
-                Toast.makeText(this, "Email verified. Sign in to continue.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.email_verified_sign_in), Toast.LENGTH_LONG).show()
             }
             data.path == "/login" && data.getQueryParameter("verification") == "invalid" -> {
-                Toast.makeText(this, "That verification link is invalid or expired.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.verification_link_invalid), Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun oauthErrorMessage(code: String): String = when (code) {
-        "no_email" -> "That account has no verified email to sign in with."
-        "link_in_use" -> "That provider is already linked to another account."
-        "state" -> "Sign-in expired or was interrupted. Please try again."
-        else -> "Couldn't sign in with that provider. Please try again."
+        "no_email" -> getString(R.string.oauth_no_email)
+        "link_in_use" -> getString(R.string.oauth_link_in_use)
+        "state" -> getString(R.string.oauth_state)
+        else -> getString(R.string.oauth_generic)
     }
 }

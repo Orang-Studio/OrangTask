@@ -1,3 +1,5 @@
+import { t, type MessageKey } from './i18n'
+
 const API_BASE = '/api'
 
 let refreshPromise: Promise<boolean> | null = null
@@ -48,11 +50,11 @@ async function request<T>(
     if (!path.includes('/auth/')) {
       window.dispatchEvent(new CustomEvent('auth:expired'))
     }
-    throw new ApiError('Unauthorized', 401)
+    throw new ApiError(t('api.unauthorized' as MessageKey), 401)
   }
 
   if (!res.ok) {
-    let message = `Request failed (${res.status})`
+    let message = t('api.requestFailed' as MessageKey, { status: res.status })
     try {
       const data = await res.json()
       if (data.error) message = data.error

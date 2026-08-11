@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  ArrowLeft, User, Palette, Bell, Webhook, Plug, Database,
+  ArrowLeft, User, Palette, Bell, Webhook, Plug, Database, Languages,
   Download, Upload, Trash2, Lock, Monitor, Moon, Sun, Check, ExternalLink,
   Github, Link2, Unlink, LogOut, FileText, Copy, X, Plus,
 } from 'lucide-react'
@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { unzipSync } from 'fflate'
 import { useAuthStore } from '../stores/auth'
 import { useTheme } from '../hooks/useTheme'
+import { useLangStore, LANGUAGES, setLanguage, getEndonym, t, tCount, tNodes, type Language, type MessageKey } from '../lib/i18n'
 import { WebhookManager } from '../components/WebhookManager'
 import { useApiKeys, useCreateApiKey, useDeleteApiKey } from '../hooks/useApiKeys'
 import { api } from '../lib/api'
@@ -17,17 +18,7 @@ import { safeHttpUrl } from '../lib/safeUrl'
 import { getPushState, enablePush, disablePush, sendTestPush, showLocalTestNotification, type PushState } from '../lib/push'
 import { useHaptics } from '../hooks/useHaptics'
 
-type Section = 'profile' | 'appearance' | 'notifications' | 'webhooks' | 'integrations' | 'data' | 'legal'
-
-const SECTIONS: { id: Section; label: string; icon: typeof User }[] = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'appearance', label: 'Appearance', icon: Palette },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'webhooks', label: 'Webhooks', icon: Webhook },
-  { id: 'integrations', label: 'Integrations', icon: Plug },
-  { id: 'data', label: 'Data', icon: Database },
-  { id: 'legal', label: 'Legal', icon: FileText },
-]
+type Section = 'profile' | 'appearance' | 'language' | 'notifications' | 'webhooks' | 'integrations' | 'data' | 'legal'
 
 export function SettingsPage() {
   const navigate = useNavigate()
@@ -35,6 +26,17 @@ export function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const haptics = useHaptics()
   const [section, setSection] = useState<Section>('profile')
+
+  const SECTIONS: { id: Section; label: string; icon: typeof User }[] = [
+    { id: 'profile', label: t('settings.profile' as MessageKey), icon: User },
+    { id: 'appearance', label: t('settings.appearance' as MessageKey), icon: Palette },
+    { id: 'language', label: t('language.title'), icon: Languages },
+    { id: 'notifications', label: t('notifications.title' as MessageKey), icon: Bell },
+    { id: 'webhooks', label: t('settings.webhooks' as MessageKey), icon: Webhook },
+    { id: 'integrations', label: t('settings.integrations' as MessageKey), icon: Plug },
+    { id: 'data', label: t('settings.data' as MessageKey), icon: Database },
+    { id: 'legal', label: t('settings.legal' as MessageKey), icon: FileText },
+  ]
 
   return (
     <div className="h-full flex flex-col md:flex-row max-w-4xl mx-auto w-full">
@@ -44,7 +46,7 @@ export function SettingsPage() {
           <button onClick={() => navigate(-1)} className="p-1 text-gray-400">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-lg font-bold uppercase tracking-wide">Settings</h1>
+          <h1 className="text-lg font-bold uppercase tracking-wide">{t('settings.title' as MessageKey)}</h1>
         </div>
         <nav className="flex md:flex-col overflow-x-auto md:overflow-visible p-2 gap-1 no-scrollbar">
           {SECTIONS.map((s) => (
@@ -67,20 +69,20 @@ export function SettingsPage() {
         {section === 'profile' && <ProfileSection user={user} setUser={setUser} />}
         {section === 'appearance' && (
           <div className="max-w-md space-y-4">
-            <SectionTitle title="Appearance" />
+            <SectionTitle title={t('settings.appearance' as MessageKey)} />
             <div>
-              <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">Theme</label>
+              <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">{t('settings.theme' as MessageKey)}</label>
               <div className="grid grid-cols-3 gap-2">
-                {([['light', Sun], ['dark', Moon], ['system', Monitor]] as const).map(([t, Icon]) => (
+                {([['light', Sun], ['dark', Moon], ['system', Monitor]] as const).map(([mode, Icon]) => (
                   <button
-                    key={t}
-                    onClick={() => { haptics.tap(); setTheme(t) }}
+                    key={mode}
+                    onClick={() => { haptics.tap(); setTheme(mode) }}
                     className={`flex flex-col items-center gap-2 p-4 border transition-colors ${
-                      theme === t ? 'border-orange-500 bg-orange-50 dark:bg-ink-750' : 'border-gray-300 dark:border-ink-600'
+                      theme === mode ? 'border-orange-500 bg-orange-50 dark:bg-ink-750' : 'border-gray-300 dark:border-ink-600'
                     }`}
                   >
                     <Icon size={20} />
-                    <span className="text-sm capitalize">{t}</span>
+                    <span className="text-sm capitalize">{mode}</span>
                   </button>
                 ))}
               </div>
@@ -88,11 +90,12 @@ export function SettingsPage() {
           </div>
         )}
         {section === 'notifications' && <NotificationsSection />}
+        {section === 'language' && <LanguageSection />}
         {section === 'webhooks' && (
           <div className="max-w-2xl">
-            <SectionTitle title="Webhooks" />
+            <SectionTitle title={t('settings.webhooks' as MessageKey)} />
             <p className="text-sm text-gray-500 dark:text-ink-400 mb-4">
-              Send task events to external services, or create tasks from incoming requests.
+              {t('settings.webhooksDescription' as MessageKey)}
             </p>
             <WebhookManager />
           </div>
@@ -107,6 +110,38 @@ export function SettingsPage() {
 
 function SectionTitle({ title }: { title: string }) {
   return <h2 className="text-base font-bold uppercase tracking-wide mb-4">{title}</h2>
+}
+
+function LanguageSection() {
+  const pref = useLangStore((s) => s.pref)
+  const haptics = useHaptics()
+  const options: ('system' | Language)[] = ['system', ...LANGUAGES]
+  return (
+    <div className="max-w-md space-y-4">
+      <SectionTitle title={t('language.title')} />
+      <p className="text-sm text-gray-500 dark:text-ink-400">
+        {t('language.description')}
+      </p>
+      <div className="grid gap-2">
+        {options.map((option) => {
+          const selected = pref === option
+          const label = option === 'system' ? t('language.system') : getEndonym(option)
+          return (
+            <button
+              key={option}
+              onClick={() => { haptics.tap(); setLanguage(option) }}
+              className={`flex items-center justify-between px-4 py-3 border transition-colors ${
+                selected ? 'border-orange-500 bg-orange-50 dark:bg-ink-750' : 'border-gray-300 dark:border-ink-600'
+              }`}
+            >
+              <span className="text-sm">{label}</span>
+              {selected && <Check size={16} className="text-orange-500" />}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function ProfileSection({ user, setUser }: { user: any; setUser: (u: any) => void }) {
@@ -156,7 +191,7 @@ function ProfileSection({ user, setUser }: { user: any; setUser: (u: any) => voi
 
   return (
     <div className="max-w-md space-y-4">
-      <SectionTitle title="Profile" />
+      <SectionTitle title={t('settings.profile' as MessageKey)} />
       <div className="flex items-center gap-4">
         {safeAvatarUrl ? (
           <img src={safeAvatarUrl} className="w-16 h-16 rounded-full object-cover" alt="" />
@@ -169,29 +204,29 @@ function ProfileSection({ user, setUser }: { user: any; setUser: (u: any) => voi
       </div>
 
       <div>
-        <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">Name</label>
+        <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">{t('common.name' as MessageKey)}</label>
         <input value={name} onChange={(e) => setName(e.target.value)} className="input-field" />
       </div>
       <div>
-        <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">Avatar URL</label>
+        <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">{t('settings.avatarUrl' as MessageKey)}</label>
         <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." className="input-field" />
       </div>
       <button onClick={save} className="btn-primary">
-        {saved ? <><Check size={16} className="mr-2" /> Saved</> : 'Save profile'}
+        {saved ? <><Check size={16} className="mr-2" /> {t('common.saved' as MessageKey)}</> : t('settings.saveProfile' as MessageKey)}
       </button>
 
       {}
       <div className="pt-4 border-t border-gray-200 dark:border-ink-700">
         <div className="flex items-center gap-2 mb-2">
           <Lock size={16} className="text-gray-400" />
-          <span className="text-sm font-medium">App PIN</span>
-          {hasPin && <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 rounded">Enabled</span>}
+          <span className="text-sm font-medium">{t('settings.appPin' as MessageKey)}</span>
+          {hasPin && <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 rounded">{t('common.enabled')}</span>}
         </div>
         <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">
-          Optional. Require a 4-6 digit PIN to open the app on this account.
+          {t('settings.pinDescription' as MessageKey)}
         </p>
         {hasPin ? (
-          <button onClick={removePin} className="btn-secondary text-sm">Remove PIN</button>
+          <button onClick={removePin} className="btn-secondary text-sm">{t('settings.removePin' as MessageKey)}</button>
         ) : showPinForm ? (
           <div className="flex gap-2">
             <input
@@ -199,13 +234,13 @@ function ProfileSection({ user, setUser }: { user: any; setUser: (u: any) => voi
               onChange={(e) => setPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
               type="password"
               inputMode="numeric"
-              placeholder="4-6 digits"
+              placeholder={t('settings.pinPlaceholder' as MessageKey)}
               className="input-field w-32"
             />
-            <button onClick={setPin} className="btn-primary">Set PIN</button>
+            <button onClick={setPin} className="btn-primary">{t('settings.setPin' as MessageKey)}</button>
           </div>
         ) : (
-          <button onClick={() => setShowPinForm(true)} className="btn-secondary text-sm">Set up PIN</button>
+          <button onClick={() => setShowPinForm(true)} className="btn-secondary text-sm">{t('settings.setUpPin' as MessageKey)}</button>
         )}
       </div>
 
@@ -213,7 +248,7 @@ function ProfileSection({ user, setUser }: { user: any; setUser: (u: any) => voi
 
       <div className="pt-4 border-t border-gray-200 dark:border-ink-700">
         <button onClick={signOut} className="btn-secondary text-sm inline-flex items-center gap-2">
-          <LogOut size={16} /> Sign out
+          <LogOut size={16} /> {t('settings.signOut' as MessageKey)}
         </button>
       </div>
     </div>
@@ -251,8 +286,8 @@ function ConnectedAccounts() {
 
     const linked = searchParams.get('linked')
     const err = searchParams.get('link_error')
-    if (linked) setBanner(`Connected your ${PROVIDER_LABEL[linked] || linked} account.`)
-    else if (err === 'in_use') setBanner('That provider account is already linked to a different OrangTask user.')
+    if (linked) setBanner(t('settings.connectedBanner' as MessageKey, { provider: PROVIDER_LABEL[linked] || linked }))
+    else if (err === 'in_use') setBanner(t('settings.linkedInUse' as MessageKey))
     if (linked || err) {
       searchParams.delete('linked')
       searchParams.delete('link_error')
@@ -286,10 +321,10 @@ function ConnectedAccounts() {
     <div className="pt-4 border-t border-gray-200 dark:border-ink-700">
       <div className="flex items-center gap-2 mb-1">
         <Link2 size={16} className="text-gray-400" />
-        <span className="text-sm font-medium">Connected accounts</span>
+        <span className="text-sm font-medium">{t('settings.connectedAccounts' as MessageKey)}</span>
       </div>
       <p className="text-sm text-gray-500 dark:text-ink-400 mb-3">
-        Sign in to this account with any of these - even if their email differs from yours.
+        {t('settings.connectedAccountsDescription' as MessageKey)}
       </p>
 
       {banner && (
@@ -309,8 +344,8 @@ function ConnectedAccounts() {
                 <div className="text-sm font-medium">{label}</div>
                 <div className="text-xs text-gray-400 truncate">
                   {linked
-                    ? linked.provider_email || 'Connected'
-                    : configured ? 'Not connected' : 'Not configured on this server'}
+                    ? linked.provider_email || t('common.connected' as MessageKey)
+                    : configured ? t('settings.notConnected' as MessageKey) : t('settings.notConfigured' as MessageKey)}
                 </div>
               </div>
               {linked ? (
@@ -319,7 +354,7 @@ function ConnectedAccounts() {
                   disabled={busy === id}
                   className="btn-secondary text-sm disabled:opacity-50 inline-flex items-center"
                 >
-                  <Unlink size={14} className="mr-1.5" /> Disconnect
+                  <Unlink size={14} className="mr-1.5" /> {t('common.disconnect' as MessageKey)}
                 </button>
               ) : (
                 <button
@@ -327,7 +362,7 @@ function ConnectedAccounts() {
                   disabled={!configured}
                   className="btn-secondary text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Connect
+                  {t('common.connect' as MessageKey)}
                 </button>
               )}
             </div>
@@ -349,19 +384,19 @@ function NotifToggle({ checked, onChange }: { checked: boolean; onChange: (v: bo
 
 type ChannelPrefs = Record<string, { push: boolean; email: boolean }>
 
-const NOTIF_TYPES = [
-  { key: 'task_due_soon', label: 'Task due soon', desc: '1 hour before a task is due' },
-  { key: 'task_assigned', label: 'Task assigned', desc: 'When someone assigns you a task' },
-  { key: 'list_shared', label: 'List shared', desc: 'When someone shares a list with you' },
-  { key: 'task_completed_by', label: 'Task completed', desc: 'When a collaborator completes a shared task' },
-]
-
 function NotificationsSection() {
   const haptics = useHaptics()
   const [prefs, setPrefs] = useState<ChannelPrefs | null>(null)
   const [pushState, setPushState] = useState<PushState>('unsupported')
   const [busy, setBusy] = useState(false)
   const [testMsg, setTestMsg] = useState('')
+
+  const NOTIF_TYPES = [
+    { key: 'task_due_soon', label: t('settings.notifTaskDueSoon' as MessageKey), desc: t('settings.notifTaskDueSoonDesc' as MessageKey) },
+    { key: 'task_assigned', label: t('settings.notifTaskAssigned' as MessageKey), desc: t('settings.notifTaskAssignedDesc' as MessageKey) },
+    { key: 'list_shared', label: t('settings.notifListShared' as MessageKey), desc: t('settings.notifListSharedDesc' as MessageKey) },
+    { key: 'task_completed_by', label: t('settings.notifTaskCompleted' as MessageKey), desc: t('settings.notifTaskCompletedDesc' as MessageKey) },
+  ]
 
   useEffect(() => {
     api.get<{ prefs: ChannelPrefs }>('/user/notification-prefs').then((d) => setPrefs(d.prefs)).catch(() => {})
@@ -387,7 +422,7 @@ function NotificationsSection() {
   }
 
   const sendTest = async () => {
-    setTestMsg('Testing…')
+    setTestMsg(t('notifications.testing' as MessageKey))
     const local = await showLocalTestNotification().catch(() => false)
     let server: { subscriptions: number } | null = null
     try {
@@ -396,72 +431,76 @@ function NotificationsSection() {
       server = null
     }
     setTestMsg(
-      `Local: ${local ? 'shown' : 'failed'} · ` +
-        `Server push: ${server ? `sent to ${server.subscriptions} device(s)` : 'failed'}`
+      t('notifications.testResult' as MessageKey, {
+        local: local ? t('notifications.testShown' as MessageKey) : t('notifications.testFailed' as MessageKey),
+        server: server
+          ? tCount('notifications.testServerSent', server.subscriptions, { count: server.subscriptions })
+          : t('notifications.testFailed' as MessageKey),
+      })
     )
     setTimeout(() => setTestMsg(''), 12000)
   }
 
   return (
     <div className="max-w-lg space-y-5">
-      <SectionTitle title="Notifications" />
+      <SectionTitle title={t('notifications.title' as MessageKey)} />
 
       <div className="surface p-4 flex items-center justify-between gap-4">
         <div>
-          <div className="text-sm font-medium">Push on this device</div>
+          <div className="text-sm font-medium">{t('notifications.pushOnDevice' as MessageKey)}</div>
           <div className="text-xs text-gray-400">
-            {pushState === 'unsupported' && 'Not supported by this browser.'}
-            {pushState === 'denied' && 'Blocked - allow notifications for this site in your browser settings.'}
-            {pushState === 'subscribed' && 'This device will receive push notifications.'}
-            {pushState === 'unsubscribed' && 'Turn on to receive notifications on this device.'}
+            {pushState === 'unsupported' && t('notifications.pushUnsupported' as MessageKey)}
+            {pushState === 'denied' && t('notifications.pushBlocked' as MessageKey)}
+            {pushState === 'subscribed' && t('notifications.pushSubscribed' as MessageKey)}
+            {pushState === 'unsubscribed' && t('notifications.pushUnsubscribed' as MessageKey)}
           </div>
         </div>
         {pushState === 'unsupported' || pushState === 'denied' ? (
-          <span className="text-xs text-gray-400 whitespace-nowrap">{pushState === 'denied' ? 'Blocked' : 'N/A'}</span>
+          <span className="text-xs text-gray-400 whitespace-nowrap">{pushState === 'denied' ? t('notifications.blocked' as MessageKey) : t('notifications.na' as MessageKey)}</span>
         ) : (
           <button
             onClick={toggleDevicePush}
             disabled={busy}
             className={`${pushState === 'subscribed' ? 'btn-secondary' : 'btn-primary'} text-sm whitespace-nowrap disabled:opacity-50`}
           >
-            {pushState === 'subscribed' ? 'Turn off' : 'Turn on'}
+            {pushState === 'subscribed' ? t('notifications.turnOff' as MessageKey) : t('notifications.turnOn' as MessageKey)}
           </button>
         )}
       </div>
 
       {pushState === 'subscribed' && (
         <div className="flex items-center gap-3 -mt-2">
-          <button onClick={sendTest} className="btn-secondary text-sm">Send test notification</button>
+          <button onClick={sendTest} className="btn-secondary text-sm">{t('notifications.sendTest' as MessageKey)}</button>
           {testMsg && <span className="text-xs text-gray-400">{testMsg}</span>}
         </div>
       )}
 
       <div>
         <div className="grid grid-cols-[1fr_3rem_3rem] items-center gap-x-3 px-1 pb-2 text-[11px] uppercase tracking-wider text-gray-400 font-semibold border-b border-gray-200 dark:border-ink-700">
-          <span>Notify me about</span>
-          <span className="text-center">Push</span>
-          <span className="text-center">Email</span>
+          <span>{t('notifications.notifyMe' as MessageKey)}</span>
+          <span className="text-center">{t('notifications.push' as MessageKey)}</span>
+          <span className="text-center">{t('common.email' as MessageKey)}</span>
         </div>
-        {prefs ? NOTIF_TYPES.map((t) => (
-          <div key={t.key} className="grid grid-cols-[1fr_3rem_3rem] items-center gap-x-3 px-1 py-3 border-b border-gray-100 dark:border-ink-800">
+        {prefs ? NOTIF_TYPES.map((nt) => (
+          <div key={nt.key} className="grid grid-cols-[1fr_3rem_3rem] items-center gap-x-3 px-1 py-3 border-b border-gray-100 dark:border-ink-800">
             <div>
-              <div className="text-sm font-medium">{t.label}</div>
-              <div className="text-xs text-gray-400">{t.desc}</div>
+              <div className="text-sm font-medium">{nt.label}</div>
+              <div className="text-xs text-gray-400">{nt.desc}</div>
             </div>
             <div className="flex justify-center">
-              <NotifToggle checked={!!prefs[t.key]?.push} onChange={(v) => setChannel(t.key, 'push', v)} />
+              <NotifToggle checked={!!prefs[nt.key]?.push} onChange={(v) => setChannel(nt.key, 'push', v)} />
             </div>
             <div className="flex justify-center">
-              <NotifToggle checked={!!prefs[t.key]?.email} onChange={(v) => setChannel(t.key, 'email', v)} />
+              <NotifToggle checked={!!prefs[nt.key]?.email} onChange={(v) => setChannel(nt.key, 'email', v)} />
             </div>
           </div>
         )) : (
-          <div className="py-6 text-center text-sm text-gray-400">Loading…</div>
+          <div className="py-6 text-center text-sm text-gray-400">{t('common.loading')}</div>
         )}
       </div>
 
       <p className="text-xs text-gray-400">
-        Push delivers to devices where you've turned it on above. Email goes to your account address.
+        {t('notifications.footer' as MessageKey)}
       </p>
     </div>
   )
@@ -498,9 +537,9 @@ function ApiKeysManager() {
     <div className="space-y-3">
       {revealed && (
         <div className="surface p-4 border-orange-300 dark:border-orange-800">
-          <div className="text-sm font-medium mb-1">API key created: {revealed.name}</div>
+          <div className="text-sm font-medium mb-1">{t('settings.apiKeyCreated' as MessageKey, { name: revealed.name })}</div>
           <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">
-            Copy it now, for your security, it won't be shown again.
+            {t('settings.apiKeyCopyWarning' as MessageKey)}
           </p>
           <div className="flex gap-2">
             <code className="flex-1 text-xs bg-gray-100 dark:bg-ink-900 px-2 py-2 truncate rounded">{revealed.raw_key}</code>
@@ -509,7 +548,7 @@ function ApiKeysManager() {
             </button>
           </div>
           <button onClick={() => setRevealed(null)} className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-white mt-2">
-            Done
+            {t('common.done')}
           </button>
         </div>
       )}
@@ -519,18 +558,21 @@ function ApiKeysManager() {
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium">{k.name}</div>
             <div className="text-xs text-gray-400 font-mono">
-              {k.key_prefix}… · {k.last_used_at ? `last used ${formatDueDate(k.last_used_at)}` : 'never used'}
+              {t('settings.apiKeyMeta' as MessageKey, {
+                prefix: k.key_prefix,
+                used: k.last_used_at ? t('settings.apiKeyLastUsed' as MessageKey, { date: formatDueDate(k.last_used_at) }) : t('settings.apiKeyNeverUsed' as MessageKey),
+              })}
             </div>
           </div>
           <button
             onClick={() => {
-              if (confirm(`Revoke "${k.name}"? Any integration using it will stop working.`)) {
+              if (confirm(t('settings.revokeConfirm' as MessageKey, { name: k.name }))) {
                 haptics.error()
                 deleteKey.mutate(k.id)
               }
             }}
             className="text-gray-400 hover:text-red-500"
-            aria-label={`Revoke ${k.name}`}
+            aria-label={t('settings.revokeLabel' as MessageKey, { name: k.name })}
           >
             <Trash2 size={15} />
           </button>
@@ -543,19 +585,19 @@ function ApiKeysManager() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            placeholder="e.g. n8n integration"
+            placeholder={t('settings.apiKeyPlaceholder' as MessageKey)}
             className="input-field w-full"
           />
           <div className="flex gap-2">
             <button onClick={handleCreate} disabled={createKey.isPending} className="btn-primary flex-1">
-              {createKey.isPending ? 'Creating...' : 'Create key'}
+              {createKey.isPending ? t('settings.creatingKey' as MessageKey) : t('settings.createKey' as MessageKey)}
             </button>
             <button onClick={() => setShowForm(false)} className="btn-secondary px-4"><X size={16} /></button>
           </div>
         </div>
       ) : (
         <button onClick={() => setShowForm(true)} className="btn-secondary w-full">
-          <Plus size={16} className="mr-2" /> New API key
+          <Plus size={16} className="mr-2" /> {t('settings.newApiKey' as MessageKey)}
         </button>
       )}
     </div>
@@ -564,26 +606,24 @@ function ApiKeysManager() {
 
 function IntegrationsSection() {
   const examples = [
-    { name: 'n8n', desc: 'Use the HTTP Request node to POST to your incoming webhook URL, or trigger flows from outgoing events.' },
-    { name: 'Zapier', desc: 'Create a "Webhooks by Zapier" action pointing at your incoming URL to push tasks from any Zapier trigger.' },
-    { name: 'GitHub Actions', desc: 'Add a curl step that POSTs to your incoming webhook to create a task when a workflow runs.' },
+    { name: 'n8n', desc: t('settings.integrationN8nDesc' as MessageKey) },
+    { name: 'Zapier', desc: t('settings.integrationZapierDesc' as MessageKey) },
+    { name: 'GitHub Actions', desc: t('settings.integrationGithubActionsDesc' as MessageKey) },
   ]
   return (
     <div className="max-w-2xl space-y-8">
       <div className="space-y-4">
-        <SectionTitle title="API keys" />
+        <SectionTitle title={t('settings.apiKeys' as MessageKey)} />
         <p className="text-sm text-gray-500 dark:text-ink-400">
-          Generate a personal API key to call the full OrangTask API directly (read/write lists, tasks, tags) from
-          scripts or tools that need more than the one-way incoming webhook below. Keys don't expire like a login
-          session, revoke one any time it's no longer needed.
+          {t('settings.apiKeysDescription' as MessageKey)}
         </p>
         <ApiKeysManager />
       </div>
 
       <div className="space-y-4">
-        <SectionTitle title="Webhooks & integrations" />
+        <SectionTitle title={t('settings.webhooksAndIntegrations' as MessageKey)} />
         <p className="text-sm text-gray-500 dark:text-ink-400">
-          OrangTask works with any tool that can send or receive HTTP requests. Create a webhook in the Webhooks tab, then wire it up:
+          {t('settings.webhooksIntegrationsDescription' as MessageKey)}
         </p>
         <div className="space-y-2">
           {examples.map((ex) => (
@@ -596,7 +636,7 @@ function IntegrationsSection() {
           ))}
         </div>
         <div className="surface p-4">
-          <div className="text-xs uppercase tracking-wide text-gray-400 mb-2">Incoming webhook payload example</div>
+          <div className="text-xs uppercase tracking-wide text-gray-400 mb-2">{t('settings.webhookPayloadExample' as MessageKey)}</div>
           <pre className="text-xs bg-gray-100 dark:bg-ink-900 p-3 overflow-x-auto rounded">{`POST /api/hooks/<incoming-webhook-token>
 {
   "title": "Review PR",
@@ -607,7 +647,7 @@ function IntegrationsSection() {
 }`}</pre>
         </div>
         <div className="surface p-4">
-          <div className="text-xs uppercase tracking-wide text-gray-400 mb-2">Direct API access example</div>
+          <div className="text-xs uppercase tracking-wide text-gray-400 mb-2">{t('settings.apiAccessExample' as MessageKey)}</div>
           <pre className="text-xs bg-gray-100 dark:bg-ink-900 p-3 overflow-x-auto rounded">{`GET /api/tasks
 Authorization: Bearer <api-key>`}</pre>
         </div>
@@ -656,13 +696,13 @@ function KeepImport() {
         }
       }
       if (parsed.length === 0) {
-        setError('No Google Keep notes found in that zip. Make sure it’s the Takeout archive that contains a “Keep” folder.')
+        setError(t('settings.keepNoNotes' as MessageKey))
         return
       }
       setFileName(file.name)
       setNotes(parsed)
     } catch {
-      setError('Could not read that file. Select the .zip you downloaded from Google Takeout (don’t unzip it).')
+      setError(t('settings.keepReadError' as MessageKey))
     } finally {
       setParsing(false)
     }
@@ -680,10 +720,10 @@ function KeepImport() {
       )
       haptics.success()
       setResult(
-        `Imported ${res.imported} note${res.imported === 1 ? '' : 's'}` +
-          (res.subtasks ? ` and ${res.subtasks} checklist item${res.subtasks === 1 ? '' : 's'}` : '') +
-          ` into "${res.list.name}".` +
-          (res.skipped ? ` Skipped ${res.skipped} archived/trashed.` : '')
+        tCount('settings.keepResultNotes', res.imported, { count: res.imported }) +
+          (res.subtasks ? tCount('settings.keepResultItems', res.subtasks, { count: res.subtasks }) : '') +
+          t('settings.keepResultInto' as MessageKey, { list: res.list.name }) +
+          (res.skipped ? t('settings.keepResultSkipped' as MessageKey, { count: res.skipped }) : '')
       )
       setNotes([])
       setFileName('')
@@ -691,7 +731,7 @@ function KeepImport() {
       qc.invalidateQueries({ queryKey: ['tasks'] })
       qc.invalidateQueries({ queryKey: ['tags'] })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import failed')
+      setError(e instanceof Error ? e.message : t('settings.keepImportFailed' as MessageKey))
     } finally {
       setBusy(false)
     }
@@ -699,17 +739,20 @@ function KeepImport() {
 
   return (
     <div>
-      <div className="text-sm font-medium mb-1">Import from Google Keep</div>
+      <div className="text-sm font-medium mb-1">{t('settings.keepImportTitle' as MessageKey)}</div>
       <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">
-        Export your notes with{' '}
-        <a href="https://takeout.google.com/" target="_blank" rel="noreferrer" className="text-orange-500 hover:underline inline-flex items-center gap-0.5">
-          Google Takeout <ExternalLink size={12} />
-        </a>
-        , then choose the <code className="text-xs">.zip</code> it gives you - no need to unzip. Checklists become subtasks and labels become tags.
+        {tNodes('settings.keepImportDescription' as MessageKey, {
+          takeout: (
+            <a href="https://takeout.google.com/" target="_blank" rel="noreferrer" className="text-orange-500 hover:underline inline-flex items-center gap-0.5">
+              Google Takeout <ExternalLink size={12} />
+            </a>
+          ),
+          code: <code className="text-xs">.zip</code>,
+        })}
       </p>
 
       <label className={`btn-secondary inline-flex ${parsing ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}`}>
-        <Upload size={16} className="mr-2" /> {parsing ? 'Reading zip…' : 'Choose Takeout .zip'}
+        <Upload size={16} className="mr-2" /> {parsing ? t('settings.readingZip' as MessageKey) : t('settings.chooseTakeoutZip' as MessageKey)}
         <input
           type="file"
           accept=".zip,application/zip"
@@ -722,23 +765,25 @@ function KeepImport() {
       {notes.length > 0 && (
         <div className="mt-3 space-y-3 surface p-3">
           <div className="text-sm">
-            Found <strong>{notes.length}</strong> note{notes.length === 1 ? '' : 's'}
-            {fileName && <span className="text-gray-400"> in {fileName}</span>} ready to import.
+            {tNodes('settings.keepFound' as MessageKey, {
+              count: <strong>{tCount('settings.keepNoteCount', notes.length, { count: notes.length })}</strong>,
+            })}
+            {fileName && <span className="text-gray-400"> {t('settings.keepFoundInFile' as MessageKey, { fileName })}</span>}
           </div>
           <div>
-            <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">Import into list</label>
+            <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">{t('settings.keepImportIntoList' as MessageKey)}</label>
             <input value={listName} onChange={(e) => setListName(e.target.value)} className="input-field" placeholder="Google Keep" />
           </div>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" checked={includeArchived} onChange={(e) => setIncludeArchived(e.target.checked)} className="accent-orange-500" />
-            Include archived notes
+            {t('settings.keepIncludeArchived' as MessageKey)}
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" checked={includeTrashed} onChange={(e) => setIncludeTrashed(e.target.checked)} className="accent-orange-500" />
-            Include trashed notes
+            {t('settings.keepIncludeTrashed' as MessageKey)}
           </label>
           <button onClick={runImport} disabled={busy} className="btn-primary disabled:opacity-50">
-            {busy ? 'Importing…' : `Import ${notes.length} note${notes.length === 1 ? '' : 's'}`}
+            {busy ? t('settings.keepImporting' as MessageKey) : tCount('settings.keepImportButton', notes.length, { count: notes.length })}
           </button>
         </div>
       )}
@@ -770,13 +815,13 @@ function DataSection({ user, logout }: { user: any; logout: () => void }) {
 
   return (
     <div className="max-w-md space-y-6">
-      <SectionTitle title="Data" />
+      <SectionTitle title={t('settings.data' as MessageKey)} />
 
       <div>
-        <div className="text-sm font-medium mb-1">Export your data</div>
-        <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">Download all your lists, tasks, tags, and webhooks as JSON.</p>
+        <div className="text-sm font-medium mb-1">{t('settings.exportData' as MessageKey)}</div>
+        <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">{t('settings.exportDataDescription' as MessageKey)}</p>
         <button onClick={exportData} className="btn-secondary">
-          <Download size={16} className="mr-2" /> Export JSON
+          <Download size={16} className="mr-2" /> {t('settings.exportJson' as MessageKey)}
         </button>
       </div>
 
@@ -785,13 +830,13 @@ function DataSection({ user, logout }: { user: any; logout: () => void }) {
       </div>
 
       <div className="pt-6 border-t border-gray-200 dark:border-ink-700">
-        <div className="text-sm font-medium text-red-500 mb-1">Delete account</div>
+        <div className="text-sm font-medium text-red-500 mb-1">{t('settings.deleteAccount' as MessageKey)}</div>
         <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">
-          Permanently delete your account and all data. This cannot be undone.
+          {t('settings.deleteAccountDescription' as MessageKey)}
         </p>
         {showDelete ? (
           <div className="space-y-2">
-            <p className="text-sm">Type <strong>{user?.email}</strong> to confirm:</p>
+            <p className="text-sm">{tNodes('settings.deleteConfirmInstruction' as MessageKey, { email: <strong>{user?.email}</strong> })}</p>
             <input
               value={confirmEmail}
               onChange={(e) => setConfirmEmail(e.target.value)}
@@ -804,14 +849,14 @@ function DataSection({ user, logout }: { user: any; logout: () => void }) {
                 disabled={confirmEmail.toLowerCase() !== user?.email?.toLowerCase()}
                 className="btn-brand bg-red-500 text-white px-4 h-11 disabled:opacity-40"
               >
-                <Trash2 size={16} className="mr-2" /> Delete forever
+                <Trash2 size={16} className="mr-2" /> {t('settings.deleteForever' as MessageKey)}
               </button>
-              <button onClick={() => setShowDelete(false)} className="btn-secondary px-4">Cancel</button>
+              <button onClick={() => setShowDelete(false)} className="btn-secondary px-4">{t('common.cancel')}</button>
             </div>
           </div>
         ) : (
           <button onClick={() => setShowDelete(true)} className="btn-brand bg-red-500 text-white px-4 h-11">
-            <Trash2 size={16} className="mr-2" /> Delete account
+            <Trash2 size={16} className="mr-2" /> {t('settings.deleteAccount' as MessageKey)}
           </button>
         )}
       </div>
@@ -823,15 +868,15 @@ function LegalSection() {
   const navigate = useNavigate()
   return (
     <div className="max-w-md space-y-4">
-      <SectionTitle title="Legal" />
+      <SectionTitle title={t('settings.legal' as MessageKey)} />
       <div className="space-y-3">
         <button
           onClick={() => navigate('/legal')}
           className="w-full text-left surface p-4 hover:bg-gray-50 dark:hover:bg-ink-750 transition-colors flex items-center justify-between"
         >
           <div>
-            <div className="text-sm font-medium">Terms of Service</div>
-            <div className="text-xs text-gray-400">Our usage rules and guidelines</div>
+            <div className="text-sm font-medium">{t('legal.termsTitle' as MessageKey)}</div>
+            <div className="text-xs text-gray-400">{t('settings.termsDescription' as MessageKey)}</div>
           </div>
           <ExternalLink size={16} className="text-gray-400" />
         </button>
@@ -842,8 +887,8 @@ function LegalSection() {
           className="w-full text-left surface p-4 hover:bg-gray-50 dark:hover:bg-ink-750 transition-colors flex items-center justify-between"
         >
           <div>
-            <div className="text-sm font-medium">Discord Community</div>
-            <div className="text-xs text-gray-400">Get help and connect with others</div>
+            <div className="text-sm font-medium">{t('settings.discordCommunity' as MessageKey)}</div>
+            <div className="text-xs text-gray-400">{t('settings.discordDescription' as MessageKey)}</div>
           </div>
           <ExternalLink size={16} className="text-gray-400" />
         </a>

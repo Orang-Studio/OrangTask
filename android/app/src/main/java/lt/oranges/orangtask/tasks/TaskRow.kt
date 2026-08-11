@@ -30,10 +30,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.db.TaskEntity
 import lt.oranges.orangtask.ui.components.Avatar
 import lt.oranges.orangtask.ui.components.PriorityDot
@@ -190,7 +192,15 @@ private fun TaskRowContent(
                                     tint = mutedColor,
                                     modifier = Modifier.size(11.dp),
                                 )
-                                Text("${task.subtaskCount}", fontSize = 12.sp, color = mutedColor)
+                                Text(
+                                    pluralStringResource(
+                                        R.plurals.subtask_count,
+                                        task.subtaskCount,
+                                        task.subtaskCount,
+                                    ),
+                                    fontSize = 12.sp,
+                                    color = mutedColor,
+                                )
                             }
                         }
                         task.tagNames.take(3).forEach { tag ->

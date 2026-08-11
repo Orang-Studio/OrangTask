@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import lt.oranges.orangtask.BuildConfig
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.db.isoToMillis
 import lt.oranges.orangtask.core.network.ApiKeyDto
 import lt.oranges.orangtask.ui.components.BrandButton
@@ -63,11 +65,9 @@ fun IntegrationsSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("API KEYS", fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(stringResource(R.string.api_keys_heading), fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(
-                "Generate a personal API key to call the full OrangTask API directly (read/write lists, " +
-                    "tasks, tags) from scripts or tools that need more than the one-way incoming webhook " +
-                    "below. Keys don't expire like a login session, revoke one any time it's no longer needed.",
+                stringResource(R.string.api_keys_description),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -75,15 +75,19 @@ fun IntegrationsSection(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("WEBHOOKS & INTEGRATIONS", fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(
-                "OrangTask works with any tool that can send or receive HTTP requests. Create a webhook " +
-                    "in the Webhooks section, then wire it up with n8n, Zapier, or a GitHub Actions curl step.",
+                stringResource(R.string.webhooks_integrations_heading),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+            )
+            Text(
+                stringResource(R.string.webhooks_integrations_description),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             CodeBlock(
-                label = "Incoming webhook payload example",
+                label = stringResource(R.string.incoming_webhook_payload_label),
                 code = "POST /api/hooks/<incoming-webhook-token>\n" +
                     "{\n" +
                     "  \"title\": \"Review PR\",\n" +
@@ -94,7 +98,7 @@ fun IntegrationsSection(
                     "}",
             )
             CodeBlock(
-                label = "Direct API access example",
+                label = stringResource(R.string.direct_api_access_example_label),
                 code = "GET ${BuildConfig.API_BASE_URL.trimEnd('/')}/api/tasks\n" +
                     "Authorization: Bearer <api-key>",
             )
@@ -135,7 +139,7 @@ private fun ApiKeysManager(viewModel: ApiKeysViewModel) {
         }
 
         if (viewModel.loading) {
-            Text("Loading…", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         viewModel.keys.forEach { key ->
@@ -151,10 +155,14 @@ private fun ApiKeysManager(viewModel: ApiKeysViewModel) {
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.padding(12.dp),
                 ) {
-                    OrangTextField(value = name, onValueChange = { name = it }, placeholder = "e.g. n8n integration")
+                    OrangTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        placeholder = stringResource(R.string.api_key_name_placeholder),
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         BrandButton(
-                            text = if (viewModel.creating) "Creating…" else "Create key",
+                            text = if (viewModel.creating) stringResource(R.string.creating) else stringResource(R.string.create_key),
                             enabled = !viewModel.creating && name.isNotBlank(),
                             onClick = {
                                 haptics.tap()
@@ -165,13 +173,13 @@ private fun ApiKeysManager(viewModel: ApiKeysViewModel) {
                             },
                             modifier = Modifier.weight(1f),
                         )
-                        BrandButton(text = "Cancel", secondary = true, onClick = { showForm = false })
+                        BrandButton(text = stringResource(R.string.cancel), secondary = true, onClick = { showForm = false })
                     }
                 }
             }
         } else {
             BrandButton(
-                text = "New API key",
+                text = stringResource(R.string.new_api_key),
                 icon = Icons.Outlined.Add,
                 secondary = true,
                 onClick = {
@@ -193,9 +201,9 @@ private fun RevealedKeyCard(name: String, rawKey: String, onDismiss: () -> Unit)
 
     SurfaceCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text("API key created: $name", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.api_key_created, name), fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Text(
-                "Copy it now, for your security, it won't be shown again.",
+                stringResource(R.string.api_key_copy_warning),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
@@ -219,14 +227,14 @@ private fun RevealedKeyCard(name: String, rawKey: String, onDismiss: () -> Unit)
                 }) {
                     Icon(
                         Icons.Outlined.ContentCopy,
-                        contentDescription = "Copy key",
+                        contentDescription = stringResource(R.string.copy_key),
                         tint = if (copied) Orange500 else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp),
                     )
                 }
             }
             Text(
-                "Done",
+                stringResource(R.string.done),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -248,8 +256,13 @@ private fun ApiKeyRow(key: ApiKeyDto, onDelete: () -> Unit) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(key.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                val lastUsedMillis = isoToMillis(key.lastUsedAt)
                 Text(
-                    "${key.keyPrefix}… · " + (isoToMillis(key.lastUsedAt)?.let { "last used ${formatDueDate(it)}" } ?: "never used"),
+                    if (lastUsedMillis == null) {
+                        stringResource(R.string.api_key_never_used, key.keyPrefix)
+                    } else {
+                        stringResource(R.string.api_key_last_used, key.keyPrefix, formatDueDate(lastUsedMillis))
+                    },
                     fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -258,7 +271,7 @@ private fun ApiKeyRow(key: ApiKeyDto, onDelete: () -> Unit) {
             IconButton(onClick = { confirmDelete = true }) {
                 Icon(
                     Icons.Outlined.Delete,
-                    contentDescription = "Revoke ${key.name}",
+                    contentDescription = stringResource(R.string.revoke_api_key_content_description, key.name),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp),
                 )
@@ -269,15 +282,15 @@ private fun ApiKeyRow(key: ApiKeyDto, onDelete: () -> Unit) {
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Revoke API key") },
-            text = { Text("Revoke \"${key.name}\"? Any integration using it will stop working.") },
+            title = { Text(stringResource(R.string.revoke_api_key)) },
+            text = { Text(stringResource(R.string.revoke_api_key_confirmation, key.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = false
                     onDelete()
-                }) { Text("Revoke", color = Color(0xFFEF4444)) }
+                }) { Text(stringResource(R.string.revoke), color = Color(0xFFEF4444)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 }

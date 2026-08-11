@@ -2,10 +2,12 @@ import { Logo } from '../components/Logo'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
+import { t, tNodes, type MessageKey } from '../lib/i18n'
 
 export function LegalPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const updated = 'June 18, 2026'
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-ink-900 px-4 py-10">
@@ -15,105 +17,97 @@ export function LegalPage() {
             onClick={() => navigate(user ? '/today' : '/login')}
             className="btn-secondary flex items-center gap-2 text-sm"
           >
-            <ArrowLeft size={14} /> Back
+            <ArrowLeft size={14} /> {t('common.back')}
           </button>
           <Logo size={32} />
-          <h1 className="text-xl font-bold uppercase tracking-wider">Legal</h1>
+          <h1 className="text-xl font-bold uppercase tracking-wider">{t('legal.title' as MessageKey)}</h1>
         </div>
 
         <div className="surface p-8 space-y-10 text-sm leading-relaxed text-gray-700 dark:text-ink-300">
 
           <section>
             <h2 className="text-base font-bold uppercase tracking-wider text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-ink-600 pb-2">
-              Terms of Service
+              {t('legal.termsTitle' as MessageKey)}
             </h2>
-            <p className="mb-3">Last updated: June 18, 2026</p>
+            <p className="mb-3">{t('legal.lastUpdated' as MessageKey, { date: updated })}</p>
 
             <p className="mb-3">
-              OrangTask ("the Service") is operated by Orange Studio. By creating an account or using the
-              Service you agree to these terms. If you do not agree, do not use the Service.
+              {t('legal.operatedBy' as MessageKey)}
             </p>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">Use of the Service</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.useOfService' as MessageKey)}</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>You must be at least 16 years old to use OrangTask.</li>
-              <li>You are responsible for keeping your account credentials secure.</li>
-              <li>You may not use the Service for any unlawful purpose or to harm others.</li>
-              <li>We reserve the right to suspend or terminate accounts that violate these terms.</li>
+              <li>{t('legal.termAge' as MessageKey)}</li>
+              <li>{t('legal.termCredentials' as MessageKey)}</li>
+              <li>{t('legal.termUnlawful' as MessageKey)}</li>
+              <li>{t('legal.termSuspension' as MessageKey)}</li>
             </ul>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">Your Content</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.yourContent' as MessageKey)}</h3>
             <p className="mb-3">
-              You retain ownership of tasks, notes, and other content you create. By using the Service you
-              grant us a limited licence to store and process that content solely to provide the Service.
-              We do not sell your content.
+              {t('legal.contentParagraph' as MessageKey)}
             </p>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">Service Availability</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.serviceAvailability' as MessageKey)}</h3>
             <p className="mb-3">
-              The Service is provided "as is" without warranties of any kind. We may modify, suspend, or
-              discontinue the Service at any time. We are not liable for any loss of data or downtime.
+              {t('legal.availabilityParagraph' as MessageKey)}
             </p>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">Limitation of Liability</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.limitationOfLiability' as MessageKey)}</h3>
             <p>
-              To the maximum extent permitted by applicable law, Orange Studio shall not be liable for any
-              indirect, incidental, special, or consequential damages arising from your use of the Service.
-              Our total liability to you shall not exceed the amount you paid us in the 12 months preceding
-              the claim (which for a free service is €0).
+              {t('legal.liabilityParagraph' as MessageKey)}
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold uppercase tracking-wider text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-ink-600 pb-2">
-              Privacy Policy
+              {t('legal.privacyPolicy' as MessageKey)}
             </h2>
-            <p className="mb-3">Last updated: June 18, 2026</p>
+            <p className="mb-3">{t('legal.lastUpdated' as MessageKey, { date: updated })}</p>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">What we collect</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.whatWeCollect' as MessageKey)}</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Account data</strong>: email address, optional display name.</li>
-              <li><strong>Task data</strong>: tasks, lists, tags, due dates, and notes you create.</li>
-              <li><strong>Usage data</strong>: server logs (IP address, timestamp, HTTP method/path) retained for up to 30 days for security and debugging.</li>
-              <li><strong>Push notification tokens</strong>: stored only if you opt in to push notifications.</li>
+              <li>{tNodes('legal.collectAccount' as MessageKey, { account: <strong>{t('legal.accountData' as MessageKey)}</strong> })}</li>
+              <li>{tNodes('legal.collectTask' as MessageKey, { task: <strong>{t('legal.taskData' as MessageKey)}</strong> })}</li>
+              <li>{tNodes('legal.collectUsage' as MessageKey, { usage: <strong>{t('legal.usageData' as MessageKey)}</strong> })}</li>
+              <li>{tNodes('legal.collectPush' as MessageKey, { push: <strong>{t('legal.pushTokens' as MessageKey)}</strong> })}</li>
             </ul>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">How we use it</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.howWeUse' as MessageKey)}</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>To provide and operate the Service.</li>
-              <li>To send transactional emails (magic-link sign-in, password reset, task reminders) that you explicitly request.</li>
-              <li>To send push notifications you have opted in to.</li>
-              <li>We do not use your data for advertising or sell it to third parties.</li>
+              <li>{t('legal.useProvide' as MessageKey)}</li>
+              <li>{t('legal.useTransactional' as MessageKey)}</li>
+              <li>{t('legal.usePush' as MessageKey)}</li>
+              <li>{t('legal.useNoAds' as MessageKey)}</li>
             </ul>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">Data storage & security</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.dataStorage' as MessageKey)}</h3>
             <p className="mb-3">
-              All data is stored on servers located in the EU. Passwords are hashed with bcrypt and never
-              stored in plaintext. Connections are encrypted via TLS.
+              {t('legal.storageParagraph' as MessageKey)}
             </p>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">Third-party services</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.thirdParty' as MessageKey)}</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>GitHub / Google OAuth</strong>: if you sign in via OAuth, we receive your email and public profile from that provider.</li>
-              <li><strong>Email delivery</strong>: transactional emails are sent via a third-party SMTP provider.</li>
+              <li>{tNodes('legal.oauthItem' as MessageKey, { oauth: <strong>{t('legal.oauth' as MessageKey)}</strong> })}</li>
+              <li>{tNodes('legal.emailDeliveryItem' as MessageKey, { emailDelivery: <strong>{t('legal.emailDelivery' as MessageKey)}</strong> })}</li>
             </ul>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">Your rights (GDPR)</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.gdprRights' as MessageKey)}</h3>
             <p className="mb-3">
-              If you are in the EU/EEA you have the right to access, correct, export, or delete your
-              personal data. You can delete your account and all associated data from the Settings page.
-              For other requests, email us at <a href="mailto:legal@oranges.lt" className="text-orange-500 hover:underline">legal@oranges.lt</a>.
+              {tNodes('legal.gdprParagraph' as MessageKey, { email: <a href="mailto:legal@oranges.lt" className="text-orange-500 hover:underline">legal@oranges.lt</a> })}
             </p>
 
-            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">Cookies</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.cookies' as MessageKey)}</h3>
             <p>
-              We use a single HTTP-only cookie to maintain your session. No tracking or advertising cookies
-              are used.
+              {t('legal.cookiesParagraph' as MessageKey)}
             </p>
           </section>
 
           <p className="text-xs text-gray-400 border-t border-gray-200 dark:border-ink-600 pt-6">
-            Questions? Contact <a href="mailto:legal@oranges.lt" className="text-orange-500 hover:underline">legal@oranges.lt</a> or join our <a href="https://discord.gg/cpkfnRuRv7" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">Discord community</a>
+            {tNodes('legal.contactFooter' as MessageKey, {
+              email: <a href="mailto:legal@oranges.lt" className="text-orange-500 hover:underline">legal@oranges.lt</a>,
+              discord: <a href="https://discord.gg/cpkfnRuRv7" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">{t('legal.discordCommunity' as MessageKey)}</a>,
+            })}
           </p>
         </div>
       </div>

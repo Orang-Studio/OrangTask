@@ -29,11 +29,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.serialization.json.JsonPrimitive
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.db.isoToMillis
 import lt.oranges.orangtask.core.network.NotificationDto
 import lt.oranges.orangtask.ui.components.EmptyState
@@ -64,13 +67,17 @@ fun NotificationsScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.content_description_back),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text("NOTIFICATIONS", fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(stringResource(R.string.notifications_heading), fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             if (unread > 0) {
-                Text("$unread new", fontSize = 13.sp, color = Orange500)
+                Text(
+                    pluralStringResource(R.plurals.new_notifications, unread, unread),
+                    fontSize = 13.sp,
+                    color = Orange500,
+                )
             }
             Spacer(Modifier.weight(1f))
             if (unread > 0) {
@@ -80,7 +87,7 @@ fun NotificationsScreen(
                 }) {
                     Icon(
                         Icons.Outlined.DoneAll,
-                        contentDescription = "Mark all read",
+                        contentDescription = stringResource(R.string.mark_all_read),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -94,12 +101,12 @@ fun NotificationsScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    Text("Loading…", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.loading), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 items.isEmpty() -> EmptyState(
                     icon = Icons.Outlined.Notifications,
-                    title = "No notifications",
-                    description = "You're all caught up. New activity will show here.",
+                    title = stringResource(R.string.no_notifications),
+                    description = stringResource(R.string.notifications_caught_up),
                 )
                 else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(items, key = { it.id }) { notification ->

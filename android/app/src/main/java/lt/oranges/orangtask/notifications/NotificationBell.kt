@@ -14,8 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.ui.components.rememberHaptics
 import lt.oranges.orangtask.ui.theme.Orange500
 
@@ -34,7 +36,7 @@ fun NotificationBell(
         Box {
             Icon(
                 Icons.Outlined.Notifications,
-                contentDescription = "Notifications",
+                contentDescription = stringResource(R.string.notifications),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (unread > 0) {

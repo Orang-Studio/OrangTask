@@ -15,6 +15,7 @@ import {
   useListMembers,
 } from '../hooks/useLists'
 import { useTasks, useCreateTask, useCompleteTask, useDeleteTask } from '../hooks/useTasks'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface Props {
   task: Task | null
@@ -115,9 +116,9 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
             ${task.status === 'done' ? 'bg-orange-500 text-white' : 'border border-gray-300 dark:border-ink-500'}`}
         >
           <Check size={15} strokeWidth={3} />
-          {task.status === 'done' ? 'Completed' : 'Complete'}
+          {task.status === 'done' ? t('taskDetail.completed' as MessageKey) : t('taskDetail.complete' as MessageKey)}
         </button>
-        <button onClick={onClose} aria-label="Close" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white">
+        <button onClick={onClose} aria-label={t('common.close')} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white">
           <X size={20} />
         </button>
       </div>
@@ -130,7 +131,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
           onBlur={saveTitle}
           onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
           className="w-full bg-transparent text-xl font-semibold outline-none"
-          placeholder="Task title"
+          placeholder={t('taskDetail.taskTitlePlaceholder' as MessageKey)}
         />
 
         <div className="flex items-center gap-3">
@@ -162,7 +163,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                 }`}
                 style={task.priority === p && p !== 'none' ? { color: PRIORITY_COLORS[p] } : {}}
               >
-                {PRIORITY_LABELS[p]}
+                {PRIORITY_LABELS[p]()}
               </button>
             ))}
           </div>
@@ -187,7 +188,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                       <span>{assignee.name}</span>
                     </>
                   ) : (
-                    <span className="text-gray-400">Assign to...</span>
+                    <span className="text-gray-400">{t('taskDetail.assignTo' as MessageKey)}</span>
                   )}
                   <ChevronDown size={14} className="text-gray-400" />
                 </button>
@@ -204,7 +205,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                       }`}
                     >
                       <UserCircle2 size={20} className="text-gray-400" />
-                      Unassigned
+                      {t('taskDetail.unassigned' as MessageKey)}
                     </button>
                     {members.map((m) => (
                       <button
@@ -255,7 +256,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                 onClick={() => setShowTagPicker(!showTagPicker)}
                 className="flex items-center gap-1 text-sm px-2 py-1 border border-dashed border-gray-300 dark:border-ink-500 rounded hover:border-orange-500"
               >
-                <Plus size={12} /> Tag
+                <Plus size={12} /> {t('taskDetail.tag' as MessageKey)}
               </button>
             </div>
 
@@ -289,7 +290,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                         setShowTagPicker(false)
                       }
                     }}
-                    placeholder="New tag..."
+                    placeholder={t('taskDetail.newTagPlaceholder' as MessageKey)}
                     className="input-field flex-1 h-9"
                   />
                 </div>
@@ -299,19 +300,19 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
         </div>
 
         <div>
-          <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">Notes</label>
+          <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">{t('taskDetail.notes' as MessageKey)}</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             onBlur={saveNotes}
             rows={4}
-            placeholder="Add notes (markdown supported)..."
+            placeholder={t('taskDetail.notesPlaceholder' as MessageKey)}
             className="input-field w-full h-auto py-2 resize-y"
           />
         </div>
 
         <div>
-          <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">Subtasks</label>
+          <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">{t('taskDetail.subtasks' as MessageKey)}</label>
           <div className="space-y-1">
             {subtasks?.map((st) => (
               <div key={st.id} className="flex items-center gap-2 py-1">
@@ -346,7 +347,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                   setNewSubtask('')
                 }
               }}
-              placeholder="Add subtask..."
+              placeholder={t('taskDetail.addSubtaskPlaceholder' as MessageKey)}
               className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400"
             />
           </div>
@@ -362,7 +363,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
           }}
           className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 px-3 h-9 font-medium"
         >
-          <Trash2 size={16} /> Delete task
+          <Trash2 size={16} /> {t('common.deleteTask' as MessageKey)}
         </button>
       </div>
     </div>
@@ -408,7 +409,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
         onMouseDown={startResize}
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize panel"
+        aria-label={t('taskDetail.resizePanel' as MessageKey)}
         className="absolute left-0 top-0 h-full w-2 -ml-1 z-20 cursor-ew-resize group"
       >
         <div className="absolute inset-y-0 left-1 w-px bg-transparent group-hover:bg-orange-400 transition-colors" />

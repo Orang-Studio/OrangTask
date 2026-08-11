@@ -61,6 +61,17 @@ Open `android/` in Android Studio and run. For native push, drop your Firebase
 `google-services.json` into `android/app/` and apply the Google Services plugin.
 Without it the app still builds, push is simply inert.
 
+### Translations
+
+Community translations are managed in [Weblate](https://oranges.lt/translate/projects/orangtask/).
+English is the source locale for both clients. To pull a published locale into
+the web and Android trees:
+
+```bash
+cd frontend
+WEBLATE_LOCALES=lt npm run i18n:pull
+```
+
 ### Claude Code integration
 
 `mcp/` is an MCP server that exposes your tasks over the personal API key. See

@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -101,7 +102,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(top = 16.dp),
             )
             Text(
-                "Tasks that sync everywhere",
+                stringResource(R.string.login_tagline),
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, bottom = 32.dp),
@@ -134,7 +135,7 @@ fun LoginScreen(
             }
 
             Text(
-                "Free and open source. Self-host it yourself.",
+                stringResource(R.string.login_footer),
                 fontSize = 12.sp,
                 color = Gray400,
                 textAlign = TextAlign.Center,
@@ -147,15 +148,15 @@ fun LoginScreen(
 @Composable
 private fun MagicForm(state: LoginUiState, vm: LoginViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        FieldLabel("Email")
+        FieldLabel(stringResource(R.string.email_label))
         OrangTextField(
             value = state.email,
             onValueChange = vm::setEmail,
-            placeholder = "you@example.com",
+            placeholder = stringResource(R.string.email_placeholder),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
         BrandButton(
-            text = if (state.loading) "Sending..." else "Send magic link",
+            text = if (state.loading) stringResource(R.string.sending) else stringResource(R.string.send_magic_link),
             onClick = vm::sendMagic,
             enabled = !state.loading,
             icon = Icons.Outlined.MailOutline,
@@ -177,13 +178,13 @@ private fun MagicSentContent(state: LoginUiState, vm: LoginViewModel) {
             Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
         }
         Text(
-            "Check your email",
+            stringResource(R.string.check_your_email),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(top = 16.dp),
         )
         Text(
-            "We sent a sign-in link to ${state.email}",
+            stringResource(R.string.sign_in_link_sent, state.email),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -191,23 +192,23 @@ private fun MagicSentContent(state: LoginUiState, vm: LoginViewModel) {
         )
 
         Spacer(Modifier.height(20.dp))
-        FieldLabel("Paste the sign-in link", Modifier.fillMaxWidth())
+        FieldLabel(stringResource(R.string.sign_in_link_label), Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         OrangTextField(
             value = state.pastedLink,
             onValueChange = vm::setPastedLink,
-            placeholder = "https://…/auth/magic?token=…",
+            placeholder = stringResource(R.string.magic_link_placeholder),
         )
         Spacer(Modifier.height(12.dp))
         BrandButton(
-            text = if (state.loading) "Signing in..." else "Sign in",
+            text = if (state.loading) stringResource(R.string.signing_in) else stringResource(R.string.sign_in),
             onClick = vm::completeMagicLink,
             enabled = !state.loading,
             modifier = Modifier.fillMaxWidth(),
         )
 
         TextButton(onClick = vm::useDifferentEmail, modifier = Modifier.padding(top = 8.dp)) {
-            Text("Use a different email", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.use_different_email), fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -217,33 +218,44 @@ private fun PasswordForm(state: LoginUiState, vm: LoginViewModel, onCaptcha: () 
     val register = state.mode == LoginMode.REGISTER
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (register) {
-            FieldLabel("Name")
-            OrangTextField(value = state.name, onValueChange = vm::setName, placeholder = "Your name")
+            FieldLabel(stringResource(R.string.name_label))
+            OrangTextField(
+                value = state.name,
+                onValueChange = vm::setName,
+                placeholder = stringResource(R.string.name_placeholder),
+            )
         }
-        FieldLabel("Email")
+        FieldLabel(stringResource(R.string.email_label))
         OrangTextField(
             value = state.email,
             onValueChange = vm::setEmail,
-            placeholder = "you@example.com",
+            placeholder = stringResource(R.string.email_placeholder),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
-        FieldLabel("Password")
+        FieldLabel(stringResource(R.string.password_label))
         OrangTextField(
             value = state.password,
             onValueChange = vm::setPassword,
-            placeholder = "••••••••",
+            placeholder = stringResource(R.string.password_placeholder),
             isPassword = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         if (state.captchaRequired) {
             Text(
-                if (state.captchaToken == null) "Complete the Google reCAPTCHA security check before continuing."
-                else "Security check complete.",
+                if (state.captchaToken == null) {
+                    stringResource(R.string.captcha_security_check_incomplete)
+                } else {
+                    stringResource(R.string.captcha_security_check_complete)
+                },
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             BrandButton(
-                text = if (state.captchaToken == null) "Complete security check" else "Security check complete",
+                text = if (state.captchaToken == null) {
+                    stringResource(R.string.complete_security_check)
+                } else {
+                    stringResource(R.string.captcha_security_check_complete)
+                },
                 onClick = onCaptcha,
                 enabled = !state.loading && state.captchaToken == null,
                 icon = Icons.Default.Check,
@@ -252,9 +264,9 @@ private fun PasswordForm(state: LoginUiState, vm: LoginViewModel, onCaptcha: () 
         }
         BrandButton(
             text = when {
-                state.loading -> "Please wait..."
-                register -> "Create account"
-                else -> "Sign in"
+                state.loading -> stringResource(R.string.please_wait)
+                register -> stringResource(R.string.create_account)
+                else -> stringResource(R.string.sign_in)
             },
             onClick = vm::submitPassword,
             enabled = !state.loading,
@@ -268,28 +280,28 @@ private fun PasswordForm(state: LoginUiState, vm: LoginViewModel, onCaptcha: () 
 private fun EmailTwoFactorForm(state: LoginUiState, vm: LoginViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            "Enter the 6-digit security code we sent to ${state.email}.",
+            stringResource(R.string.email_security_code_message, state.email),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        FieldLabel("Email security code")
+        FieldLabel(stringResource(R.string.email_security_code_label))
         OrangTextField(
             value = state.emailCode,
             onValueChange = vm::setEmailCode,
-            placeholder = "123456",
+            placeholder = stringResource(R.string.six_digit_code_placeholder),
             centered = true,
             textStyle = androidx.compose.ui.text.TextStyle(letterSpacing = 8.sp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         )
         BrandButton(
-            text = if (state.loading) "Verifying..." else "Verify and sign in",
+            text = if (state.loading) stringResource(R.string.verifying) else stringResource(R.string.verify_and_sign_in),
             onClick = vm::verifyEmailCode,
             enabled = !state.loading,
             icon = Icons.Outlined.Lock,
             modifier = Modifier.fillMaxWidth(),
         )
         TextButton(onClick = vm::resendLoginCode, enabled = !state.loading) {
-            Text("Resend code", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.resend_code), fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -298,19 +310,19 @@ private fun EmailTwoFactorForm(state: LoginUiState, vm: LoginViewModel) {
 private fun VerifyEmailContent(state: LoginUiState, vm: LoginViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            "Verify ${state.email} before accessing your tasks. We sent a verification link to that address.",
+            stringResource(R.string.verify_email_message, state.email),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         BrandButton(
-            text = if (state.loading) "Sending..." else "Resend verification email",
+            text = if (state.loading) stringResource(R.string.sending) else stringResource(R.string.resend_verification_email),
             onClick = vm::resendVerification,
             enabled = !state.loading,
             icon = Icons.Outlined.MailOutline,
             modifier = Modifier.fillMaxWidth(),
         )
         TextButton(onClick = { vm.setMode(LoginMode.PASSWORD) }) {
-            Text("Back to sign in", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.back_to_sign_in), fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -321,56 +333,56 @@ private fun ResetForm(state: LoginUiState, vm: LoginViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             if (requesting) {
-                "Enter your email and we’ll send you a 6-digit code to reset your password."
+                stringResource(R.string.reset_password_request_message)
             } else {
-                "Enter the code we sent to ${state.email} and choose a new password."
+                stringResource(R.string.reset_password_confirm_message, state.email)
             },
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        FieldLabel("Email")
+        FieldLabel(stringResource(R.string.email_label))
         OrangTextField(
             value = state.email,
             onValueChange = vm::setEmail,
-            placeholder = "you@example.com",
+            placeholder = stringResource(R.string.email_placeholder),
             enabled = requesting,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
         if (requesting) {
             BrandButton(
-                text = if (state.loading) "Sending..." else "Send reset code",
+                text = if (state.loading) stringResource(R.string.sending) else stringResource(R.string.send_reset_code),
                 onClick = vm::requestReset,
                 enabled = !state.loading,
                 icon = Icons.Outlined.Key,
                 modifier = Modifier.fillMaxWidth(),
             )
         } else {
-            FieldLabel("Reset code")
+            FieldLabel(stringResource(R.string.reset_code_label))
             OrangTextField(
                 value = state.resetCode,
                 onValueChange = vm::setResetCode,
-                placeholder = "123456",
+                placeholder = stringResource(R.string.six_digit_code_placeholder),
                 centered = true,
                 textStyle = androidx.compose.ui.text.TextStyle(letterSpacing = 8.sp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             )
-            FieldLabel("New password")
+            FieldLabel(stringResource(R.string.new_password_label))
             OrangTextField(
                 value = state.password,
                 onValueChange = vm::setPassword,
-                placeholder = "At least 8 characters",
+                placeholder = stringResource(R.string.new_password_placeholder),
                 isPassword = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             )
             BrandButton(
-                text = if (state.loading) "Please wait..." else "Reset password & sign in",
+                text = if (state.loading) stringResource(R.string.please_wait) else stringResource(R.string.reset_password_and_sign_in),
                 onClick = vm::submitReset,
                 enabled = !state.loading,
                 icon = Icons.Outlined.Lock,
                 modifier = Modifier.fillMaxWidth(),
             )
             TextButton(onClick = vm::requestReset, enabled = !state.loading, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("Resend code", fontSize = 12.sp, color = Gray400)
+                Text(stringResource(R.string.resend_code), fontSize = 12.sp, color = Gray400)
             }
         }
     }
@@ -388,12 +400,12 @@ private fun OAuthSection(state: LoginUiState, onOAuth: (String) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             HorizontalDivider(modifier = Modifier.weight(1f))
-            Text("OR", fontSize = 12.sp, color = muted)
+            Text(stringResource(R.string.or), fontSize = 12.sp, color = muted)
             HorizontalDivider(modifier = Modifier.weight(1f))
         }
         if (state.providers.github) {
             BrandButton(
-                text = "Continue with GitHub",
+                text = stringResource(R.string.continue_with_github),
                 secondary = true,
                 onClick = { onOAuth("github") },
                 enabled = !state.loading,
@@ -403,7 +415,7 @@ private fun OAuthSection(state: LoginUiState, onOAuth: (String) -> Unit) {
         }
         if (state.providers.google) {
             BrandButton(
-                text = "Continue with Google",
+                text = stringResource(R.string.continue_with_google),
                 secondary = true,
                 onClick = { onOAuth("google") },
                 enabled = !state.loading,
@@ -427,30 +439,30 @@ private fun ModeToggles(state: LoginUiState, vm: LoginViewModel) {
         when (state.mode) {
             LoginMode.MAGIC -> {
                 TextButton(onClick = { vm.setMode(LoginMode.PASSWORD) }) {
-                    Text("Use password instead", fontSize = 14.sp, color = muted)
+                    Text(stringResource(R.string.use_password_instead), fontSize = 14.sp, color = muted)
                 }
             }
             LoginMode.PASSWORD -> {
                 androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     TextButton(onClick = { vm.setMode(LoginMode.MAGIC) }) {
-                        Text("Magic link", fontSize = 14.sp, color = muted)
+                        Text(stringResource(R.string.magic_link), fontSize = 14.sp, color = muted)
                     }
                     TextButton(onClick = { vm.setMode(LoginMode.REGISTER) }) {
-                        Text("Create account →", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.create_account_arrow), fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 TextButton(onClick = { vm.setMode(LoginMode.RESET) }) {
-                    Text("Forgot password?", fontSize = 14.sp, color = Gray400)
+                    Text(stringResource(R.string.forgot_password), fontSize = 14.sp, color = Gray400)
                 }
             }
             LoginMode.REGISTER -> {
                 TextButton(onClick = { vm.setMode(LoginMode.PASSWORD) }) {
-                    Text("Already have an account? Sign in", fontSize = 14.sp, color = muted)
+                    Text(stringResource(R.string.already_have_account_sign_in), fontSize = 14.sp, color = muted)
                 }
             }
             LoginMode.RESET -> {
                 TextButton(onClick = { vm.setMode(LoginMode.PASSWORD) }) {
-                    Text("Back to sign in", fontSize = 14.sp, color = muted)
+                    Text(stringResource(R.string.back_to_sign_in), fontSize = 14.sp, color = muted)
                 }
             }
             LoginMode.EMAIL_2FA, LoginMode.VERIFY_EMAIL -> Unit

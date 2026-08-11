@@ -12,6 +12,7 @@ import { useTasks, useCreateTask, useCompleteTask, useDeleteTask, useUpdateTask,
 import { useLists } from '../hooks/useLists'
 import { useLayout } from '../components/Layout'
 import { useHaptics } from '../hooks/useHaptics'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface SmartConfig {
   title: string
@@ -58,9 +59,9 @@ function SmartPage({ config }: { config: SmartConfig }) {
 
     let due = data.due_date
     if (config.smart === 'today' && !due) {
-      const t = new Date()
-      t.setHours(23, 59, 0, 0)
-      due = t.toISOString()
+      const now = new Date()
+      now.setHours(23, 59, 0, 0)
+      due = now.toISOString()
     }
     createTask.mutate({
       list_id: defaultList.id,
@@ -128,35 +129,35 @@ function SmartPage({ config }: { config: SmartConfig }) {
 
 export const TodayPage = () => (
   <SmartPage config={{
-    title: 'Today', smart: 'today', icon: Sun, allowAdd: true, pose: 'happy',
-    emptyTitle: 'Nothing due today', emptyDescription: 'You are all caught up. Add a task below to plan your day.',
+    title: t('today.title' as MessageKey), smart: 'today', icon: Sun, allowAdd: true, pose: 'happy',
+    emptyTitle: t('today.emptyTitle' as MessageKey), emptyDescription: t('today.emptyDescription' as MessageKey),
   }} />
 )
 
 export const UpcomingPage = () => (
   <SmartPage config={{
-    title: 'Upcoming', smart: 'week', icon: CalendarDays, allowAdd: false, pose: 'sleeping',
-    emptyTitle: 'No upcoming tasks', emptyDescription: 'Nothing scheduled for the next 7 days.',
+    title: t('upcoming.title' as MessageKey), smart: 'week', icon: CalendarDays, allowAdd: false, pose: 'sleeping',
+    emptyTitle: t('upcoming.emptyTitle' as MessageKey), emptyDescription: t('upcoming.emptyDescription' as MessageKey),
   }} />
 )
 
 export const OverduePage = () => (
   <SmartPage config={{
-    title: 'Overdue', smart: 'overdue', icon: AlertCircle, allowAdd: false, pose: 'happy',
-    emptyTitle: 'No overdue tasks', emptyDescription: 'Great work staying on top of things.',
+    title: t('overdue.title' as MessageKey), smart: 'overdue', icon: AlertCircle, allowAdd: false, pose: 'happy',
+    emptyTitle: t('overdue.emptyTitle' as MessageKey), emptyDescription: t('overdue.emptyDescription' as MessageKey),
   }} />
 )
 
 export const AssignedPage = () => (
   <SmartPage config={{
-    title: 'Assigned to Me', smart: 'assigned', icon: UserCheck, allowAdd: false, pose: 'happy',
-    emptyTitle: 'Nothing assigned to you', emptyDescription: 'Tasks that teammates assign to you in shared lists will show up here.',
+    title: t('assigned.title' as MessageKey), smart: 'assigned', icon: UserCheck, allowAdd: false, pose: 'happy',
+    emptyTitle: t('assigned.emptyTitle' as MessageKey), emptyDescription: t('assigned.emptyDescription' as MessageKey),
   }} />
 )
 
 export const AllTasksPage = () => (
   <SmartPage config={{
-    title: 'All Tasks', smart: 'all', icon: Layers, allowAdd: true,
-    emptyTitle: 'No tasks yet', emptyDescription: 'Create a list and start adding tasks.',
+    title: t('allTasks.title' as MessageKey), smart: 'all', icon: Layers, allowAdd: true,
+    emptyTitle: t('allTasks.emptyTitle' as MessageKey), emptyDescription: t('allTasks.emptyDescription' as MessageKey),
   }} />
 )

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
+import { t, type MessageKey } from '../lib/i18n'
 import { useAuthStore } from '../stores/auth'
 import { Logo } from '../components/Logo'
 import { useHaptics } from '../hooks/useHaptics'
@@ -61,9 +62,9 @@ export function PinPage() {
     try {
       await api.post('/auth/pin/forgot')
       setRecover('sent')
-      setRecoverMsg('We emailed a reset code to your account address.')
+      setRecoverMsg(t('pin.resetCodeSent' as MessageKey))
     } catch (e) {
-      setRecoverErr(e instanceof Error ? e.message : 'Could not send a reset code')
+      setRecoverErr(e instanceof Error ? e.message : t('pin.resetSendError' as MessageKey))
     } finally {
       setRecoverBusy(false)
     }
@@ -71,7 +72,7 @@ export function PinPage() {
 
   const submitPinReset = async () => {
     if (!/^\d{6}$/.test(code)) {
-      setRecoverErr('Enter the 6-digit code from your email')
+      setRecoverErr(t('pin.enterCode' as MessageKey))
       return
     }
     setRecoverBusy(true)
@@ -85,7 +86,7 @@ export function PinPage() {
       navigate(next)
     } catch (e) {
       haptics.error()
-      setRecoverErr(e instanceof Error ? e.message : 'Could not reset PIN')
+      setRecoverErr(e instanceof Error ? e.message : t('pin.resetError' as MessageKey))
     } finally {
       setRecoverBusy(false)
     }
@@ -97,7 +98,7 @@ export function PinPage() {
         <div className="w-full max-w-sm text-center">
           <div className="flex flex-col items-center mb-8">
             <Logo size={48} />
-            <h1 className="mt-4 text-xl font-bold uppercase tracking-wider">Reset your PIN</h1>
+            <h1 className="mt-4 text-xl font-bold uppercase tracking-wider">{t('pin.resetTitle' as MessageKey)}</h1>
             <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">{recoverMsg}</p>
           </div>
 
@@ -118,17 +119,17 @@ export function PinPage() {
             disabled={code.length !== 6 || recoverBusy}
             className="btn-primary w-full mt-6 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {recoverBusy ? 'Please wait…' : 'Remove PIN & continue'}
+            {recoverBusy ? t('pin.waiting' as MessageKey) : t('pin.removePinContinue' as MessageKey)}
           </button>
 
           <button onClick={requestPinReset} disabled={recoverBusy} className="mt-4 text-sm text-gray-400 hover:text-orange-500">
-            Resend code
+            {t('login.resendCode' as MessageKey)}
           </button>
           <button
             onClick={() => { setRecover('idle'); setCode(''); setRecoverErr(''); inputRef.current?.focus() }}
             className="block mx-auto mt-3 text-sm text-gray-400 hover:text-orange-500"
           >
-            Back to PIN entry
+            {t('pin.backToEntry' as MessageKey)}
           </button>
         </div>
       </div>
@@ -140,8 +141,8 @@ export function PinPage() {
       <div className="w-full max-w-sm text-center">
         <div className="flex flex-col items-center mb-8">
           <Logo size={48} />
-          <h1 className="mt-4 text-xl font-bold uppercase tracking-wider">Enter your PIN</h1>
-          <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">Unlock your tasks</p>
+          <h1 className="mt-4 text-xl font-bold uppercase tracking-wider">{t('pin.enterPin' as MessageKey)}</h1>
+          <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">{t('pin.unlockHint' as MessageKey)}</p>
         </div>
 
         <input
@@ -158,21 +159,21 @@ export function PinPage() {
           name="pin-code"
           data-1p-ignore="true"
           data-lpignore="true"
-          aria-label="PIN"
+          aria-label={t('pin.pinLabel' as MessageKey)}
           placeholder="••••"
           className={`pin-mask w-full h-16 text-center text-3xl font-bold tracking-[0.5em] bg-white dark:bg-ink-750 border-2 outline-none transition-colors ${
             error ? 'border-red-500 animate-pulse' : 'border-gray-300 dark:border-ink-500 focus:border-orange-500'
           }`}
         />
 
-        {error && <p className="text-sm text-red-500 mt-4">Wrong PIN, try again</p>}
+        {error && <p className="text-sm text-red-500 mt-4">{t('pin.wrongPin' as MessageKey)}</p>}
 
         <button
           onClick={() => verify(pin)}
           disabled={pin.length < 4 || submitting}
           className="btn-primary w-full mt-6 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Unlock
+          {t('common.unlock' as MessageKey)}
         </button>
 
         <button
@@ -180,7 +181,7 @@ export function PinPage() {
           disabled={recoverBusy}
           className="mt-6 block mx-auto text-sm text-gray-400 hover:text-orange-500 disabled:opacity-50"
         >
-          {recoverBusy ? 'Sending reset code…' : 'Forgot PIN?'}
+          {recoverBusy ? t('pin.sendingResetCode' as MessageKey) : t('pin.forgotPin' as MessageKey)}
         </button>
         {recoverErr && <p className="text-sm text-red-500 mt-2">{recoverErr}</p>}
 
@@ -191,7 +192,7 @@ export function PinPage() {
           }}
           className="mt-4 block mx-auto text-sm text-gray-400 hover:text-orange-500"
         >
-          Sign out instead
+          {t('pin.signOutInstead' as MessageKey)}
         </button>
       </div>
     </div>

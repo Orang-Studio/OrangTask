@@ -7,6 +7,7 @@ import { ShareModal } from '../components/ShareModal'
 import { useNavigate } from 'react-router-dom'
 import { useHaptics } from '../hooks/useHaptics'
 import { LIST_ICONS, LIST_ICON_KEYS } from '../lib/listIcons'
+import { t, type MessageKey } from '../lib/i18n'
 
 const COLORS = ['#f97316', '#ef4444', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280']
 
@@ -29,7 +30,7 @@ export function ListPage() {
   if (!list) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
-        List not found
+        {t('list.notFound' as MessageKey)}
       </div>
     )
   }
@@ -49,14 +50,14 @@ export function ListPage() {
       <button
         onClick={() => { haptics.tap(); setShareOpen(true) }}
         className="p-2 text-gray-400 hover:text-orange-500"
-        aria-label="Share list"
+        aria-label={t('list.shareLabel' as MessageKey)}
       >
         <Users size={18} />
       </button>
       <button
         onClick={() => { haptics.tap(); setMenuOpen(!menuOpen) }}
         className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white"
-        aria-label="List options"
+        aria-label={t('list.optionsLabel' as MessageKey)}
       >
         <MoreVertical size={18} />
       </button>
@@ -77,7 +78,7 @@ export function ListPage() {
                     if (e.key === 'Escape') setRenaming(false)
                   }}
                   className="input-field w-full h-9 text-sm"
-                  placeholder="List name..."
+                  placeholder={t('lists.namePlaceholder' as MessageKey)}
                 />
               </div>
             ) : (
@@ -85,7 +86,7 @@ export function ListPage() {
                 onClick={() => { setRenameValue(list.name); setRenaming(true) }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-ink-750"
               >
-                <Pencil size={15} /> Rename
+                <Pencil size={15} /> {t('common.rename' as MessageKey)}
               </button>
             ))}
             {canEdit && (
@@ -94,7 +95,7 @@ export function ListPage() {
                   onClick={() => { setIconOpen(!iconOpen); setColorOpen(false) }}
                   className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-ink-750"
                 >
-                  <Smile size={15} /> Change icon
+                  <Smile size={15} /> {t('list.changeIcon' as MessageKey)}
                 </button>
                 {iconOpen && (
                   <div className="grid grid-cols-6 gap-1 px-3 py-2 max-h-48 overflow-y-auto">
@@ -130,7 +131,7 @@ export function ListPage() {
                 onClick={() => { setColorOpen(!colorOpen); setIconOpen(false) }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-ink-750"
               >
-                <Palette size={15} /> Change color
+                <Palette size={15} /> {t('list.changeColor' as MessageKey)}
               </button>
             )}
             {colorOpen && (
@@ -152,7 +153,7 @@ export function ListPage() {
             {isOwner && (
               <button
                 onClick={() => {
-                  if (confirm(`Delete list "${list.name}" and all its tasks?`)) {
+                  if (confirm(t('list.deleteConfirm' as MessageKey, { name: list.name }))) {
                     haptics.error()
                     deleteList.mutate(list.id)
                     navigate('/today')
@@ -160,7 +161,7 @@ export function ListPage() {
                 }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-gray-50 dark:hover:bg-ink-750"
               >
-                <Trash2 size={15} /> Delete list
+                <Trash2 size={15} /> {t('list.deleteList' as MessageKey)}
               </button>
             )}
           </div>
@@ -176,8 +177,8 @@ export function ListPage() {
         title={list.name}
         listId={list.id}
         emptyIcon={Hash}
-        emptyTitle="No tasks in this list"
-        emptyDescription="Add your first task using the box below."
+        emptyTitle={t('list.emptyTitle' as MessageKey)}
+        emptyDescription={t('list.emptyDescription' as MessageKey)}
         headerAccessory={accessory}
       />
       {shareOpen && <ShareModal listId={list.id} listName={list.name} isOwner={isOwner} onClose={() => setShareOpen(false)} />}

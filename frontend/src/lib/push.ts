@@ -1,4 +1,5 @@
 import { api } from './api'
+import { t, type MessageKey } from './i18n'
 
 export type PushState = 'unsupported' | 'denied' | 'subscribed' | 'unsubscribed'
 
@@ -50,8 +51,8 @@ export async function sendTestPush(): Promise<{ ok: boolean; configured: boolean
 export async function showLocalTestNotification(): Promise<boolean> {
   if (!pushSupported() || Notification.permission !== 'granted') return false
   const reg = await navigator.serviceWorker.ready
-  await reg.showNotification('OrangTask - local test', {
-    body: 'If you can see this, notifications display correctly on this device.',
+  await reg.showNotification(t('push.localTestTitle' as MessageKey), {
+    body: t('push.localTestBody' as MessageKey),
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     tag: 'orangtask-local-test',

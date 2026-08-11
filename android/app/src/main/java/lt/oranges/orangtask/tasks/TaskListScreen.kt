@@ -54,6 +54,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +66,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.channels.ReceiveChannel
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.notifications.NotificationBell
 import lt.oranges.orangtask.ui.components.EmptyState
 import lt.oranges.orangtask.ui.components.LIST_COLORS
@@ -80,33 +83,33 @@ import lt.oranges.orangtask.ui.theme.Ink700
 import lt.oranges.orangtask.ui.theme.Orange500
 
 private data class SmartConfig(
-    val title: String,
+    val titleRes: Int,
     val icon: ImageVector,
-    val emptyTitle: String,
-    val emptyDescription: String,
+    val emptyTitleRes: Int,
+    val emptyDescriptionRes: Int,
     val allowAdd: Boolean,
 )
 
 private val SMART_CONFIGS = mapOf(
     "today" to SmartConfig(
-        "Today", Icons.Outlined.WbSunny,
-        "Nothing due today", "You are all caught up. Add a task below to plan your day.", true,
+        R.string.today, Icons.Outlined.WbSunny,
+        R.string.nothing_due_today, R.string.today_empty_description, true,
     ),
     "upcoming" to SmartConfig(
-        "Upcoming", Icons.Outlined.CalendarMonth,
-        "No upcoming tasks", "Nothing scheduled for the next 7 days.", false,
+        R.string.upcoming, Icons.Outlined.CalendarMonth,
+        R.string.no_upcoming_tasks, R.string.upcoming_empty_description, false,
     ),
     "overdue" to SmartConfig(
-        "Overdue", Icons.Outlined.ErrorOutline,
-        "No overdue tasks", "Great work staying on top of things.", false,
+        R.string.overdue, Icons.Outlined.ErrorOutline,
+        R.string.no_overdue_tasks, R.string.overdue_empty_description, false,
     ),
     "assigned" to SmartConfig(
-        "Assigned to Me", Icons.Outlined.HowToReg,
-        "Nothing assigned to you", "Tasks that teammates assign to you in shared lists will show up here.", false,
+        R.string.assigned_to_me, Icons.Outlined.HowToReg,
+        R.string.nothing_assigned_to_you, R.string.assigned_empty_description, false,
     ),
     "all" to SmartConfig(
-        "All Tasks", Icons.Outlined.Layers,
-        "No tasks yet", "Create a list and start adding tasks.", true,
+        R.string.all_tasks, Icons.Outlined.Layers,
+        R.string.no_tasks_yet, R.string.all_tasks_empty_description, true,
     ),
 )
 
@@ -162,7 +165,7 @@ fun TaskListScreen(
                     Icon(smart!!.icon, contentDescription = null, tint = Orange500, modifier = Modifier.size(20.dp))
                 }
                 Text(
-                    text = (if (isListRoute) list?.name ?: "" else smart!!.title).uppercase(),
+                    text = (if (isListRoute) list?.name ?: "" else stringResource(smart!!.titleRes)).uppercase(),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
@@ -173,7 +176,7 @@ fun TaskListScreen(
                 )
                 if (tasks.isNotEmpty()) {
                     Text(
-                        "${tasks.size}",
+                        pluralStringResource(R.plurals.task_count, tasks.size, tasks.size),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -204,8 +207,10 @@ fun TaskListScreen(
                     viewModel.initialLoading && tasks.isEmpty() -> TaskListSkeleton()
                     tasks.isEmpty() -> EmptyState(
                         icon = if (isListRoute) listIconFor(list?.icon) else smart!!.icon,
-                        title = if (isListRoute) "No tasks in this list" else smart!!.emptyTitle,
-                        description = if (isListRoute) "Add your first task using the box below." else smart!!.emptyDescription,
+                        title = if (isListRoute) stringResource(R.string.no_tasks_in_list)
+                        else stringResource(smart!!.emptyTitleRes),
+                        description = if (isListRoute) stringResource(R.string.list_empty_description)
+                        else stringResource(smart!!.emptyDescriptionRes),
                     )
                     else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(tasks, key = { it.id }) { task ->
@@ -287,7 +292,7 @@ private fun QuickAddBar(focusRequester: FocusRequester, onAdd: (String) -> Unit)
                     ParseChip(Icons.Outlined.Flag, priorityLabel(parsed.priority))
                 }
                 if (parsed.recurrenceRule != null) {
-                    ParseChip(Icons.Outlined.Repeat, "Recurring")
+                    ParseChip(Icons.Outlined.Repeat, stringResource(R.string.recurring))
                 }
             }
         }
@@ -299,7 +304,7 @@ private fun QuickAddBar(focusRequester: FocusRequester, onAdd: (String) -> Unit)
             OrangTextField(
                 value = text,
                 onValueChange = { text = it },
-                placeholder = "Add a task...  (try \"report friday 5pm !high\")",
+                placeholder = stringResource(R.string.quick_add_placeholder),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { submit() }),
                 modifier = Modifier.weight(1f).focusRequester(focusRequester),
@@ -311,7 +316,7 @@ private fun QuickAddBar(focusRequester: FocusRequester, onAdd: (String) -> Unit)
                     .background(if (text.isBlank()) Orange500.copy(alpha = 0.5f) else Orange500)
                     .clickable(enabled = text.isNotBlank()) { submit() },
             ) {
-                Icon(Icons.Outlined.Add, contentDescription = "Add task", tint = Color.White)
+                Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.add_task), tint = Color.White)
             }
         }
     }
@@ -362,31 +367,35 @@ private fun ListMenu(
 
     Box {
         IconButton(onClick = { haptics.tap(); menuOpen = true }) {
-            Icon(Icons.Outlined.MoreVert, contentDescription = "List options", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                Icons.Outlined.MoreVert,
+                contentDescription = stringResource(R.string.list_options),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            DropdownMenuItem(text = { Text("Share") }, onClick = {
+            DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = {
                 onShare()
                 menuOpen = false
             })
             if (canEdit) {
-                DropdownMenuItem(text = { Text("Rename") }, onClick = {
+                DropdownMenuItem(text = { Text(stringResource(R.string.rename)) }, onClick = {
                     renameValue = listName
                     renameOpen = true
                     menuOpen = false
                 })
-                DropdownMenuItem(text = { Text("Change icon") }, onClick = {
+                DropdownMenuItem(text = { Text(stringResource(R.string.change_icon)) }, onClick = {
                     iconOpen = true
                     menuOpen = false
                 })
-                DropdownMenuItem(text = { Text("Change color") }, onClick = {
+                DropdownMenuItem(text = { Text(stringResource(R.string.change_color)) }, onClick = {
                     colorOpen = true
                     menuOpen = false
                 })
             }
             if (isOwner) {
                 DropdownMenuItem(
-                    text = { Text("Delete list", color = Color(0xFFEF4444)) },
+                    text = { Text(stringResource(R.string.delete_list), color = Color(0xFFEF4444)) },
                     onClick = {
                         confirmDelete = true
                         menuOpen = false
@@ -399,24 +408,28 @@ private fun ListMenu(
     if (renameOpen) {
         AlertDialog(
             onDismissRequest = { renameOpen = false },
-            title = { Text("Rename list") },
+            title = { Text(stringResource(R.string.rename_list)) },
             text = {
-                OrangTextField(value = renameValue, onValueChange = { renameValue = it }, placeholder = "List name...")
+                OrangTextField(
+                    value = renameValue,
+                    onValueChange = { renameValue = it },
+                    placeholder = stringResource(R.string.list_name_placeholder),
+                )
             },
             confirmButton = {
                 TextButton(onClick = {
                     if (renameValue.isNotBlank()) onRename(renameValue)
                     renameOpen = false
-                }) { Text("Rename") }
+                }) { Text(stringResource(R.string.rename)) }
             },
-            dismissButton = { TextButton(onClick = { renameOpen = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { renameOpen = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 
     if (iconOpen) {
         AlertDialog(
             onDismissRequest = { iconOpen = false },
-            title = { Text("Change icon") },
+            title = { Text(stringResource(R.string.change_icon)) },
             text = {
                 LazyVerticalGrid(columns = GridCells.Fixed(6), modifier = Modifier.height(240.dp)) {
                     items(LIST_ICONS.keys.toList()) { key ->
@@ -432,7 +445,7 @@ private fun ListMenu(
                         ) {
                             Icon(
                                 LIST_ICONS.getValue(key),
-                                contentDescription = key,
+                                contentDescription = stringResource(R.string.list_icon),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp),
                             )
@@ -441,14 +454,14 @@ private fun ListMenu(
                 }
             },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = { iconOpen = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { iconOpen = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 
     if (colorOpen) {
         AlertDialog(
             onDismissRequest = { colorOpen = false },
-            title = { Text("Change color") },
+            title = { Text(stringResource(R.string.change_color)) },
             text = {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     LIST_COLORS.forEach { hex ->
@@ -465,23 +478,23 @@ private fun ListMenu(
                 }
             },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = { colorOpen = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { colorOpen = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete list") },
-            text = { Text("Delete \"$listName\" and all its tasks?") },
+            title = { Text(stringResource(R.string.delete_list)) },
+            text = { Text(stringResource(R.string.delete_list_confirmation, listName)) },
             confirmButton = {
                 TextButton(onClick = {
                     haptics.error()
                     confirmDelete = false
                     onDelete()
-                }) { Text("Delete", color = Color(0xFFEF4444)) }
+                }) { Text(stringResource(R.string.delete), color = Color(0xFFEF4444)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 }

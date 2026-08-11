@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { t, type MessageKey } from '../lib/i18n'
 
 declare global {
   interface Window {
@@ -17,7 +18,7 @@ function loadRecaptcha(): Promise<void> {
     const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null
     if (existing) {
       existing.addEventListener('load', () => resolve(), { once: true })
-      existing.addEventListener('error', () => reject(new Error('Failed to load CAPTCHA')), { once: true })
+      existing.addEventListener('error', () => reject(new Error(t('recaptcha.loadFailed' as MessageKey))), { once: true })
       return
     }
     const script = document.createElement('script')
@@ -26,7 +27,7 @@ function loadRecaptcha(): Promise<void> {
     script.async = true
     script.defer = true
     script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load CAPTCHA'))
+    script.onerror = () => reject(new Error(t('recaptcha.loadFailed' as MessageKey)))
     document.head.appendChild(script)
   })
 }
@@ -53,6 +54,6 @@ export function Recaptcha({ active, onChange }: { active: boolean; onChange: (to
   }, [active, onChange, siteKey])
 
   if (!active) return null
-  if (!siteKey) return <p className="text-xs text-red-600">CAPTCHA is not configured. Contact the site administrator.</p>
+  if (!siteKey) return <p className="text-xs text-red-600">{t('recaptcha.notConfigured' as MessageKey)}</p>
   return <div ref={container} className="flex justify-center py-1" />
 }

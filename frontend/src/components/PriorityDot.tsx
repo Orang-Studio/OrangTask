@@ -1,3 +1,5 @@
+import { t, type MessageKey } from '../lib/i18n'
+
 const PRIORITY_COLORS: Record<string, string> = {
   none: '#6b7280',
   low: '#3b82f6',
@@ -5,11 +7,11 @@ const PRIORITY_COLORS: Record<string, string> = {
   high: '#ef4444',
 }
 
-export const PRIORITY_LABELS: Record<string, string> = {
-  none: 'None',
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
+export const PRIORITY_LABELS: Record<string, () => string> = {
+  none: () => t('priority.none' as MessageKey),
+  low: () => t('priority.low' as MessageKey),
+  medium: () => t('priority.medium' as MessageKey),
+  high: () => t('priority.high' as MessageKey),
 }
 
 export function PriorityDot({ priority, size = 8 }: { priority: string; size?: number }) {
@@ -18,7 +20,7 @@ export function PriorityDot({ priority, size = 8 }: { priority: string; size?: n
     <span
       className="inline-block rounded-full flex-shrink-0"
       style={{ width: size, height: size, backgroundColor: PRIORITY_COLORS[priority] || PRIORITY_COLORS.none }}
-      title={`${PRIORITY_LABELS[priority]} priority`}
+      title={t('priority.title' as MessageKey, { priority: PRIORITY_LABELS[priority]() })}
     />
   )
 }

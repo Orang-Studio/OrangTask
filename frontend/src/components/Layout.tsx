@@ -13,6 +13,7 @@ import { useAuthStore } from '../stores/auth'
 import { WifiOff } from 'lucide-react'
 import { Logo } from './Logo'
 import { modKey } from '../lib/platform'
+import { t, tCount, type MessageKey } from '../lib/i18n'
 
 import { createContext, useContext } from 'react'
 
@@ -101,7 +102,7 @@ export function Layout() {
                 onClick={() => setPaletteOpen(true)}
                 className="flex items-center gap-2 px-3 h-9 text-sm text-gray-400 border border-gray-200 dark:border-ink-600 hover:border-orange-500 transition-colors"
               >
-                Search
+                {t('common.search')}
                 <kbd className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-ink-700 rounded">{modKey === '⌘' ? '⌘K' : 'Ctrl+K'}</kbd>
               </button>
               <NotificationBell />
@@ -111,7 +112,7 @@ export function Layout() {
           {(!online || queueLen > 0) && (
             <div className="flex items-center justify-center gap-2 px-4 py-1.5 bg-orange-500 text-white text-xs font-medium">
               <WifiOff size={13} />
-              {!online ? 'Offline - changes will sync when reconnected' : `Syncing ${queueLen} change${queueLen > 1 ? 's' : ''}...`}
+              {!online ? t('layout.offline' as MessageKey) : tCount('layout.syncing', queueLen)}
             </div>
           )}
 

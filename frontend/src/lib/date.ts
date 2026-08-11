@@ -1,22 +1,27 @@
+import { t, type MessageKey } from './i18n'
+
 export function formatDueDate(dateStr: string | null | undefined): string {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   const now = new Date()
+  const locale = typeof document !== 'undefined' && document.documentElement.lang
+    ? document.documentElement.lang
+    : 'en-US'
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const target = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000)
 
   const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0
   const timeStr = hasTime
-    ? date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    ? date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
     : ''
 
   let dayStr: string
-  if (diffDays === 0) dayStr = 'Today'
-  else if (diffDays === 1) dayStr = 'Tomorrow'
-  else if (diffDays === -1) dayStr = 'Yesterday'
-  else if (diffDays > 1 && diffDays < 7) dayStr = date.toLocaleDateString('en-US', { weekday: 'short' })
-  else dayStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  if (diffDays === 0) dayStr = t('date.today' as MessageKey)
+  else if (diffDays === 1) dayStr = t('date.tomorrow' as MessageKey)
+  else if (diffDays === -1) dayStr = t('date.yesterday' as MessageKey)
+  else if (diffDays > 1 && diffDays < 7) dayStr = date.toLocaleDateString(locale, { weekday: 'short' })
+  else dayStr = date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
 
   return timeStr ? `${dayStr}, ${timeStr}` : dayStr
 }

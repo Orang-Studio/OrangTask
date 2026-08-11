@@ -7,7 +7,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import lt.oranges.orangtask.R
 
 val PRIORITIES = listOf("none", "low", "medium", "high")
 
@@ -18,11 +20,12 @@ fun priorityColor(priority: String): Color = when (priority) {
     else -> Color(0xFF6B7280)
 }
 
+@Composable
 fun priorityLabel(priority: String): String = when (priority) {
-    "low" -> "Low"
-    "medium" -> "Medium"
-    "high" -> "High"
-    else -> "None"
+    "low" -> stringResource(R.string.priority_low)
+    "medium" -> stringResource(R.string.priority_medium)
+    "high" -> stringResource(R.string.priority_high)
+    else -> stringResource(R.string.priority_none)
 }
 
 @Composable

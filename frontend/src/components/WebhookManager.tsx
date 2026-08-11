@@ -7,13 +7,14 @@ import {
 import { Webhook } from '../lib/api'
 import { formatDueDate } from '../lib/date'
 import { useHaptics } from '../hooks/useHaptics'
+import { t, type MessageKey } from '../lib/i18n'
 
 const OUTGOING_EVENTS = ['task.created', 'task.updated', 'task.completed', 'task.deleted', 'task.due_soon', 'list.shared']
 
 function DeliveryLog({ webhookId }: { webhookId: string }) {
   const { data: deliveries } = useWebhookDeliveries(webhookId)
   if (!deliveries || deliveries.length === 0) {
-    return <p className="text-sm text-gray-400 py-2">No deliveries yet.</p>
+    return <p className="text-sm text-gray-400 py-2">{t('webhook.noDeliveries' as MessageKey)}</p>
   }
   return (
     <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -24,7 +25,7 @@ function DeliveryLog({ webhookId }: { webhookId: string }) {
               ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400'
               : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400'
           }`}>
-            {d.status_code || 'ERR'}
+            {d.status_code || t('webhook.err' as MessageKey)}
           </span>
           <span className="font-medium">{d.event}</span>
           <span className="text-gray-400 ml-auto">{formatDueDate(d.created_at)}</span>
@@ -50,7 +51,7 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
   const handleTest = async () => {
     haptics.tap()
     const result = await testWebhook.mutateAsync(webhook.id)
-    setTestResult(result.error ? `Error: ${result.error}` : `${result.statusCode} OK`)
+    setTestResult(result.error ? t('webhook.testError' as MessageKey, { error: result.error }) : t('webhook.testOk' as MessageKey, { statusCode: result.statusCode }))
     setTimeout(() => setTestResult(null), 4000)
   }
 
@@ -64,7 +65,7 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
           <div className="flex items-center gap-2">
             <span className="font-medium truncate">{webhook.name}</span>
             <span className={`text-xs px-1.5 py-0.5 rounded ${webhook.enabled ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400' : 'bg-gray-100 dark:bg-ink-700 text-gray-500'}`}>
-              {webhook.enabled ? 'Enabled' : 'Disabled'}
+              {webhook.enabled ? t('common.enabled') : t('common.disabled')}
             </span>
           </div>
           <div className="text-xs text-gray-400 truncate">{webhook.url || incomingUrl}</div>
@@ -87,7 +88,7 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
         <div className="px-4 pb-4 space-y-3 border-t border-gray-100 dark:border-ink-700 pt-3">
           {incomingUrl && (
             <div>
-              <label className="text-xs uppercase tracking-wide text-gray-400">Incoming URL</label>
+              <label className="text-xs uppercase tracking-wide text-gray-400">{t('webhook.incomingUrl' as MessageKey)}</label>
               <div className="flex gap-2 mt-1">
                 <code className="flex-1 text-xs bg-gray-100 dark:bg-ink-900 px-2 py-2 truncate rounded">{incomingUrl}</code>
                 <button
@@ -109,7 +110,7 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
             <>
               {webhook.events && webhook.events.length > 0 && (
                 <div>
-                  <label className="text-xs uppercase tracking-wide text-gray-400">Events</label>
+                  <label className="text-xs uppercase tracking-wide text-gray-400">{t('webhook.events' as MessageKey)}</label>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {webhook.events.map((e) => (
                       <span key={e} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-ink-700 rounded font-mono">{e}</span>
@@ -119,12 +120,12 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
               )}
               <button onClick={handleTest} disabled={testWebhook.isPending} className="btn-secondary">
                 <Send size={14} className="mr-2" />
-                {testWebhook.isPending ? 'Sending...' : 'Send test'}
+                {testWebhook.isPending ? t('webhook.sending' as MessageKey) : t('webhook.sendTest' as MessageKey)}
               </button>
               {testResult && <span className="text-sm ml-2">{testResult}</span>}
 
               <div>
-                <label className="text-xs uppercase tracking-wide text-gray-400">Delivery log</label>
+                <label className="text-xs uppercase tracking-wide text-gray-400">{t('webhook.deliveryLog' as MessageKey)}</label>
                 <DeliveryLog webhookId={webhook.id} />
               </div>
             </>
@@ -132,14 +133,14 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
 
           <button
             onClick={() => {
-              if (confirm('Delete this webhook?')) {
+              if (confirm(t('webhook.deleteConfirm' as MessageKey))) {
                 haptics.error()
                 deleteWebhook.mutate(webhook.id)
               }
             }}
             className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600"
           >
-            <Trash2 size={14} /> Delete webhook
+            <Trash2 size={14} /> {t('webhook.deleteWebhook' as MessageKey)}
           </button>
         </div>
       )}
@@ -184,23 +185,23 @@ export function WebhookManager() {
               onClick={() => setDirection('outgoing')}
               className={`flex-1 px-3 h-10 text-sm font-medium border transition-colors ${direction === 'outgoing' ? 'border-orange-500 bg-orange-50 dark:bg-ink-700' : 'border-gray-300 dark:border-ink-600'}`}
             >
-              Outgoing
+              {t('webhook.outgoing' as MessageKey)}
             </button>
             <button
               onClick={() => setDirection('incoming')}
               className={`flex-1 px-3 h-10 text-sm font-medium border transition-colors ${direction === 'incoming' ? 'border-orange-500 bg-orange-50 dark:bg-ink-700' : 'border-gray-300 dark:border-ink-600'}`}
             >
-              Incoming
+              {t('webhook.incoming' as MessageKey)}
             </button>
           </div>
 
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Webhook name" className="input-field" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('webhook.namePlaceholder' as MessageKey)} className="input-field" />
 
           {direction === 'outgoing' && (
             <>
-              <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/webhook" className="input-field" />
+              <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t('webhook.urlPlaceholder' as MessageKey)} className="input-field" />
               <div>
-                <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">Events</label>
+                <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">{t('webhook.events' as MessageKey)}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {OUTGOING_EVENTS.map((e) => (
                     <button
@@ -218,18 +219,18 @@ export function WebhookManager() {
 
           {direction === 'incoming' && (
             <p className="text-sm text-gray-500 dark:text-ink-400">
-              An incoming URL will be generated. POST a JSON task to it to create tasks from external tools.
+              {t('webhook.incomingHint' as MessageKey)}
             </p>
           )}
 
           <div className="flex gap-2">
-            <button onClick={handleCreate} className="btn-primary flex-1">Create</button>
+            <button onClick={handleCreate} className="btn-primary flex-1">{t('common.create')}</button>
             <button onClick={() => setShowForm(false)} className="btn-secondary px-4"><X size={16} /></button>
           </div>
         </div>
       ) : (
         <button onClick={() => setShowForm(true)} className="btn-secondary w-full">
-          <Plus size={16} className="mr-2" /> Add webhook
+          <Plus size={16} className="mr-2" /> {t('webhook.addWebhook' as MessageKey)}
         </button>
       )}
     </div>

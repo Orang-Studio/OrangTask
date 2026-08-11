@@ -8,6 +8,7 @@ import { formatDueDate, isOverdue } from '../lib/date'
 import { useHaptics } from '../hooks/useHaptics'
 import { useIsMobile } from '../hooks/useMediaQuery'
 import { crossesTaskSwipeThreshold } from '../lib/swipeThreshold'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface Props {
   task: Task
@@ -90,7 +91,7 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
             e.stopPropagation()
             handleComplete()
           }}
-          aria-label={done ? 'Mark incomplete' : 'Mark complete'}
+          aria-label={done ? t('taskItem.markIncomplete' as MessageKey) : t('taskItem.markComplete' as MessageKey)}
           className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
             ${done ? 'bg-orange-500 border-orange-500 animate-scale-check' : 'border-gray-400 dark:border-ink-400 hover:border-orange-500'}`}
           style={{ minWidth: 24, minHeight: 24 }}
@@ -159,7 +160,7 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
               haptics.tap()
               onDelete(task)
             }}
-            aria-label="Delete task"
+            aria-label={t('common.deleteTask' as MessageKey)}
             className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <Trash2 size={16} />

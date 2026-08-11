@@ -11,13 +11,7 @@ import { Logo } from './Logo'
 import { ListIcon, DEFAULT_LIST_ICON } from '../lib/listIcons'
 import { safeHttpUrl } from '../lib/safeUrl'
 import { useHaptics } from '../hooks/useHaptics'
-
-const SMART_VIEWS = [
-  { to: '/today', label: 'Today', icon: Sun, smart: 'today' as const },
-  { to: '/upcoming', label: 'Upcoming', icon: CalendarDays, smart: 'week' as const },
-  { to: '/overdue', label: 'Overdue', icon: AlertCircle, smart: 'overdue' as const },
-  { to: '/all', label: 'All Tasks', icon: Layers, smart: 'all' as const },
-]
+import { t, type MessageKey } from '../lib/i18n'
 
 function SmartBadge({ smart }: { smart: 'today' | 'overdue' | 'assigned' }) {
   const { data: tasks } = useTasks({ smart })
@@ -65,6 +59,13 @@ export function Sidebar() {
         : 'text-gray-700 dark:text-ink-300 hover:bg-gray-50 dark:hover:bg-ink-750 border-l-2 border-transparent'
     }`
 
+  const SMART_VIEWS = [
+    { to: '/today', label: t('sidebar.today' as MessageKey), icon: Sun, smart: 'today' as const },
+    { to: '/upcoming', label: t('sidebar.upcoming' as MessageKey), icon: CalendarDays, smart: 'week' as const },
+    { to: '/overdue', label: t('sidebar.overdue' as MessageKey), icon: AlertCircle, smart: 'overdue' as const },
+    { to: '/all', label: t('sidebar.allTasks' as MessageKey), icon: Layers, smart: 'all' as const },
+  ]
+
   const handleCreate = async () => {
     if (!newName.trim()) {
       setAdding(false)
@@ -80,14 +81,14 @@ export function Sidebar() {
 
       <div className={`flex items-center h-14 border-b border-gray-200 dark:border-ink-700 ${collapsed ? 'justify-center px-0' : 'gap-2 px-4'}`}>
         {collapsed ? (
-          <button onClick={toggleCollapsed} className="p-1" aria-label="Expand sidebar" title="Expand sidebar">
+          <button onClick={toggleCollapsed} className="p-1" aria-label={t('sidebar.expandSidebar' as MessageKey)} title={t('sidebar.expandSidebar' as MessageKey)}>
             <Logo size={28} />
           </button>
         ) : (
           <>
             <Logo size={28} />
             <span className="font-bold uppercase tracking-wider text-[15px] flex-1 truncate">OrangTask</span>
-            <button onClick={toggleCollapsed} className="p-1.5 text-gray-400 hover:text-orange-500" aria-label="Collapse sidebar" title="Collapse sidebar">
+            <button onClick={toggleCollapsed} className="p-1.5 text-gray-400 hover:text-orange-500" aria-label={t('sidebar.collapseSidebar' as MessageKey)} title={t('sidebar.collapseSidebar' as MessageKey)}>
               <PanelLeftClose size={18} />
             </button>
           </>
@@ -107,21 +108,21 @@ export function Sidebar() {
           ))}
 
           {hasSharedLists && (
-            <NavLink to="/assigned" className={navClass} onClick={() => haptics.tap()} title={collapsed ? 'Assigned to Me' : undefined}>
+            <NavLink to="/assigned" className={navClass} onClick={() => haptics.tap()} title={collapsed ? t('sidebar.assignedToMe' as MessageKey) : undefined}>
               <UserCheck size={17} className="flex-shrink-0" />
-              {!collapsed && <span>Assigned to Me</span>}
+              {!collapsed && <span>{t('sidebar.assignedToMe' as MessageKey)}</span>}
               {!collapsed && <SmartBadge smart="assigned" />}
             </NavLink>
           )}
         </div>
 
         <div className={`mt-6 mb-1 flex items-center ${collapsed ? 'justify-center px-0' : 'justify-between px-4'}`}>
-          {!collapsed && <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Lists</span>}
+          {!collapsed && <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">{t('sidebar.lists' as MessageKey)}</span>}
           <button
             onClick={() => { if (collapsed) toggleCollapsed(); setAdding(true) }}
             className="text-gray-400 hover:text-orange-500"
-            aria-label="New list"
-            title="New list"
+            aria-label={t('sidebar.newList' as MessageKey)}
+            title={t('sidebar.newList' as MessageKey)}
           >
             <Plus size={16} />
           </button>
@@ -149,7 +150,7 @@ export function Sidebar() {
                   setAdding(false)
                 }
               }}
-              placeholder="List name..."
+              placeholder={t('sidebar.listNamePlaceholder' as MessageKey)}
               className="input-field mx-1 h-9 text-sm"
               style={{ width: 'calc(100% - 8px)' }}
             />
@@ -164,7 +165,7 @@ export function Sidebar() {
             className={`flex items-center hover:bg-gray-50 dark:hover:bg-ink-750 transition-colors min-w-0 ${
               collapsed ? 'justify-center w-10 h-10' : 'gap-2 flex-1 px-2 h-10'
             }`}
-            aria-label="Account"
+            aria-label={t('sidebar.account' as MessageKey)}
             title={collapsed ? user?.name : undefined}
           >
             {safeAvatarUrl ? (
@@ -180,7 +181,7 @@ export function Sidebar() {
             <button
               onClick={() => navigate('/settings')}
               className="p-2 text-gray-400 hover:text-orange-500"
-              aria-label="Settings"
+              aria-label={t('common.settings' as MessageKey)}
             >
               <Settings size={18} />
             </button>
@@ -191,8 +192,8 @@ export function Sidebar() {
               navigate('/login')
             }}
             className="p-2 text-gray-400 hover:text-red-500"
-            aria-label="Log out"
-            title={collapsed ? 'Log out' : undefined}
+            aria-label={t('sidebar.logOut' as MessageKey)}
+            title={collapsed ? t('sidebar.logOut' as MessageKey) : undefined}
           >
             <LogOut size={18} />
           </button>

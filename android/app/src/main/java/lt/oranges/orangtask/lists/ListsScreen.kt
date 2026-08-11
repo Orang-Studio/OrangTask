@@ -36,6 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.ui.components.EmptyState
 import lt.oranges.orangtask.ui.components.ListIcon
 import lt.oranges.orangtask.ui.components.OrangTextField
@@ -73,6 +76,13 @@ fun ListsScreen(
         viewModel.createList(name) { id -> onOpenList(id) }
     }
 
+    val views = listOf(
+        Triple("upcoming", stringResource(R.string.upcoming), Icons.Outlined.CalendarMonth),
+        Triple("overdue", stringResource(R.string.overdue), Icons.Outlined.ErrorOutline),
+        Triple("assigned", stringResource(R.string.assigned_to_me), Icons.Outlined.HowToReg),
+        Triple("all", stringResource(R.string.all_tasks), Icons.Outlined.Layers),
+    )
+
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -80,7 +90,12 @@ fun ListsScreen(
             modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
         ) {
             Icon(Icons.Outlined.Layers, contentDescription = null, tint = Orange500, modifier = Modifier.size(20.dp))
-            Text("LISTS", fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(
+                stringResource(R.string.lists).uppercase(),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+            )
             Spacer(Modifier.weight(1f))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -94,7 +109,13 @@ fun ListsScreen(
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
                 Icon(Icons.Outlined.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                Text("NEW", fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, color = Color.White)
+                Text(
+                    stringResource(R.string.new_label).uppercase(),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    color = Color.White,
+                )
             }
         }
         HorizontalDivider(color = if (isDarkTheme()) Ink700 else Color(0xFFE5E7EB))
@@ -116,13 +137,13 @@ fun ListsScreen(
                         OrangTextField(
                             value = newName,
                             onValueChange = { newName = it },
-                            placeholder = "List name...",
+                            placeholder = stringResource(R.string.list_name_placeholder),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { create() }),
                             modifier = Modifier.weight(1f),
                         )
                         Text(
-                            "ADD",
+                            stringResource(R.string.add_label).uppercase(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Orange500,
@@ -132,16 +153,8 @@ fun ListsScreen(
                 }
             }
 
-            item { SectionLabel("Views") }
-            items(
-                listOf(
-                    Triple("upcoming", "Upcoming", Icons.Outlined.CalendarMonth),
-                    Triple("overdue", "Overdue", Icons.Outlined.ErrorOutline),
-                    Triple("assigned", "Assigned to Me", Icons.Outlined.HowToReg),
-                    Triple("all", "All Tasks", Icons.Outlined.Layers),
-                ),
-                key = { it.first },
-            ) { (kind, label, icon) ->
+            item { SectionLabel(stringResource(R.string.views)) }
+            items(views, key = { it.first }) { (kind, label, icon) ->
                 IndexRow(
                     icon = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) },
                     label = label,
@@ -152,12 +165,12 @@ fun ListsScreen(
                 )
             }
 
-            item { SectionLabel("Lists") }
+            item { SectionLabel(stringResource(R.string.lists)) }
             items(lists, key = { it.id }) { list ->
                 IndexRow(
                     icon = { ListIcon(icon = list.icon, colorHex = list.color) },
                     label = list.name,
-                    roleBadge = list.myRole?.takeIf { it != "owner" },
+                    roleBadge = list.myRole?.takeIf { it != "owner" }?.let { roleLabel(it) },
                     count = list.taskCount.takeIf { it > 0 },
                     onClick = {
                         haptics.tap()
@@ -171,14 +184,25 @@ fun ListsScreen(
                     Box(Modifier.fillMaxWidth().height(320.dp)) {
                         EmptyState(
                             icon = Icons.Outlined.Layers,
-                            title = "No lists yet",
-                            description = "Tap \"New\" above to create your first list, then add tasks.",
+                            title = stringResource(R.string.no_lists_yet),
+                            description = stringResource(
+                                R.string.no_lists_description,
+                                stringResource(R.string.new_label),
+                            ),
                         )
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun roleLabel(role: String): String = when (role) {
+    "owner" -> stringResource(R.string.role_owner)
+    "editor" -> stringResource(R.string.role_editor)
+    "viewer" -> stringResource(R.string.role_viewer)
+    else -> role.replaceFirstChar { it.uppercase() }
 }
 
 @Composable
@@ -234,7 +258,11 @@ private fun IndexRow(
                 )
             }
             count?.let {
-                Text("$it", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    pluralStringResource(R.plurals.task_count, it, it),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             Icon(
                 Icons.AutoMirrored.Outlined.KeyboardArrowRight,

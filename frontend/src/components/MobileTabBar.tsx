@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Sun, Layers, Plus, Search, Settings } from 'lucide-react'
 import { useHaptics } from '../hooks/useHaptics'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface Props {
   onAdd: () => void
@@ -23,17 +24,17 @@ export function MobileTabBar({ onAdd, onSearch }: Props) {
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 h-16 bg-white dark:bg-ink-850 border-t border-gray-200 dark:border-ink-700 flex items-center pb-safe">
       <button onClick={() => { haptics.tap(); navigate('/today') }} className={tabClass(isActive('/today'))}>
         <Sun size={22} />
-        <span className="text-[10px] font-medium">Today</span>
+        <span className="text-[10px] font-medium">{t('tabbar.today' as MessageKey)}</span>
       </button>
       <button onClick={() => { haptics.tap(); navigate('/lists') }} className={tabClass(location.pathname.startsWith('/list'))}>
         <Layers size={22} />
-        <span className="text-[10px] font-medium">Lists</span>
+        <span className="text-[10px] font-medium">{t('tabbar.lists' as MessageKey)}</span>
       </button>
 
       <div className="flex-1 flex items-center justify-center">
         <button
           onClick={() => { haptics.tap(); onAdd() }}
-          aria-label="Add task"
+          aria-label={t('common.addTask' as MessageKey)}
           className="w-14 h-14 -mt-6 bg-orange-500 text-white flex items-center justify-center shadow-lg active:bg-orange-600 transition-colors"
           style={{ borderRadius: 0 }}
         >
@@ -43,11 +44,11 @@ export function MobileTabBar({ onAdd, onSearch }: Props) {
 
       <button onClick={() => { haptics.tap(); onSearch() }} className={tabClass(false)}>
         <Search size={22} />
-        <span className="text-[10px] font-medium">Search</span>
+        <span className="text-[10px] font-medium">{t('common.search')}</span>
       </button>
       <button onClick={() => { haptics.tap(); navigate('/settings') }} className={tabClass(isActive('/settings'))}>
         <Settings size={22} />
-        <span className="text-[10px] font-medium">Settings</span>
+        <span className="text-[10px] font-medium">{t('common.settings' as MessageKey)}</span>
       </button>
     </nav>
   )

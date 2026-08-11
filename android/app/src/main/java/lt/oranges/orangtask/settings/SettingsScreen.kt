@@ -55,6 +55,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -63,6 +65,7 @@ import androidx.core.content.FileProvider
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.network.UserDto
 import lt.oranges.orangtask.ui.components.Avatar
 import lt.oranges.orangtask.ui.components.BrandButton
@@ -83,15 +86,30 @@ private const val SECTION_WEBHOOKS = "webhooks"
 private const val SECTION_INTEGRATIONS = "integrations"
 private const val SECTION_DATA = "data"
 
-private data class SectionInfo(val key: String, val label: String, val icon: ImageVector)
+private data class SectionInfo(val key: String, val labelRes: Int, val icon: ImageVector)
 
 private val SECTIONS = listOf(
-    SectionInfo(SECTION_PROFILE, "Profile", Icons.Outlined.Person),
-    SectionInfo(SECTION_APPEARANCE, "Appearance", Icons.Outlined.Palette),
-    SectionInfo(SECTION_NOTIFICATIONS, "Notifications", Icons.Outlined.Notifications),
-    SectionInfo(SECTION_WEBHOOKS, "Webhooks", Icons.Outlined.Webhook),
-    SectionInfo(SECTION_INTEGRATIONS, "Integrations", Icons.Outlined.IntegrationInstructions),
-    SectionInfo(SECTION_DATA, "Data", Icons.Outlined.Storage),
+    SectionInfo(SECTION_PROFILE, R.string.settings_profile, Icons.Outlined.Person),
+    SectionInfo(SECTION_APPEARANCE, R.string.settings_appearance, Icons.Outlined.Palette),
+    SectionInfo(SECTION_NOTIFICATIONS, R.string.settings_notifications, Icons.Outlined.Notifications),
+    SectionInfo(SECTION_WEBHOOKS, R.string.settings_webhooks, Icons.Outlined.Webhook),
+    SectionInfo(SECTION_INTEGRATIONS, R.string.settings_integrations, Icons.Outlined.IntegrationInstructions),
+    SectionInfo(SECTION_DATA, R.string.settings_data, Icons.Outlined.Storage),
+)
+
+private fun themeLabelRes(mode: ThemeMode): Int = when (mode) {
+    ThemeMode.SYSTEM -> R.string.theme_system
+    ThemeMode.LIGHT -> R.string.theme_light
+    ThemeMode.DARK -> R.string.theme_dark
+}
+
+private data class NotifType(val key: String, val labelRes: Int, val descRes: Int)
+
+private val NOTIF_TYPES = listOf(
+    NotifType("task_due_soon", R.string.task_due_soon_label, R.string.task_due_soon_description),
+    NotifType("task_assigned", R.string.task_assigned_label, R.string.task_assigned_description),
+    NotifType("list_shared", R.string.list_shared_label, R.string.list_shared_description),
+    NotifType("task_completed_by", R.string.task_completed_label, R.string.task_completed_description),
 )
 
 @Composable
@@ -121,17 +139,18 @@ fun SettingsScreen(
             ) {
                 if (section.isEmpty()) {
                     Icon(Icons.Outlined.Settings, contentDescription = null, tint = Orange500, modifier = Modifier.size(20.dp))
-                    Text("SETTINGS", fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(stringResource(R.string.settings_heading), fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 } else {
                     IconButton(onClick = { section = "" }) {
                         Icon(
                             Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.content_description_back),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    val sectionLabelRes = SECTIONS.firstOrNull { it.key == section }?.labelRes
                     Text(
-                        (SECTIONS.firstOrNull { it.key == section }?.label ?: "").uppercase(),
+                        (if (sectionLabelRes == null) "" else stringResource(sectionLabelRes)).uppercase(),
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
@@ -208,7 +227,7 @@ private fun SettingsIndex(user: UserDto?, onOpen: (String) -> Unit, onLogout: ()
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
                     )
-                    Text(info.label, fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                    Text(stringResource(info.labelRes), fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                     Icon(
                         Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                         contentDescription = null,
@@ -220,7 +239,7 @@ private fun SettingsIndex(user: UserDto?, onOpen: (String) -> Unit, onLogout: ()
         }
 
         BrandButton(
-            text = "Sign out",
+            text = stringResource(R.string.sign_out),
             secondary = true,
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth(),
@@ -259,20 +278,24 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
         }
 
         Column {
-            FieldLabel("Name")
+            FieldLabel(stringResource(R.string.name))
             Spacer(Modifier.height(6.dp))
             OrangTextField(value = name, onValueChange = { name = it })
         }
         Column {
-            FieldLabel("Avatar URL")
+            FieldLabel(stringResource(R.string.avatar_url))
             Spacer(Modifier.height(6.dp))
-            OrangTextField(value = avatarUrl, onValueChange = { avatarUrl = it }, placeholder = "https://...")
+            OrangTextField(
+                value = avatarUrl,
+                onValueChange = { avatarUrl = it },
+                placeholder = stringResource(R.string.avatar_url_placeholder),
+            )
         }
         BrandButton(
             text = when {
-                viewModel.profileSaving -> "Saving…"
-                viewModel.profileSaved -> "Saved ✓"
-                else -> "Save profile"
+                viewModel.profileSaving -> stringResource(R.string.saving)
+                viewModel.profileSaved -> stringResource(R.string.saved)
+                else -> stringResource(R.string.save_profile)
             },
             enabled = !viewModel.profileSaving && name.isNotBlank(),
             onClick = {
@@ -285,10 +308,10 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("App PIN", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.app_pin), fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 if (viewModel.hasPin == true) {
                     Text(
-                        "Enabled",
+                        stringResource(R.string.enabled),
                         fontSize = 10.sp,
                         color = Color(0xFF22C55E),
                         modifier = Modifier
@@ -298,13 +321,13 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
                 }
             }
             Text(
-                "Optional. Require a 4-6 digit PIN to open the app on this account.",
+                stringResource(R.string.pin_description),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             when (viewModel.hasPin) {
-                null -> Text("Checking…", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                true -> BrandButton(text = "Remove PIN", secondary = true, onClick = {
+                null -> Text(stringResource(R.string.checking), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                true -> BrandButton(text = stringResource(R.string.remove_pin), secondary = true, onClick = {
                     haptics.tap()
                     viewModel.removePin()
                 })
@@ -313,13 +336,13 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
                         OrangTextField(
                             value = pinInput,
                             onValueChange = { pinInput = it.filter(Char::isDigit).take(6) },
-                            placeholder = "4-6 digits",
+                            placeholder = stringResource(R.string.pin_digits_placeholder),
                             isPassword = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                             modifier = Modifier.weight(1f),
                         )
                         BrandButton(
-                            text = "Set PIN",
+                            text = stringResource(R.string.set_pin),
                             enabled = pinInput.length in 4..6,
                             onClick = {
                                 haptics.tap()
@@ -330,7 +353,7 @@ private fun ProfileSection(user: UserDto?, viewModel: SettingsViewModel, onUserC
                         )
                     }
                 } else {
-                    BrandButton(text = "Set up PIN", secondary = true, onClick = {
+                    BrandButton(text = stringResource(R.string.set_up_pin), secondary = true, onClick = {
                         haptics.tap()
                         showPinForm = true
                     })
@@ -345,13 +368,13 @@ private fun AppearanceSection(viewModel: SettingsViewModel) {
     val haptics = rememberHaptics()
     val dark = isDarkTheme()
     Column {
-        FieldLabel("Theme")
+        FieldLabel(stringResource(R.string.theme))
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ThemeMode.entries.forEach { mode ->
                 val selected = viewModel.themePrefs.mode == mode
                 Text(
-                    text = mode.name.lowercase().replaceFirstChar { it.uppercase() },
+                    text = stringResource(themeLabelRes(mode)),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = if (selected) Orange500 else MaterialTheme.colorScheme.onSurface,
@@ -368,15 +391,6 @@ private fun AppearanceSection(viewModel: SettingsViewModel) {
     }
 }
 
-private data class NotifType(val key: String, val label: String, val desc: String)
-
-private val NOTIF_TYPES = listOf(
-    NotifType("task_due_soon", "Task due soon", "1 hour before a task is due"),
-    NotifType("task_assigned", "Task assigned", "When someone assigns you a task"),
-    NotifType("list_shared", "List shared", "When someone shares a list with you"),
-    NotifType("task_completed_by", "Task completed", "When a collaborator completes a shared task"),
-)
-
 @Composable
 private fun NotificationPrefsSection(viewModel: SettingsViewModel) {
     val haptics = rememberHaptics()
@@ -386,22 +400,21 @@ private fun NotificationPrefsSection(viewModel: SettingsViewModel) {
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            "Push delivers to devices where you've enabled it (browser push today, " +
-                "native Android push arrives in a later update). Email goes to your account address.",
+            stringResource(R.string.notification_delivery_description),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         val prefs = viewModel.prefs
         if (prefs == null) {
-            Text("Loading…", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.loading), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@Column
         }
 
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp)) {
-            FieldLabel("Notify me about", modifier = Modifier.weight(1f))
-            FieldLabel("Push", modifier = Modifier.padding(end = 26.dp))
-            FieldLabel("Email")
+            FieldLabel(stringResource(R.string.notify_me_about), modifier = Modifier.weight(1f))
+            FieldLabel(stringResource(R.string.push), modifier = Modifier.padding(end = 26.dp))
+            FieldLabel(stringResource(R.string.email))
         }
         HorizontalDivider(color = if (dark) Ink700 else Color(0xFFE5E7EB))
 
@@ -413,8 +426,8 @@ private fun NotificationPrefsSection(viewModel: SettingsViewModel) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(type.label, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                    Text(type.desc, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(type.labelRes), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(type.descRes), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(
                     checked = pref?.push == true,
@@ -442,17 +455,18 @@ private fun DataSection(user: UserDto?, viewModel: SettingsViewModel, onLogout: 
     val haptics = rememberHaptics()
     val dark = isDarkTheme()
     val context = LocalContext.current
+    val exportChooserTitle = stringResource(R.string.export_orangtask_data)
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Export your data", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.export_your_data), fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Text(
-                "Download all your lists, tasks, tags, and webhooks as JSON.",
+                stringResource(R.string.export_data_description),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             BrandButton(
-                text = if (viewModel.exporting) "Exporting…" else "Export JSON",
+                text = if (viewModel.exporting) stringResource(R.string.exporting) else stringResource(R.string.export_json),
                 secondary = true,
                 enabled = !viewModel.exporting,
                 onClick = {
@@ -466,7 +480,7 @@ private fun DataSection(user: UserDto?, viewModel: SettingsViewModel, onLogout: 
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-                        context.startActivity(Intent.createChooser(send, "Export OrangTask data"))
+                        context.startActivity(Intent.createChooser(send, exportChooserTitle))
                     }
                 },
             )
@@ -485,7 +499,8 @@ private fun DataSection(user: UserDto?, viewModel: SettingsViewModel, onLogout: 
 @Composable
 private fun KeepImportBlock(viewModel: SettingsViewModel) {
     val haptics = rememberHaptics()
-    var listName by rememberSaveable { mutableStateOf("Google Keep") }
+    val googleKeep = stringResource(R.string.google_keep)
+    var listName by rememberSaveable { mutableStateOf(googleKeep) }
     var includeArchived by rememberSaveable { mutableStateOf(true) }
     var includeTrashed by rememberSaveable { mutableStateOf(false) }
 
@@ -494,16 +509,15 @@ private fun KeepImportBlock(viewModel: SettingsViewModel) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Import from Google Keep", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        Text(stringResource(R.string.import_from_google_keep), fontSize = 14.sp, fontWeight = FontWeight.Medium)
         Text(
-            "Export your notes with Google Takeout (takeout.google.com), then choose the " +
-                ".zip it gives you, no need to unzip. Checklists become subtasks and labels become tags.",
+            stringResource(R.string.import_google_keep_description),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         BrandButton(
-            text = if (viewModel.keepParsing) "Reading zip…" else "Choose Takeout .zip",
+            text = if (viewModel.keepParsing) stringResource(R.string.reading_zip) else stringResource(R.string.choose_takeout_zip),
             icon = Icons.Outlined.Upload,
             secondary = true,
             enabled = !viewModel.keepParsing && !viewModel.keepImporting,
@@ -520,19 +534,31 @@ private fun KeepImportBlock(viewModel: SettingsViewModel) {
                     modifier = Modifier.padding(12.dp),
                 ) {
                     Text(
-                        "Found ${viewModel.keepNotes.size} note${if (viewModel.keepNotes.size == 1) "" else "s"} ready to import.",
+                        pluralStringResource(
+                            R.plurals.keep_notes_ready,
+                            viewModel.keepNotes.size,
+                            viewModel.keepNotes.size,
+                        ),
                         fontSize = 13.sp,
                     )
                     Column {
-                        FieldLabel("Import into list")
+                        FieldLabel(stringResource(R.string.import_into_list))
                         Spacer(Modifier.height(4.dp))
-                        OrangTextField(value = listName, onValueChange = { listName = it }, placeholder = "Google Keep")
+                        OrangTextField(
+                            value = listName,
+                            onValueChange = { listName = it },
+                            placeholder = googleKeep,
+                        )
                     }
-                    CheckboxRow("Include archived notes", includeArchived) { includeArchived = it }
-                    CheckboxRow("Include trashed notes", includeTrashed) { includeTrashed = it }
+                    CheckboxRow(stringResource(R.string.include_archived_notes), includeArchived) { includeArchived = it }
+                    CheckboxRow(stringResource(R.string.include_trashed_notes), includeTrashed) { includeTrashed = it }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         BrandButton(
-                            text = if (viewModel.keepImporting) "Importing…" else "Import ${viewModel.keepNotes.size} notes",
+                            text = if (viewModel.keepImporting) {
+                                stringResource(R.string.importing)
+                            } else {
+                                pluralStringResource(R.plurals.import_notes, viewModel.keepNotes.size, viewModel.keepNotes.size)
+                            },
                             enabled = !viewModel.keepImporting,
                             onClick = {
                                 haptics.tap()
@@ -540,7 +566,7 @@ private fun KeepImportBlock(viewModel: SettingsViewModel) {
                             },
                             modifier = Modifier.weight(1f),
                         )
-                        BrandButton(text = "Cancel", secondary = true, onClick = { viewModel.clearKeepSelection() })
+                        BrandButton(text = stringResource(R.string.cancel), secondary = true, onClick = { viewModel.clearKeepSelection() })
                     }
                 }
             }
@@ -579,13 +605,13 @@ private fun DeleteAccountBlock(user: UserDto?, viewModel: SettingsViewModel, onL
     val matches = confirmEmail.trim().equals(user?.email ?: "", ignoreCase = true)
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Delete account", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFFEF4444))
+        Text(stringResource(R.string.delete_account), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFFEF4444))
         Text(
-            "Permanently delete your account and all data. This cannot be undone.",
+            stringResource(R.string.delete_account_description),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        BrandButton(text = "Delete account", secondary = true, onClick = {
+        BrandButton(text = stringResource(R.string.delete_account), secondary = true, onClick = {
             haptics.error()
             confirmEmail = ""
             showConfirm = true
@@ -595,10 +621,15 @@ private fun DeleteAccountBlock(user: UserDto?, viewModel: SettingsViewModel, onL
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { if (!viewModel.deletingAccount) showConfirm = false },
-            title = { Text("Delete account") },
+            title = { Text(stringResource(R.string.delete_account)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Type ${user?.email ?: "your email"} to confirm:")
+                    Text(
+                        stringResource(
+                            R.string.type_email_to_confirm,
+                            user?.email ?: stringResource(R.string.your_email),
+                        )
+                    )
                     OrangTextField(
                         value = confirmEmail,
                         onValueChange = { confirmEmail = it },
@@ -619,7 +650,7 @@ private fun DeleteAccountBlock(user: UserDto?, viewModel: SettingsViewModel, onL
                     },
                 ) {
                     Text(
-                        if (viewModel.deletingAccount) "Deleting…" else "Delete forever",
+                        if (viewModel.deletingAccount) stringResource(R.string.deleting) else stringResource(R.string.delete_forever),
                         color = if (matches) Color(0xFFEF4444) else Color(0xFFEF4444).copy(alpha = 0.4f),
                     )
                 }
@@ -628,7 +659,7 @@ private fun DeleteAccountBlock(user: UserDto?, viewModel: SettingsViewModel, onL
                 TextButton(
                     enabled = !viewModel.deletingAccount,
                     onClick = { showConfirm = false },
-                ) { Text("Cancel") }
+                ) { Text(stringResource(R.string.cancel)) }
             },
         )
     }

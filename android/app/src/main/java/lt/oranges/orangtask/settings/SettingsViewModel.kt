@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.network.ChannelPref
 import lt.oranges.orangtask.core.network.UserDto
 import lt.oranges.orangtask.core.network.userMessage
@@ -47,7 +48,7 @@ class SettingsViewModel @Inject constructor(
                 profileSaved = true
                 onSaved(user)
             } catch (e: Exception) {
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             } finally {
                 profileSaving = false
             }
@@ -73,7 +74,7 @@ class SettingsViewModel @Inject constructor(
                 repo.setPin(pin)
                 hasPin = true
             } catch (e: Exception) {
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             }
         }
     }
@@ -84,7 +85,7 @@ class SettingsViewModel @Inject constructor(
                 repo.removePin()
                 hasPin = false
             } catch (e: Exception) {
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             }
         }
     }
@@ -129,13 +130,12 @@ class SettingsViewModel @Inject constructor(
                         ?: emptyList()
                 }
                 if (notes.isEmpty()) {
-                    keepError = "No Google Keep notes found in that zip. " +
-                        "Pick the Takeout archive that contains a \"Keep\" folder."
+                    keepError = context.getString(R.string.no_google_keep_notes)
                 } else {
                     keepNotes = notes
                 }
             } catch (e: Exception) {
-                keepError = "Could not read that file. Select the .zip from Google Takeout (don't unzip it)."
+                keepError = context.getString(R.string.could_not_read_keep_zip)
             } finally {
                 keepParsing = false
             }
@@ -156,17 +156,36 @@ class SettingsViewModel @Inject constructor(
                 val res = repo.importGoogleKeep(notes, listName, includeArchived, includeTrashed)
                 keepNotes = emptyList()
                 keepResult = buildString {
-                    append("Imported ${res.imported} note${if (res.imported == 1) "" else "s"}")
-                    if (res.subtasks > 0) append(" and ${res.subtasks} checklist item${if (res.subtasks == 1) "" else "s"}")
-                    append(" into \"${res.list.name}\".")
-                    if (res.skipped > 0) append(" Skipped ${res.skipped} archived/trashed.")
+                    append(context.resources.getQuantityString(R.plurals.imported_notes, res.imported, res.imported))
+                    if (res.subtasks > 0) {
+                        append(" ")
+                        append(
+                            context.resources.getQuantityString(
+                                R.plurals.imported_checklist_items,
+                                res.subtasks,
+                                res.subtasks,
+                            )
+                        )
+                    }
+                    append(" ")
+                    append(context.getString(R.string.imported_into_list, res.list.name))
+                    if (res.skipped > 0) {
+                        append(" ")
+                        append(
+                            context.resources.getQuantityString(
+                                R.plurals.skipped_archived_trashed,
+                                res.skipped,
+                                res.skipped,
+                            )
+                        )
+                    }
                 }
 
                 runCatching { listRepository.refreshLists() }
                 runCatching { listRepository.refreshTags() }
                 runCatching { taskRepository.refreshAllTasks() }
             } catch (e: Exception) {
-                keepError = e.userMessage()
+                keepError = e.userMessage(context)
             } finally {
                 keepImporting = false
             }
@@ -185,7 +204,7 @@ class SettingsViewModel @Inject constructor(
                 repo.exportTo(file)
                 onReady(file)
             } catch (e: Exception) {
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             } finally {
                 exporting = false
             }
@@ -202,7 +221,7 @@ class SettingsViewModel @Inject constructor(
                 repo.deleteAccount(email.trim())
                 onDeleted()
             } catch (e: Exception) {
-                errors.tryEmit(e.userMessage())
+                errors.tryEmit(e.userMessage(context))
             } finally {
                 deletingAccount = false
             }

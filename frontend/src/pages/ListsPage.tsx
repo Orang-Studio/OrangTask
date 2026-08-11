@@ -7,6 +7,7 @@ import { useLists, useCreateList } from '../hooks/useLists'
 import { useHaptics } from '../hooks/useHaptics'
 import { EmptyState } from '../components/EmptyState'
 import { ListIcon, DEFAULT_LIST_ICON } from '../lib/listIcons'
+import { t, type MessageKey } from '../lib/i18n'
 
 export function ListsPage() {
   const { data: lists } = useLists()
@@ -36,13 +37,13 @@ export function ListsPage() {
       {}
       <div className="flex items-center gap-2 px-4 md:px-6 h-14 border-b border-gray-200 dark:border-ink-700 flex-shrink-0">
         <Layers size={20} className="text-orange-500" />
-        <h1 className="text-lg font-bold uppercase tracking-wide">Lists</h1>
+        <h1 className="text-lg font-bold uppercase tracking-wide">{t('lists.title' as MessageKey)}</h1>
         <button
           onClick={() => { haptics.tap(); setAdding(true) }}
           className="ml-auto flex items-center gap-1.5 px-3 h-9 bg-orange-500 text-white text-sm font-bold uppercase tracking-wide active:bg-orange-600"
-          aria-label="New list"
+          aria-label={t('lists.newListLabel' as MessageKey)}
         >
-          <Plus size={16} strokeWidth={2.5} /> New
+          <Plus size={16} strokeWidth={2.5} /> {t('common.new' as MessageKey)}
         </button>
       </div>
 
@@ -60,17 +61,17 @@ export function ListsPage() {
                 if (e.key === 'Enter') handleCreate()
                 if (e.key === 'Escape') { setNewName(''); setAdding(false) }
               }}
-              placeholder="List name..."
+              placeholder={t('lists.namePlaceholder' as MessageKey)}
               className="input-field flex-1 h-9 text-sm"
             />
           </div>
         )}
 
-        <p className="px-4 md:px-6 pt-4 pb-1 text-xs uppercase tracking-wider text-gray-400 font-semibold">Views</p>
+        <p className="px-4 md:px-6 pt-4 pb-1 text-xs uppercase tracking-wider text-gray-400 font-semibold">{t('lists.viewsSection' as MessageKey)}</p>
         {[
-          { to: '/upcoming', label: 'Upcoming', Icon: CalendarDays },
-          { to: '/overdue', label: 'Overdue', Icon: AlertCircle },
-          { to: '/all', label: 'All Tasks', Icon: Layers },
+          { to: '/upcoming', label: t('upcoming.title' as MessageKey), Icon: CalendarDays },
+          { to: '/overdue', label: t('overdue.title' as MessageKey), Icon: AlertCircle },
+          { to: '/all', label: t('allTasks.title' as MessageKey), Icon: Layers },
         ].map(({ to, label, Icon }) => (
           <button key={to} className={rowClass} onClick={() => { haptics.tap(); navigate(to) }}>
             <Icon size={18} className="text-gray-400" />
@@ -79,7 +80,7 @@ export function ListsPage() {
           </button>
         ))}
 
-        <p className="px-4 md:px-6 pt-4 pb-1 text-xs uppercase tracking-wider text-gray-400 font-semibold">Lists</p>
+        <p className="px-4 md:px-6 pt-4 pb-1 text-xs uppercase tracking-wider text-gray-400 font-semibold">{t('lists.listsSection' as MessageKey)}</p>
         {lists?.map((list) => (
           <button key={list.id} className={rowClass} onClick={() => { haptics.tap(); navigate(`/list/${list.id}`) }}>
             <ListIcon icon={list.icon} color={list.color} />
@@ -99,8 +100,8 @@ export function ListsPage() {
         {lists && lists.length === 0 && !adding && (
           <EmptyState
             icon={Layers}
-            title="No lists yet"
-            description='Tap "New" above to create your first list, then share it or add tasks.'
+            title={t('lists.emptyTitle' as MessageKey)}
+            description={t('lists.emptyDescription' as MessageKey)}
             pose="idle"
           />
         )}

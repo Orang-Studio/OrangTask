@@ -6,6 +6,7 @@ import { useSearch } from '../hooks/useSearch'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { PriorityDot } from './PriorityDot'
 import { formatDueDate } from '../lib/date'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface Props {
   open: boolean
@@ -88,20 +89,20 @@ export function CommandPalette({ open, onClose }: Props) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder="Search tasks..."
+                placeholder={t('commandPalette.searchPlaceholder' as MessageKey)}
                 className="flex-1 bg-transparent py-4 outline-none text-[15px]"
               />
             </div>
 
             <div className="max-h-[50vh] overflow-y-auto">
               {query.length < 2 && (
-                <div className="px-4 py-8 text-center text-sm text-gray-400">Type at least 2 characters</div>
+                <div className="px-4 py-8 text-center text-sm text-gray-400">{t('commandPalette.minChars' as MessageKey)}</div>
               )}
               {query.length >= 2 && pending && !results?.length && (
-                <div className="px-4 py-8 text-center text-sm text-gray-400">Searching…</div>
+                <div className="px-4 py-8 text-center text-sm text-gray-400">{t('commandPalette.searching' as MessageKey)}</div>
               )}
               {query.length >= 2 && !pending && results?.length === 0 && (
-                <div className="px-4 py-8 text-center text-sm text-gray-400">No results for "{debouncedQuery}"</div>
+                <div className="px-4 py-8 text-center text-sm text-gray-400">{t('commandPalette.noResults' as MessageKey, { query: debouncedQuery })}</div>
               )}
               {results?.map((r, i) => (
                 <button

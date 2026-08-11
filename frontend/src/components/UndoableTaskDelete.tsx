@@ -5,6 +5,7 @@ import { RotateCcw, X } from 'lucide-react'
 import { api, Task } from '../lib/api'
 import { scheduleDelete } from '../lib/undoableDelete'
 import { useOfflineStore } from '../stores/offline'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface RestorePoint {
   key: QueryKey
@@ -85,7 +86,7 @@ export function UndoableTaskDeleteProvider({ children }: { children: React.React
         return
       }
       restoreTask(deletion)
-      showError('Could not delete task')
+      showError(t('undo.couldNotDelete' as MessageKey))
     }
   }, [queryClient, restoreTask, showError])
 
@@ -166,14 +167,14 @@ export function UndoableTaskDeleteProvider({ children }: { children: React.React
                 className="flex items-center gap-3 bg-ink-900 dark:bg-white text-white dark:text-ink-900 px-4 py-3 shadow-xl"
               >
                 <span className="min-w-0 flex-1 truncate text-sm">
-                  Deleted “{deletion.task.title}”
+                  {t('undo.deleted' as MessageKey, { title: deletion.task.title })}
                 </span>
                 <button
                   type="button"
                   onClick={() => undo(deletion)}
                   className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-orange-400 hover:text-orange-300"
                 >
-                  <RotateCcw size={15} /> Undo
+                  <RotateCcw size={15} /> {t('undo.undo' as MessageKey)}
                 </button>
               </motion.div>
             ))}
@@ -187,7 +188,7 @@ export function UndoableTaskDeleteProvider({ children }: { children: React.React
                 className="flex items-center gap-3 bg-red-600 text-white px-4 py-3 shadow-xl"
               >
                 <span className="flex-1 text-sm">{error}</span>
-                <button type="button" onClick={() => setError(null)} aria-label="Dismiss">
+                <button type="button" onClick={() => setError(null)} aria-label={t('undo.dismiss' as MessageKey)}>
                   <X size={17} />
                 </button>
               </motion.div>

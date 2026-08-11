@@ -29,8 +29,12 @@ object AppNotifications {
         val mgr = context.getSystemService(NotificationManager::class.java) ?: return
         if (mgr.getNotificationChannel(CHANNEL_ID) != null) return
         mgr.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Reminders", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Task reminders and updates"
+            NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.notification_channel_name),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = context.getString(R.string.notification_channel_description)
             }
         )
     }
@@ -49,8 +53,16 @@ object AppNotifications {
             .setContentIntent(openIntent(context, taskId))
 
         if (taskId != null && type in TASK_TYPES) {
-            builder.addAction(0, "Mark done", actionIntent(context, ACTION_DONE, taskId, notifId))
-            builder.addAction(0, "Snooze 1h", actionIntent(context, ACTION_SNOOZE, taskId, notifId))
+            builder.addAction(
+                0,
+                context.getString(R.string.notification_action_mark_done),
+                actionIntent(context, ACTION_DONE, taskId, notifId),
+            )
+            builder.addAction(
+                0,
+                context.getString(R.string.notification_action_snooze_one_hour),
+                actionIntent(context, ACTION_SNOOZE, taskId, notifId),
+            )
         }
 
         if (canPost(context)) {

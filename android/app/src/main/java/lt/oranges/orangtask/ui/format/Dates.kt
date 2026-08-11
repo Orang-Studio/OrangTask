@@ -1,5 +1,8 @@
 package lt.oranges.orangtask.ui.format
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import lt.oranges.orangtask.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -7,10 +10,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-private val timeFmt = DateTimeFormatter.ofPattern("h:mm a", Locale.US)
-private val weekdayFmt = DateTimeFormatter.ofPattern("EEE", Locale.US)
-private val monthDayFmt = DateTimeFormatter.ofPattern("MMM d", Locale.US)
-
+@Composable
 fun formatDueDate(millis: Long?): String {
     if (millis == null) return ""
     val zone = ZoneId.systemDefault()
@@ -18,16 +18,28 @@ fun formatDueDate(millis: Long?): String {
     val diffDays = ChronoUnit.DAYS.between(LocalDate.now(zone), date.toLocalDate())
 
     val hasTime = date.hour != 0 || date.minute != 0
+    val timeFmt = DateTimeFormatter.ofPattern(
+        stringResource(R.string.date_time_format),
+        Locale.getDefault(),
+    )
+    val weekdayFmt = DateTimeFormatter.ofPattern(
+        stringResource(R.string.date_weekday_format),
+        Locale.getDefault(),
+    )
+    val monthDayFmt = DateTimeFormatter.ofPattern(
+        stringResource(R.string.date_month_day_format),
+        Locale.getDefault(),
+    )
     val timeStr = if (hasTime) timeFmt.format(date) else ""
 
     val dayStr = when {
-        diffDays == 0L -> "Today"
-        diffDays == 1L -> "Tomorrow"
-        diffDays == -1L -> "Yesterday"
+        diffDays == 0L -> stringResource(R.string.date_today)
+        diffDays == 1L -> stringResource(R.string.date_tomorrow)
+        diffDays == -1L -> stringResource(R.string.date_yesterday)
         diffDays in 2..6 -> weekdayFmt.format(date)
         else -> monthDayFmt.format(date)
     }
-    return if (timeStr.isNotEmpty()) "$dayStr, $timeStr" else dayStr
+    return if (timeStr.isNotEmpty()) stringResource(R.string.date_with_time, dayStr, timeStr) else dayStr
 }
 
 fun isOverdue(millis: Long?): Boolean = millis != null && millis < System.currentTimeMillis()

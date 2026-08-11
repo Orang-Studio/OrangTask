@@ -1,9 +1,12 @@
 package lt.oranges.orangtask.settings
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.network.ApiKeyDto
 import lt.oranges.orangtask.core.network.ChannelPref
 import lt.oranges.orangtask.core.network.CreateApiKeyRequest
@@ -32,6 +35,7 @@ class SettingsRepository @Inject constructor(
     private val api: OrangApi,
     private val tokenStore: TokenStore,
     private val json: Json,
+    @ApplicationContext private val context: Context,
 ) {
 
     suspend fun updateProfile(name: String, avatarUrl: String?): UserDto {
@@ -122,7 +126,12 @@ class SettingsRepository @Inject constructor(
         includeArchived: Boolean,
         includeTrashed: Boolean,
     ): KeepImportResult = api.importGoogleKeep(
-        KeepImportRequest(notes, listName.trim().ifEmpty { "Google Keep" }, includeArchived, includeTrashed)
+        KeepImportRequest(
+            notes,
+            listName.trim().ifEmpty { context.getString(R.string.google_keep) },
+            includeArchived,
+            includeTrashed,
+        )
     )
 
     suspend fun deleteAccount(email: String) {

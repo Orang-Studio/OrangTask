@@ -5,6 +5,7 @@ import { useListMembers, useInviteMember, useRemoveMember, useUpdateMemberRole }
 import { Avatar } from './Avatar'
 import { useAuthStore } from '../stores/auth'
 import { useHaptics } from '../hooks/useHaptics'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface Props {
   listId: string
@@ -27,7 +28,7 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
 
   const handleLeave = async () => {
     if (!currentUser) return
-    if (!confirm(`Leave "${listName}"? You'll lose access until you're invited again.`)) return
+    if (!confirm(t('share.leaveConfirm' as MessageKey, { listName }))) return
     await removeMember.mutateAsync({ listId, userId: currentUser.id })
     haptics.success()
     onClose()
@@ -43,7 +44,7 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
       haptics.success()
       setEmail('')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to invite')
+      setError(e instanceof Error ? e.message : t('share.inviteFailed' as MessageKey))
       haptics.error()
     }
   }
@@ -63,7 +64,7 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-ink-700">
-          <h2 className="font-bold uppercase tracking-wide truncate">Share "{listName}"</h2>
+          <h2 className="font-bold uppercase tracking-wide truncate">{t('share.title' as MessageKey, { listName })}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
             <X size={20} />
           </button>
@@ -72,13 +73,13 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
         <div className="p-5 space-y-4">
           {isOwner && (
             <div>
-              <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">Invite by email</label>
+              <label className="text-xs uppercase tracking-wide text-gray-400 mb-1 block">{t('share.inviteByEmail' as MessageKey)}</label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                 type="email"
-                placeholder="teammate@example.com"
+                placeholder={t('share.emailPlaceholder' as MessageKey)}
                 className="input-field w-full"
               />
               <div className="flex gap-2 mt-2">
@@ -87,8 +88,8 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
                   onChange={(e) => setRole(e.target.value as 'editor' | 'viewer')}
                   className="input-field !w-28 flex-shrink-0"
                 >
-                  <option value="editor">Editor</option>
-                  <option value="viewer">Viewer</option>
+                  <option value="editor">{t('share.editor' as MessageKey)}</option>
+                  <option value="viewer">{t('share.viewer' as MessageKey)}</option>
                 </select>
                 <button
                   onClick={handleInvite}
@@ -96,7 +97,7 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
                   className="btn-primary flex-1"
                 >
                   <UserPlus size={16} className="mr-2" />
-                  {invite.isPending ? 'Inviting...' : 'Invite'}
+                  {invite.isPending ? t('share.inviting' as MessageKey) : t('share.invite' as MessageKey)}
                 </button>
               </div>
               {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
@@ -104,10 +105,10 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
           )}
 
           <div>
-            <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">Members</label>
+            <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">{t('share.members' as MessageKey)}</label>
             <div className="space-y-2">
               {members && members.filter((m) => m.role !== 'owner').length === 0 && (
-                <p className="text-sm text-gray-400">Just you for now. Invite someone to collaborate.</p>
+                <p className="text-sm text-gray-400">{t('share.noMembers' as MessageKey)}</p>
               )}
               {members?.map((m) => (
                 <div key={m.id} className="flex items-center gap-3">
@@ -118,7 +119,7 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
                   </div>
                   {m.role === 'owner' ? (
                     <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 rounded">
-                      <Crown size={12} /> Owner
+                      <Crown size={12} /> {t('share.owner' as MessageKey)}
                     </span>
                   ) : isOwner ? (
                     <>
@@ -130,19 +131,19 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
                         }}
                         className="input-field !w-24 !h-8 text-xs !py-0"
                       >
-                        <option value="editor">Editor</option>
-                        <option value="viewer">Viewer</option>
+                        <option value="editor">{t('share.editor' as MessageKey)}</option>
+                        <option value="viewer">{t('share.viewer' as MessageKey)}</option>
                       </select>
                       <button
                         onClick={() => removeMember.mutate({ listId, userId: m.id })}
                         className="text-gray-400 hover:text-red-500"
-                        aria-label={`Remove ${m.name}`}
+                        aria-label={t('share.removeMember' as MessageKey, { name: m.name })}
                       >
                         <Trash2 size={15} />
                       </button>
                     </>
                   ) : (
-                    <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-ink-700 rounded capitalize">{m.role}</span>
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-ink-700 rounded capitalize">{m.role === 'editor' ? t('share.editor' as MessageKey) : t('share.viewer' as MessageKey)}</span>
                   )}
                 </div>
               ))}
@@ -156,7 +157,7 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
                 disabled={removeMember.isPending}
                 className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 font-medium"
               >
-                <Trash2 size={15} /> Leave list
+                <Trash2 size={15} /> {t('share.leaveList' as MessageKey)}
               </button>
             </div>
           )}
