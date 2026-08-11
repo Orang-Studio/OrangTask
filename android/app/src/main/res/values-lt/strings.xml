@@ -230,4 +230,5 @@
     <string name="search_unavailable">Paieška negalima</string>
     <string name="searching">Ieškoma…</string>
     <string name="send_magic_link">Išsiųsti magišką nuorodą</string>
+    <string name="tag">Žyma</string>
 </resources>
