@@ -227,4 +227,7 @@
     <string name="saving">Išsaugojama…</string>
     <string name="search">Ieškoti</string>
     <string name="search_tasks_placeholder">Ieškoti užduočių...</string>
+    <string name="search_unavailable">Paieška negalima</string>
+    <string name="searching">Ieškoma…</string>
+    <string name="send_magic_link">Išsiųsti magišką nuorodą</string>
 </resources>
