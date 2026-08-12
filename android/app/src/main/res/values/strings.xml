@@ -2,8 +2,8 @@
 <resources>
     <string name="add_due_date">Add due date</string>
     <string name="add_label">Add</string>
-    <string name="add_notes_placeholder">Add notes...</string>
-    <string name="add_subtask_placeholder">Add subtask...</string>
+    <string name="add_notes_placeholder">Add notes…</string>
+    <string name="add_subtask_placeholder">Add subtask…</string>
     <string name="add_task">Add task</string>
     <string name="add_webhook">Add webhook</string>
     <string name="all_tasks">All Tasks</string>
@@ -11,18 +11,18 @@
     <string name="already_have_account_sign_in">Already have an account? Sign in</string>
     <string name="api_key_copy_warning">Copy it now, for your security, it won\'t be shown again.</string>
     <string name="api_key_created">API key created: %1$s</string>
-    <string name="api_key_last_used">%1$s&#8230; &#183; last used %2$s</string>
+    <string name="api_key_last_used">%1$s… · last used %2$s</string>
     <string name="api_key_name_placeholder">e.g. n8n integration</string>
-    <string name="api_key_never_used">%1$s&#8230; &#183; never used</string>
+    <string name="api_key_never_used">%1$s… · never used</string>
     <string name="api_keys_description">Generate a personal API key to call the full OrangTask API directly (read/write lists, tasks, tags) from scripts or tools that need more than the one-way incoming webhook below. Keys don\'t expire like a login session, revoke one any time it\'s no longer needed.</string>
     <string name="api_keys_heading">API KEYS</string>
     <string name="app_name">OrangTask</string>
     <string name="app_pin">App PIN</string>
-    <string name="assign_to">Assign to...</string>
+    <string name="assign_to">Assign to…</string>
     <string name="assigned_empty_description">Tasks that teammates assign to you in shared lists will show up here.</string>
     <string name="assigned_to_me">Assigned to Me</string>
     <string name="avatar_url">Avatar URL</string>
-    <string name="avatar_url_placeholder">https://...</string>
+    <string name="avatar_url_placeholder">https://…</string>
     <string name="back_to_pin_entry">Back to PIN entry</string>
     <string name="back_to_sign_in">Back to sign in</string>
     <string name="cancel">Cancel</string>
@@ -32,7 +32,7 @@
     <string name="change_color">Change color</string>
     <string name="change_icon">Change icon</string>
     <string name="check_your_email">Check your email</string>
-    <string name="checking">Checking&#8230;</string>
+    <string name="checking">Checking…</string>
     <string name="choose_takeout_zip">Choose Takeout .zip</string>
     <string name="clear_due_date">Clear due date</string>
     <string name="close">Close</string>
@@ -48,10 +48,10 @@
     <string name="could_not_read_keep_zip">Could not read that file. Select the .zip from Google Takeout (don\'t unzip it).</string>
     <string name="create">Create</string>
     <string name="create_account">Create account</string>
-    <string name="create_account_arrow">Create account &#8594;</string>
+    <string name="create_account_arrow">Create account →</string>
     <string name="create_key">Create key</string>
     <string name="create_list_first">Create a list first</string>
-    <string name="creating">Creating&#8230;</string>
+    <string name="creating">Creating…</string>
     <string name="date_month_day_format">MMM d</string>
     <string name="date_time_format">h:mm a</string>
     <string name="date_today">Today</string>
@@ -69,7 +69,7 @@
     <string name="delete_task">Delete task</string>
     <string name="delete_webhook">Delete webhook</string>
     <string name="delete_webhook_confirmation">Delete \"%1$s\"?</string>
-    <string name="deleting">Deleting&#8230;</string>
+    <string name="deleting">Deleting…</string>
     <string name="delivery_log">Delivery log</string>
     <string name="direct_api_access_example_label">Direct API access example</string>
     <string name="disabled">Disabled</string>
@@ -88,7 +88,7 @@
     <string name="export_json">Export JSON</string>
     <string name="export_orangtask_data">Export OrangTask data</string>
     <string name="export_your_data">Export your data</string>
-    <string name="exporting">Exporting&#8230;</string>
+    <string name="exporting">Exporting…</string>
     <string name="fcm_default_channel">orangtask_reminders</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="forgot_pin">Forgot PIN?</string>
@@ -109,7 +109,7 @@
         <item quantity="one">Imported %1$d note</item>
         <item quantity="other">Imported %1$d notes</item>
     </plurals>
-    <string name="importing">Importing&#8230;</string>
+    <string name="importing">Importing…</string>
     <string name="include_archived_notes">Include archived notes</string>
     <string name="include_trashed_notes">Include trashed notes</string>
     <string name="incoming">Incoming</string>
@@ -128,7 +128,7 @@
     <string name="leave_list_confirmation">Leave \"%1$s\"? You\'ll lose access until you\'re invited again.</string>
     <string name="list_empty_description">Add your first task using the box below.</string>
     <string name="list_icon">List icon</string>
-    <string name="list_name_placeholder">List name...</string>
+    <string name="list_name_placeholder">List name…</string>
     <string name="list_options">List options</string>
     <string name="list_shared_description">When someone shares a list with you</string>
     <string name="list_shared_label">List shared</string>
@@ -139,11 +139,11 @@
     <string name="language_subtitle">Choose the language used by OrangTask</string>
     <string name="language_system">System default</string>
     <string name="language_title">Language</string>
-    <string name="loading">Loading&#8230;</string>
+    <string name="loading">Loading…</string>
     <string name="login_footer">Free and open source. Self-host it yourself.</string>
     <string name="login_tagline">Tasks that sync everywhere</string>
     <string name="magic_link">Magic link</string>
-    <string name="magic_link_placeholder">https://&#8230;/auth/magic?token=&#8230;</string>
+    <string name="magic_link_placeholder">https://…/auth/magic?token=…</string>
     <string name="mark_all_read">Mark all read</string>
     <string name="members">Members</string>
     <string name="name">Name</string>
@@ -158,7 +158,7 @@
     </plurals>
     <string name="new_password_label">New password</string>
     <string name="new_password_placeholder">At least 8 characters</string>
-    <string name="new_tag_placeholder">New tag...</string>
+    <string name="new_tag_placeholder">New tag…</string>
     <string name="next">Next</string>
     <string name="no_deliveries">No deliveries yet.</string>
     <string name="no_google_keep_notes">No Google Keep notes found in that zip. Pick the Takeout archive that contains a \"Keep\" folder.</string>
@@ -192,21 +192,21 @@
     <string name="overdue_empty_description">Great work staying on top of things.</string>
     <string name="password_label">Password</string>
     <string name="password_min_length_error">Password must be at least 8 characters</string>
-    <string name="password_placeholder">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</string>
+    <string name="password_placeholder">••••••••</string>
     <string name="paste_magic_link_error">Paste the link from your email</string>
     <string name="pin_description">Optional. Require a 4-6 digit PIN to open the app on this account.</string>
     <string name="pin_digits_placeholder">4-6 digits</string>
-    <string name="pin_placeholder">&#8226;&#8226;&#8226;&#8226;</string>
+    <string name="pin_placeholder">••••</string>
     <string name="pin_reset_code_placeholder">123456</string>
     <string name="pin_reset_message">We emailed a reset code to your account address.</string>
-    <string name="please_wait">Please wait...</string>
+    <string name="please_wait">Please wait…</string>
     <string name="priority_high">High</string>
     <string name="priority_low">Low</string>
     <string name="priority_medium">Medium</string>
     <string name="priority_none">None</string>
     <string name="push">Push</string>
-    <string name="quick_add_placeholder">Add a task...  (try \"report friday 5pm !high\")</string>
-    <string name="reading_zip">Reading zip&#8230;</string>
+    <string name="quick_add_placeholder">Add a task… (try \"report friday 5pm !high\")</string>
+    <string name="reading_zip">Reading zip…</string>
     <string name="recurrence_rule_placeholder">Recurrence rule (e.g. FREQ=DAILY)</string>
     <string name="recurring">Recurring</string>
     <string name="remove_member_description">Remove %1$s</string>
@@ -221,7 +221,7 @@
     <string name="reset_code_label">Reset code</string>
     <string name="reset_password_and_sign_in">Reset password &amp; sign in</string>
     <string name="reset_password_confirm_message">Enter the code we sent to %1$s and choose a new password.</string>
-    <string name="reset_password_request_message">Enter your email and we&#8217;ll send you a 6-digit code to reset your password.</string>
+    <string name="reset_password_request_message">Enter your email and we’ll send you a 6-digit code to reset your password.</string>
     <string name="reset_pin_title">RESET YOUR PIN</string>
     <string name="revoke">Revoke</string>
     <string name="revoke_api_key">Revoke API key</string>
@@ -229,20 +229,20 @@
     <string name="revoke_api_key_content_description">Revoke %1$s</string>
     <string name="role_editor">Editor</string>
     <string name="role_owner">Owner</string>
-    <string name="role_picker_label">%1$s &#9662;</string>
+    <string name="role_picker_label">%1$s ▾</string>
     <string name="role_viewer">Viewer</string>
     <string name="save_profile">Save profile</string>
-    <string name="saved">Saved &#10003;</string>
-    <string name="saving">Saving&#8230;</string>
+    <string name="saved">Saved ✓</string>
+    <string name="saving">Saving…</string>
     <string name="search">Search</string>
-    <string name="search_tasks_placeholder">Search tasks...</string>
+    <string name="search_tasks_placeholder">Search tasks…</string>
     <string name="search_unavailable">Search unavailable</string>
-    <string name="searching">Searching&#8230;</string>
+    <string name="searching">Searching…</string>
     <string name="send_magic_link">Send magic link</string>
     <string name="send_reset_code">Send reset code</string>
     <string name="send_test">Send test</string>
-    <string name="sending">Sending...</string>
-    <string name="sending_reset_code">Sending reset code&#8230;</string>
+    <string name="sending">Sending…</string>
+    <string name="sending_reset_code">Sending reset code…</string>
     <string name="session_tokens_missing">The server didn\'t return session tokens, it\'s running an older OrangTask backend without native app support. Update and restart the backend, then try again.</string>
     <string name="set">Set</string>
     <string name="set_pin">Set PIN</string>
@@ -262,7 +262,7 @@
     <string name="sign_in_link_sent">We sent a sign-in link to %1$s</string>
     <string name="sign_out">Sign out</string>
     <string name="sign_out_instead">Sign out instead</string>
-    <string name="signing_in">Signing in...</string>
+    <string name="signing_in">Signing in…</string>
     <string name="six_digit_code_error">Enter the 6-digit code from your email</string>
     <string name="six_digit_code_placeholder">123456</string>
     <plurals name="skipped_archived_trashed">
@@ -306,7 +306,7 @@
     <string name="verification_link_invalid">That verification link is invalid or expired.</string>
     <string name="verify_and_sign_in">Verify and sign in</string>
     <string name="verify_email_message">Verify %1$s before accessing your tasks. We sent a verification link to that address.</string>
-    <string name="verifying">Verifying...</string>
+    <string name="verifying">Verifying…</string>
     <string name="views">Views</string>
     <string name="webhook_delivery_error_code">ERR</string>
     <string name="webhook_name_placeholder">Webhook name</string>
