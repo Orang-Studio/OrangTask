@@ -13,12 +13,12 @@
     <string name="api_key_last_used">%1$s...­ · paskutinį kartą naudotas %2$s</string>
     <string name="api_key_name_placeholder">P.v.z. \"n8n\" integracija</string>
     <string name="api_key_never_used">%1$s... · Nenaudota</string>
-    <string name="api_keys_description">Sugeneruoti asmenini API rakta kad gautum visa OrangTask API tiesiogiai (skaityti/rasyti, uzduotys, tagsai) is kodu ar irankiu kuriems reikia daugiau nei vienos puses ieinamaui tinklo siuntėju po. Raktai nepasibaigia kaip prisijungimo sesija, atsaukti gali bet kada jei jo nebereikia.</string>
+    <string name="api_keys_description">Sugeneruoti asmeninį API raktą, kad gautum visą OrangTask API tiesiogiai (skaityti/rašyti, uzduotys, tagsai) iš kodų ar įrankių kuriems reikia daugiau nei vienos puses einamąjį webhook po. Raktai nepasibaigia kaip prisijungimo sesija, atšaukti gali bet kada, jei jo nebereikia.</string>
     <string name="api_keys_heading">API RAKTAI</string>
     <string name="app_name">OrangTask</string>
     <string name="app_pin">Programos PIN kodas</string>
     <string name="assign_to">Priskirti...</string>
-    <string name="add_webhook">Pridėti tinklo kablį</string>
+    <string name="add_webhook">Pridėti webhook\'ą</string>
     <string name="assigned_empty_description">Čia bus rodomos užduotys, kurias grupės nariai jums priskiria bendruose sąrašuose.</string>
     <string name="assigned_to_me">Man priskirtos</string>
     <string name="avatar_url">Paveiksliuko URL</string>
@@ -76,7 +76,7 @@
     <string name="enter_your_pin">ĮVESKITE SAVO KODĄ</string>
     <string name="events">Įvykiai</string>
     <string name="expand">Išplėsti</string>
-    <string name="export_data_description">Atsisiųskite visus savo sąrašus, užduotis, žymas ir „webhook“ nuorodas JSON formatu.</string>
+    <string name="export_data_description">Atsisiųskite visus savo sąrašus, užduotis, žymas ir webhook nuorodas JSON formatu.</string>
     <string name="delete_webhook_confirmation">Ištrinti %1$s?</string>
     <string name="deleting">Trinama…</string>
     <string name="delivery_log">Pristatymų žurnalas</string>
@@ -101,13 +101,13 @@
         <item quantity="many">Importuoti %1$d užrašų</item>
         <item quantity="other">Importuoti %1$d užrašų</item>
     </plurals>
-    <string name="settings_webhooks">Tinklo kabliai</string>
+    <string name="settings_webhooks">Webhook\'ai</string>
     <string name="webhook_delivery_error_code">ERR</string>
-    <string name="webhook_name_placeholder">Tinko kablio pavadinimas</string>
+    <string name="webhook_name_placeholder">Webhook\'o pavadinimas</string>
     <string name="webhook_test_error">Klaida: %1$s</string>
     <string name="webhook_test_success">%1$d OK</string>
-    <string name="webhook_url_placeholder">https://pavyzdys.lt/tinklo-kablis</string>
-    <string name="delete_webhook">Ištrinti tinklo kablį</string>
+    <string name="webhook_url_placeholder">https://pavyzdys.lt/webhook</string>
+    <string name="delete_webhook">Ištrinti webhook\'ą</string>
     <string name="imported_into_list">į \"%1$s\".</string>
     <string name="importing">Perkeliama…</string>
     <string name="include_archived_notes">Įtraukti archyvuotus užrašus</string>
@@ -115,7 +115,7 @@
     <string name="incoming">Gaunama</string>
     <string name="incoming_url">Gaunamas URL</string>
     <string name="incoming_webhook_description">Bus sugeneruotas gaunantis URL. Norėdami sukurti užduotis iš išorinių įrankių, siųskite POST jam JSON formato užduotį.</string>
-    <string name="incoming_webhook_payload_label">Gaunamojo tinklo kablio duomenų pavyzdys</string>
+    <string name="incoming_webhook_payload_label">Gaunamojo webhook duomenų pavyzdys</string>
     <string name="invite">Pakviesti</string>
     <string name="invite_by_email">Pakviesti su el. paštu</string>
     <string name="just_you_invite_collaborate">Kol kas esate tik jūs. Pakvieskite ką nors bendradarbiauti.</string>
@@ -231,4 +231,11 @@
     <string name="searching">Ieškoma…</string>
     <string name="send_magic_link">Išsiųsti magišką nuorodą</string>
     <string name="tag">Žyma</string>
+    <plurals name="imported_notes">
+        <item quantity="one">Importuota %1$d užrašas</item>
+        <item quantity="few">Importuota %1$d užrašai</item>
+        <item quantity="many">Importuota %1$d užrašų</item>
+        <item quantity="other">Importuota %1$d užrašų</item>
+    </plurals>
+    <string name="language_english">Anglų</string>
 </resources>
