@@ -1,20 +1,28 @@
 import { Context, Next } from 'hono'
 import { getCookie } from 'hono/cookie'
 import sql from '../db/client.js'
-import { API_KEY_PREFIX, hashApiKey } from '../services/apiKeys.js'
+import { API_KEY_PREFIX, hashApiKey, legacyHashApiKey } from '../services/apiKeys.js'
 import type { AppEnv } from '../types.js'
 
 async function authenticateApiKey(c: Context<AppEnv>, token: string): Promise<boolean> {
   const keyHash = hashApiKey(token)
+  const legacyHash = legacyHashApiKey(token)
+
   const [row] = await sql`
-    SELECT k.id as key_id, u.id as uid, u.email, u.name, u.avatar_url, u.email_verified_at
+    SELECT k.id as key_id, k.key_hash, u.id as uid, u.email, u.name, u.avatar_url, u.email_verified_at
     FROM api_keys k
     JOIN users u ON u.id = k.user_id
-    WHERE k.key_hash = ${keyHash}
+    WHERE k.key_hash IN (${keyHash}, ${legacyHash})
   `
   if (!row) return false
 
-  sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${row.key_id}`.catch(() => {})
+  if (row.key_hash === legacyHash) {
+    sql`
+      UPDATE api_keys SET key_hash = ${keyHash}, last_used_at = now() WHERE id = ${row.key_id}
+    `.catch(() => {})
+  } else {
+    sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${row.key_id}`.catch(() => {})
+  }
 
   c.set('userId', row.uid)
   c.set('user', { id: row.uid, email: row.email, name: row.name, avatar_url: row.avatar_url })
