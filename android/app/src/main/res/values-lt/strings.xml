@@ -2,8 +2,8 @@
 <resources>
     <string name="add_due_date">Pridėti terminą</string>
     <string name="add_label">Pridėti</string>
-    <string name="add_notes_placeholder">Pridėti užrašų...</string>
-    <string name="add_subtask_placeholder">Pridėti papildomą užduotį...</string>
+    <string name="add_notes_placeholder">Pridėti užrašų…</string>
+    <string name="add_subtask_placeholder">Pridėti papildomą užduotį…</string>
     <string name="add_task">Pridėti užduotį</string>
     <string name="add_webhook">Pridėti webhook\'ą</string>
     <string name="all_tasks">Visos užduotys</string>
@@ -11,18 +11,18 @@
     <string name="already_have_account_sign_in">Jau turite paskyrą? Prisijunkite</string>
     <string name="api_key_copy_warning">Nukopijuokite dabar – dėl jūsų saugumo vėliau jis nebebus rodomas.</string>
     <string name="api_key_created">Sukurtas API raktas: %1$s</string>
-    <string name="api_key_last_used">%1$s&#8230; &#183; paskutinį kartą naudotas %2$s</string>
+    <string name="api_key_last_used">%1$s… · paskutinį kartą naudotas %2$s</string>
     <string name="api_key_name_placeholder">pvz., „n8n“ integracija</string>
-    <string name="api_key_never_used">%1$s&#8230; &#183; niekada nenaudotas</string>
+    <string name="api_key_never_used">%1$s… · niekada nenaudotas</string>
     <string name="api_keys_description">Sugeneruokite asmeninį API raktą, kad galėtumėte tiesiogiai iškviesti visą „OrangTask“ API (skaityti ir rašyti sąrašus, užduotis bei žymas) naudodami scenarijus ar įrankius, kuriems reikia daugiau nei toliau pateikiamos vienkryptės gaunamosios webhook nuorodos. Raktai, kitaip nei prisijungimo seansas, negalioja ribotą laiką – prireikus bet kada juos atšaukite.</string>
     <string name="api_keys_heading">API RAKTAI</string>
     <string name="app_name">OrangTask</string>
     <string name="app_pin">Programos PIN</string>
-    <string name="assign_to">Priskirti...</string>
+    <string name="assign_to">Priskirti…</string>
     <string name="assigned_empty_description">Čia bus rodomos užduotys, kurias komandos nariai jums priskirs bendruose sąrašuose.</string>
     <string name="assigned_to_me">Man priskirtos</string>
     <string name="avatar_url">Avataro URL</string>
-    <string name="avatar_url_placeholder">https://...</string>
+    <string name="avatar_url_placeholder">https://…</string>
     <string name="back_to_pin_entry">Grįžti prie PIN įvedimo</string>
     <string name="back_to_sign_in">Grįžti į prisijungimą</string>
     <string name="cancel">Atšaukti</string>
@@ -32,7 +32,7 @@
     <string name="change_color">Pakeisti spalvą</string>
     <string name="change_icon">Pakeisti piktogramą</string>
     <string name="check_your_email">Patikrinkite el. paštą</string>
-    <string name="checking">Tikrinama&#8230;</string>
+    <string name="checking">Tikrinama…</string>
     <string name="choose_takeout_zip">Pasirinkite „Takeout“ .zip failą</string>
     <string name="clear_due_date">Išvalyti terminą</string>
     <string name="close">Uždaryti</string>
@@ -48,10 +48,10 @@
     <string name="could_not_read_keep_zip">Nepavyko perskaityti failo. Pasirinkite iš „Google Takeout“ gautą .zip failą (jo neišskleiskite).</string>
     <string name="create">Sukurti</string>
     <string name="create_account">Sukurti paskyrą</string>
-    <string name="create_account_arrow">Sukurti paskyrą &#8594;</string>
+    <string name="create_account_arrow">Sukurti paskyrą →</string>
     <string name="create_key">Sukurti raktą</string>
     <string name="create_list_first">Pirmiausia sukurkite sąrašą</string>
-    <string name="creating">Kuriama&#8230;</string>
+    <string name="creating">Kuriama…</string>
     <string name="date_month_day_format">d MMM</string>
     <string name="date_time_format">HH:mm</string>
     <string name="date_today">Šiandien</string>
@@ -69,7 +69,7 @@
     <string name="delete_task">Ištrinti užduotį</string>
     <string name="delete_webhook">Ištrinti webhook\'ą</string>
     <string name="delete_webhook_confirmation">Ištrinti „%1$s“?</string>
-    <string name="deleting">Trinama&#8230;</string>
+    <string name="deleting">Trinama…</string>
     <string name="delivery_log">Pristatymų žurnalas</string>
     <string name="direct_api_access_example_label">Tiesioginės API prieigos pavyzdys</string>
     <string name="disabled">Išjungta</string>
@@ -88,7 +88,7 @@
     <string name="export_json">Eksportuoti JSON</string>
     <string name="export_orangtask_data">Eksportuoti „OrangTask“ duomenis</string>
     <string name="export_your_data">Eksportuoti savo duomenis</string>
-    <string name="exporting">Eksportuojama&#8230;</string>
+    <string name="exporting">Eksportuojama…</string>
     <string name="fcm_default_channel">orangtask_priminimai</string>
     <string name="forgot_password">Pamiršote slaptažodį?</string>
     <string name="forgot_pin">Pamiršote PIN?</string>
@@ -115,7 +115,7 @@
         <item quantity="many">Importuota %1$d užrašų</item>
         <item quantity="other">Importuota %1$d užrašų</item>
     </plurals>
-    <string name="importing">Importuojama&#8230;</string>
+    <string name="importing">Importuojama…</string>
     <string name="include_archived_notes">Įtraukti archyvuotus užrašus</string>
     <string name="include_trashed_notes">Įtraukti ištrintus užrašus</string>
     <string name="incoming">Gaunamasis</string>
@@ -136,7 +136,7 @@
     <string name="leave_list_confirmation">Išeiti iš „%1$s“? Prarasite prieigą, kol vėl būsite pakviesti.</string>
     <string name="list_empty_description">Pridėkite pirmąją užduotį naudodami toliau esantį lauką.</string>
     <string name="list_icon">Sąrašo piktograma</string>
-    <string name="list_name_placeholder">Sąrašo pavadinimas...</string>
+    <string name="list_name_placeholder">Sąrašo pavadinimas…</string>
     <string name="list_options">Sąrašo parinktys</string>
     <string name="list_shared_description">Kai kas nors bendrina su jumis sąrašą</string>
     <string name="list_shared_label">Sąrašas bendrinamas</string>
@@ -147,11 +147,11 @@
     <string name="language_subtitle">Pasirinkite „OrangTask“ naudojamą kalbą</string>
     <string name="language_system">Sistemos numatytoji</string>
     <string name="language_title">Kalba</string>
-    <string name="loading">Įkeliama&#8230;</string>
+    <string name="loading">Įkeliama…</string>
     <string name="login_footer">Nemokama atvirojo kodo programa. Galite ją talpinti savo serveryje.</string>
     <string name="login_tagline">Užduotys, sinchronizuojamos visuose įrenginiuose</string>
     <string name="magic_link">Magiška nuoroda</string>
-    <string name="magic_link_placeholder">https://&#8230;/auth/magic?token=&#8230;</string>
+    <string name="magic_link_placeholder">https://…/auth/magic?token=…</string>
     <string name="mark_all_read">Pažymėti visus kaip perskaitytus</string>
     <string name="members">Nariai</string>
     <string name="name">Pavadinimas</string>
@@ -168,7 +168,7 @@
     </plurals>
     <string name="new_password_label">Naujas slaptažodis</string>
     <string name="new_password_placeholder">Bent 8 simboliai</string>
-    <string name="new_tag_placeholder">Nauja žyma...</string>
+    <string name="new_tag_placeholder">Nauja žyma…</string>
     <string name="next">Kitas</string>
     <string name="no_deliveries">Pristatymų dar nėra.</string>
     <string name="no_google_keep_notes">Tame ZIP faile „Google Keep“ užrašų nerasta. Pasirinkite „Takeout“ archyvą su aplanku „Keep“.</string>
@@ -202,21 +202,21 @@
     <string name="overdue_empty_description">Puikiai tvarkotės su užduotimis.</string>
     <string name="password_label">Slaptažodis</string>
     <string name="password_min_length_error">Slaptažodį turi sudaryti bent 8 simboliai</string>
-    <string name="password_placeholder">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</string>
+    <string name="password_placeholder">••••••••</string>
     <string name="paste_magic_link_error">Įklijuokite nuorodą iš savo el. laiško</string>
     <string name="pin_description">Pasirinktinai: norint atidaryti šios paskyros programėlę reikės 4–6 skaitmenų PIN kodo.</string>
     <string name="pin_digits_placeholder">4–6 skaitmenys</string>
-    <string name="pin_placeholder">&#8226;&#8226;&#8226;&#8226;</string>
+    <string name="pin_placeholder">••••</string>
     <string name="pin_reset_code_placeholder">123456</string>
     <string name="pin_reset_message">Atkūrimo kodą išsiuntėme jūsų paskyros el. pašto adresu.</string>
-    <string name="please_wait">Palaukite...</string>
+    <string name="please_wait">Palaukite…</string>
     <string name="priority_high">Aukštas</string>
     <string name="priority_low">Žemas</string>
     <string name="priority_medium">Vidutinis</string>
     <string name="priority_none">Nėra</string>
     <string name="push">Tiesioginiai pranešimai</string>
-    <string name="quick_add_placeholder">Pridėti užduotį... (pabandykite „report friday 5pm !high“)</string>
-    <string name="reading_zip">Skaitomas ZIP failas&#8230;</string>
+    <string name="quick_add_placeholder">Pridėti užduotį… (pabandykite „report friday 5pm !high“)</string>
+    <string name="reading_zip">Skaitomas ZIP failas…</string>
     <string name="recurrence_rule_placeholder">Pasikartojimo taisyklė (pvz., FREQ=DAILY)</string>
     <string name="recurring">Pasikartojanti</string>
     <string name="remove_member_description">Pašalinti %1$s</string>
@@ -243,16 +243,16 @@
     <string name="role_viewer">Stebėtojas</string>
     <string name="save_profile">Išsaugoti profilį</string>
     <string name="saved">Išsaugota ✓</string>
-    <string name="saving">Išsaugoma&#8230;</string>
+    <string name="saving">Išsaugoma…</string>
     <string name="search">Ieškoti</string>
-    <string name="search_tasks_placeholder">Ieškoti užduočių...</string>
+    <string name="search_tasks_placeholder">Ieškoti užduočių…</string>
     <string name="search_unavailable">Paieška nepasiekiama</string>
-    <string name="searching">Ieškoma&#8230;</string>
+    <string name="searching">Ieškoma…</string>
     <string name="send_magic_link">Siųsti magišką nuorodą</string>
     <string name="send_reset_code">Siųsti atkūrimo kodą</string>
     <string name="send_test">Siųsti bandomąjį</string>
-    <string name="sending">Siunčiama...</string>
-    <string name="sending_reset_code">Siunčiamas atkūrimo kodas&#8230;</string>
+    <string name="sending">Siunčiama…</string>
+    <string name="sending_reset_code">Siunčiamas atkūrimo kodas…</string>
     <string name="session_tokens_missing">Serveris negrąžino seanso žetonų – naudojama senesnė „OrangTask“ backend versija, nepalaikanti vietinės programėlės. Atnaujinkite ir paleiskite backend iš naujo, tada bandykite dar kartą.</string>
     <string name="set">Nustatyti</string>
     <string name="set_pin">Nustatyti PIN</string>
@@ -272,7 +272,7 @@
     <string name="sign_in_link_sent">Prisijungimo nuorodą išsiuntėme adresu %1$s</string>
     <string name="sign_out">Atsijungti</string>
     <string name="sign_out_instead">Atsijungti</string>
-    <string name="signing_in">Jungiama...</string>
+    <string name="signing_in">Jungiama…</string>
     <string name="six_digit_code_error">Įveskite el. laiške gautą 6 skaitmenų kodą</string>
     <string name="six_digit_code_placeholder">123456</string>
     <plurals name="skipped_archived_trashed">
@@ -322,7 +322,7 @@
     <string name="verification_link_invalid">Ši patvirtinimo nuoroda negalioja arba jos galiojimas baigėsi.</string>
     <string name="verify_and_sign_in">Patvirtinti ir prisijungti</string>
     <string name="verify_email_message">Prieš pasiekdami užduotis patvirtinkite adresą %1$s. Patvirtinimo nuorodą išsiuntėme šiuo adresu.</string>
-    <string name="verifying">Tikrinama...</string>
+    <string name="verifying">Tikrinama…</string>
     <string name="views">Rodiniai</string>
     <string name="webhook_delivery_error_code">ERR</string>
     <string name="webhook_name_placeholder">Webhook\'o pavadinimas</string>
