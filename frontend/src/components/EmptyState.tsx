@@ -1,6 +1,5 @@
 import { LucideIcon } from 'lucide-react'
 import { Mascot, MascotPose } from './Mascot'
-
 export function EmptyState({
   icon: Icon,
   title,

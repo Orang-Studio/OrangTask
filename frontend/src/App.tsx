@@ -8,6 +8,7 @@ import { MagicPage } from './pages/MagicPage'
 import { TodayPage, UpcomingPage, OverduePage, AllTasksPage, AssignedPage } from './pages/SmartViews'
 import { ListPage } from './pages/ListPage'
 import { ListsPage } from './pages/ListsPage'
+import { ScratchpadsPage } from './pages/ScratchpadsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { LegalPage } from './pages/LegalPage'
@@ -91,6 +92,7 @@ function AppRoutes() {
         <Route path="/assigned" element={<AssignedPage />} />
         <Route path="/all" element={<AllTasksPage />} />
         <Route path="/lists" element={<ListsPage />} />
+        <Route path="/scratchpads" element={<ScratchpadsPage />} />
         <Route path="/list/:id" element={<ListPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />

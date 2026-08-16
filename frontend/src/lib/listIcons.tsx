@@ -4,7 +4,7 @@ import {
   Zap, Flag, Bell, Bookmark, Folder, FileText, Tag, DollarSign,
   Gift, Plane, Car, Dumbbell, GraduationCap, Lightbulb, Leaf, Sun,
   Moon, Cloud, Pizza, Gamepad2, Wrench, Palette, Target, Trophy,
-  Users, Phone, Mail, MapPin, Shield, Smile, PawPrint, Rocket,
+  Users, Phone, Mail, MapPin, Shield, Smile, PawPrint, Rocket, Github,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -20,7 +20,7 @@ export const LIST_ICONS: Record<string, LucideIcon> = {
   game: Gamepad2, wrench: Wrench, palette: Palette, target: Target,
   trophy: Trophy, users: Users, phone: Phone, mail: Mail, map: MapPin,
   shield: Shield, smile: Smile, paw: PawPrint, rocket: Rocket,
-  webhook: Webhook,
+  webhook: Webhook, github: Github,
 }
 
 export const LIST_ICON_KEYS = Object.keys(LIST_ICONS)

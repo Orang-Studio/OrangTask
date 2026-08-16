@@ -37,7 +37,6 @@ export function TaskListView({
   const updateTask = useUpdateTask()
   const { registerQuickAdd } = useLayout()
   const haptics = useHaptics()
-
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const quickAddRef = useRef<HTMLInputElement>(null)

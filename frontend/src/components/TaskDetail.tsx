@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Calendar, Flag, Tag as TagIcon, Trash2, Plus, Check, UserCircle2, ChevronDown } from 'lucide-react'
+import { X, Calendar, Flag, Tag as TagIcon, Trash2, Plus, Check, UserCircle2, ChevronDown, ExternalLink } from 'lucide-react'
 import { Task, Tag } from '../lib/api'
 import { Avatar } from './Avatar'
 import { PRIORITY_LABELS, PRIORITY_COLORS } from './PriorityDot'
 import { toDateTimeLocal } from '../lib/date'
+import { safeHttpUrl } from '../lib/safeUrl'
 import { useIsMobile } from '../hooks/useMediaQuery'
 import { useHaptics } from '../hooks/useHaptics'
 import {
@@ -36,17 +37,15 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
   const createSubtask = useCreateTask()
   const completeTask = useCompleteTask()
   const deleteTask = useDeleteTask()
-
   const { data: subtasks } = useTasks({ listId: task?.list_id, parentId: task?.id })
   const { data: members } = useListMembers(task?.list_id)
-
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
+  const noteLink = safeHttpUrl(notes.match(/https?:\/\/\S+/)?.[0])
   const [newSubtask, setNewSubtask] = useState('')
   const [showTagPicker, setShowTagPicker] = useState(false)
   const [showAssignPicker, setShowAssignPicker] = useState(false)
   const [newTagName, setNewTagName] = useState('')
-
   const MIN_W = 320
   const maxW = () => Math.min(900, Math.round(window.innerWidth * 0.7))
   const [width, setWidth] = useState(() => {
@@ -63,7 +62,6 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
     const startX = e.clientX
     const startW = widthRef.current
     const onMove = (ev: MouseEvent) => {
-
       const next = Math.max(MIN_W, Math.min(startW + (startX - ev.clientX), maxW()))
       widthRef.current = next
       setWidth(next)
@@ -309,6 +307,16 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
             placeholder={t('taskDetail.notesPlaceholder' as MessageKey)}
             className="input-field w-full h-auto py-2 resize-y"
           />
+          {noteLink && (
+            <a
+              href={noteLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-flex items-center gap-1 text-sm text-orange-500 hover:underline break-all"
+            >
+              {noteLink} <ExternalLink size={12} className="flex-shrink-0" />
+            </a>
+          )}
         </div>
 
         <div>

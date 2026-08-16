@@ -6,12 +6,10 @@ import { api, Task } from '../lib/api'
 import { scheduleDelete } from '../lib/undoableDelete'
 import { useOfflineStore } from '../stores/offline'
 import { t, type MessageKey } from '../lib/i18n'
-
 interface RestorePoint {
   key: QueryKey
   index: number
 }
-
 interface PendingDeletion {
   task: Task
   restorePoints: RestorePoint[]
@@ -24,7 +22,6 @@ interface DeleteTaskContextValue {
 }
 
 const DeleteTaskContext = createContext<DeleteTaskContextValue | null>(null)
-
 export function useUndoableDeleteTask() {
   const context = useContext(DeleteTaskContext)
   if (!context) throw new Error('useUndoableDeleteTask outside provider')
@@ -44,7 +41,6 @@ export function UndoableTaskDeleteProvider({ children }: { children: React.React
   const [pending, setPending] = useState<PendingDeletion[]>([])
   const [error, setError] = useState<string | null>(null)
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const restoreTask = useCallback((deletion: PendingDeletion) => {
     for (const { key, index } of deletion.restorePoints) {
       queryClient.setQueryData<Task[]>(key, (tasks) => {
@@ -101,11 +97,9 @@ export function UndoableTaskDeleteProvider({ children }: { children: React.React
 
   const stageDelete = useCallback(async (task: Task) => {
     if (pendingRef.current.has(task.id)) return
-
     await queryClient.cancelQueries({ queryKey: ['tasks'] })
     const restorePoints: RestorePoint[] = []
     const cachedQueries = queryClient.getQueriesData<Task[]>({ queryKey: ['tasks'] })
-
     for (const [key, tasks] of cachedQueries) {
       const index = tasks?.findIndex((cachedTask) => cachedTask.id === task.id) ?? -1
       if (index >= 0) restorePoints.push({ key, index })

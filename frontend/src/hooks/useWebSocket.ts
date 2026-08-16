@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-
 export function useWebSocket(enabled: boolean) {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
@@ -8,7 +7,6 @@ export function useWebSocket(enabled: boolean) {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pingTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const shouldConnect = useRef(enabled)
-
   const connect = useCallback(() => {
     if (!shouldConnect.current) return
     if (wsRef.current?.readyState === WebSocket.OPEN) return

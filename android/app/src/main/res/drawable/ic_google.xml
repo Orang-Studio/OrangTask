@@ -3,8 +3,6 @@
     android:height="18dp"
     android:viewportWidth="48"
     android:viewportHeight="48">
-    <!-- Google's official multi-color "G" mark, per developers.google.com/identity
-         branding guidelines. Must be rendered untinted, colors as-is. -->
     <path
         android:fillColor="#4285F4"
         android:pathData="M45.12,24.5c0,-1.56 -0.14,-3.06 -0.4,-4.5H24v8.51h11.84c-0.51,2.75 -2.06,5.08 -4.39,6.64v5.52h7.11c4.16,-3.83 6.56,-9.47 6.56,-16.17z"/>

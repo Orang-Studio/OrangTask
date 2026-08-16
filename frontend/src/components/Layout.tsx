@@ -14,7 +14,6 @@ import { WifiOff } from 'lucide-react'
 import { Logo } from './Logo'
 import { modKey } from '../lib/platform'
 import { t, tCount, type MessageKey } from '../lib/i18n'
-
 import { createContext, useContext } from 'react'
 
 interface LayoutCtx {
@@ -35,14 +34,11 @@ export function Layout() {
   const { user } = useAuthStore()
   const online = useOfflineStore((s) => s.online)
   const queueLen = useOfflineStore((s) => s.queue.length)
-
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const quickAddFocusRef = useRef<(() => void) | null>(null)
   const pendingFocusRef = useRef(false)
-
   useWebSocket(!!user)
-
   const registerQuickAdd = useCallback((fn: (() => void) | null) => {
     quickAddFocusRef.current = fn
 
@@ -51,7 +47,6 @@ export function Layout() {
       setTimeout(fn, 0)
     }
   }, [])
-
   const focusQuickAdd = useCallback(() => {
     if (quickAddFocusRef.current) {
       quickAddFocusRef.current()

@@ -205,6 +205,52 @@ export interface WebhookDelivery {
   created_at: string
 }
 
+export type GithubItemKind = 'issue' | 'pull_request' | 'security'
+
+export interface GithubItem {
+  id: string
+  task_id?: string | null
+  kind: GithubItemKind
+  external_key: string
+  repo: string
+  number?: number | null
+  title: string
+  url: string
+  state?: string | null
+  author?: string | null
+  severity?: string | null
+  labels?: string[] | null
+  item_updated_at?: string | null
+  synced_at?: string | null
+}
+
+export interface GithubConnection {
+  github_login?: string | null
+  scopes?: string | null
+  sync_issues: boolean
+  sync_pull_requests: boolean
+  sync_security: boolean
+  list_id?: string | null
+  last_synced_at?: string | null
+  last_error?: string | null
+}
+
+export interface GithubStatus {
+  configured: boolean
+  connection: GithubConnection | null
+  counts: { issues: number; pull_requests: number; security: number }
+}
+
+export interface Scratchpad {
+  id: string
+  user_id: string
+  title: string
+  content: string
+  position: number
+  created_at: string
+  updated_at: string
+}
+
 export interface Notification {
   id: string
   user_id: string

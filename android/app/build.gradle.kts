@@ -1,5 +1,4 @@
 import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,11 +12,8 @@ val keystoreProps = Properties().apply {
     val f = rootProject.file("keystore.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-
-// Release builds are driven by the git tag in CI: -PversionName=1.2.3 -PversionCode=10203
 val appVersionName = (findProperty("versionName") as String?) ?: "1.0.0"
 val appVersionCode = (findProperty("versionCode") as String?)?.toInt() ?: 1
-
 android {
     namespace = "lt.oranges.orangtask"
     compileSdk = 35
@@ -83,7 +79,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
-
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
@@ -91,32 +86,24 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
-
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
-
     implementation(libs.retrofit)
     implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
-
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.browser)
-
     testImplementation("junit:junit:4.13.2")
-
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
-
     implementation(libs.work.runtime)
     implementation(libs.hilt.work)
     ksp(libs.hilt.work.compiler)
-
     implementation(libs.coil.compose)
-
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
 }

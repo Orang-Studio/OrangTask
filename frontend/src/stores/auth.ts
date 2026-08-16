@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { api, User } from '../lib/api'
-
 interface AuthState {
   user: User | null
   loading: boolean
@@ -10,15 +9,12 @@ interface AuthState {
   fetchMe: () => Promise<void>
   logout: () => Promise<void>
 }
-
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
   requiresPin: false,
-
   setUser: (user) => set({ user }),
   setRequiresPin: (requiresPin) => set({ requiresPin }),
-
   fetchMe: async () => {
     set({ loading: true })
     try {
@@ -29,7 +25,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, loading: false, requiresPin: false })
     }
   },
-
   logout: async () => {
     try {
       await api.post('/auth/logout')

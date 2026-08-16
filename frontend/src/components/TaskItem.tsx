@@ -26,7 +26,6 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
   const done = task.status === 'done'
   const overdue = !done && isOverdue(task.due_date)
   const rowRef = useRef<HTMLDivElement>(null)
-
   const handleComplete = () => {
     if (!done) {
       haptics.success()

@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
-
 export interface SearchResult {
   id: string
   title: string
@@ -10,7 +9,6 @@ export interface SearchResult {
   list_id: string
   list_name: string
 }
-
 export function useSearch(query: string) {
   return useQuery({
     queryKey: ['search', query],

@@ -7,7 +7,6 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { PriorityDot } from './PriorityDot'
 import { formatDueDate } from '../lib/date'
 import { t, type MessageKey } from '../lib/i18n'
-
 interface Props {
   open: boolean
   onClose: () => void
@@ -18,7 +17,6 @@ export function CommandPalette({ open, onClose }: Props) {
   const [selectedIdx, setSelectedIdx] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-
   const debouncedQuery = useDebouncedValue(query, 250)
   const { data: results, isFetching } = useSearch(debouncedQuery)
   const pending = isFetching || debouncedQuery !== query

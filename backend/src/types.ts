@@ -9,5 +9,4 @@ export type AppVariables = {
   userId: string
   user: AppUser
 }
-
 export type AppEnv = { Variables: AppVariables }

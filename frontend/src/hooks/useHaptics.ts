@@ -4,7 +4,6 @@ export const useHaptics = () => {
       navigator.vibrate(pattern)
     }
   }
-
   return {
     tap: () => vibrate(10),
     success: () => vibrate([10, 50, 10]),

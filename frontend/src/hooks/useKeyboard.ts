@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-
 type Handlers = {
   onNewTask?: () => void
   onSearch?: () => void

@@ -30,6 +30,8 @@ Lists, smart views, sharing, natural language quick-add, offline queue and push<
 - Command palette, keyboard shortcuts, light and dark themes
 - Personal API keys and outgoing webhooks for n8n, Zapier or your own scripts
 - Import from Google Keep (Google Takeout export)
+- GitHub trackers for issues, pull requests and security alerts, synced into a GitHub list
+- Scratchpads for plain notes with basic formatting
 
 ### Self-hosting
 

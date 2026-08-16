@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Sun, CalendarDays, AlertCircle, Layers, Plus, Settings, LogOut,
-  PanelLeftClose, PanelLeftOpen, UserCheck,
+  PanelLeftClose, PanelLeftOpen, UserCheck, NotebookPen,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useLists, useCreateList } from '../hooks/useLists'
@@ -28,7 +28,6 @@ function SmartBadge({ smart }: { smart: 'today' | 'overdue' | 'assigned' }) {
 
 export function Sidebar() {
   const { data: lists } = useLists()
-
   const hasSharedLists = lists?.some((l) => l.is_shared || (l.my_role && l.my_role !== 'owner')) ?? false
   const createList = useCreateList()
   const { user, logout } = useAuthStore()
@@ -114,6 +113,11 @@ export function Sidebar() {
               {!collapsed && <SmartBadge smart="assigned" />}
             </NavLink>
           )}
+
+          <NavLink to="/scratchpads" className={navClass} onClick={() => haptics.tap()} title={collapsed ? t('scratchpads.title' as MessageKey) : undefined}>
+            <NotebookPen size={17} className="flex-shrink-0" />
+            {!collapsed && <span>{t('scratchpads.title' as MessageKey)}</span>}
+          </NavLink>
         </div>
 
         <div className={`mt-6 mb-1 flex items-center ${collapsed ? 'justify-center px-0' : 'justify-between px-4'}`}>

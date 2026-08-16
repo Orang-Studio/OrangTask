@@ -1,9 +1,7 @@
 #!/usr/bin/env node
-
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-
 const frontendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const repoDir = path.resolve(frontendDir, '..')
 const webLocaleDir = path.join(frontendDir, 'src/lib/i18n')
@@ -13,12 +11,10 @@ const locales = (process.env.WEBLATE_LOCALES ?? 'lt')
   .split(',')
   .map((locale) => locale.trim().toLowerCase())
   .filter(Boolean)
-
 function checkJsonCatalogues() {
   const english = JSON.parse(readFileSync(path.join(webLocaleDir, 'en.json'), 'utf8'))
   const englishKeys = new Set(Object.keys(english))
   const files = readdirSync(webLocaleDir).filter((file) => file.endsWith('.json'))
-
   for (const file of files) {
     const locale = JSON.parse(readFileSync(path.join(webLocaleDir, file), 'utf8'))
     if (locale === null || Array.isArray(locale) || typeof locale !== 'object') {
@@ -29,7 +25,6 @@ function checkJsonCatalogues() {
       throw new Error(`${file}: stale keys: ${stale.join(', ')}`)
     }
   }
-
   const resourceDirs = readdirSync(androidResourceDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && entry.name.startsWith('values-'))
   for (const directory of resourceDirs) {
@@ -61,7 +56,6 @@ async function pull() {
     const webPath = path.join(webLocaleDir, `${locale}.json`)
     writeFileSync(webPath, `${JSON.stringify(webJson, null, 2)}\n`)
     console.log(`${webUrl} -> ${path.relative(repoDir, webPath)}`)
-
     const androidUrl = `${baseUrl}/download/orangtask/android-app/${locale}/`
     const androidXml = await download(androidUrl)
     const androidDir = path.join(androidResourceDir, `values-${locale}`)

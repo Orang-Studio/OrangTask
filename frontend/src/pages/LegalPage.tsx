@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
 import { t, tNodes, type MessageKey } from '../lib/i18n'
-
 export function LegalPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const updated = 'June 18, 2026'
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-ink-900 px-4 py-10">
       <div className="max-w-2xl mx-auto">

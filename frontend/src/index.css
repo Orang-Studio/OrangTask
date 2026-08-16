@@ -51,7 +51,6 @@ body {
   background: #444;
 }
 
-/* brand button: sharp corners, uppercase, bold (matches oranges.lt) */
 .btn-brand {
   @apply inline-flex items-center justify-center font-bold uppercase tracking-wide transition-colors select-none;
   border-radius: 0;
@@ -75,7 +74,6 @@ body {
   @apply bg-ink-600;
 }
 
-/* input */
 .input-field {
   @apply w-full px-3 h-11 bg-white border border-gray-300 text-black outline-none transition-colors;
   border-radius: 4px;
@@ -87,7 +85,6 @@ body {
   @apply border-orange-500;
 }
 
-/* card surfaces */
 .surface {
   @apply bg-white border border-gray-200;
 }
@@ -95,12 +92,10 @@ body {
   @apply bg-ink-800 border-ink-600;
 }
 
-/* no text selection on interactive chrome */
 .no-select {
   user-select: none;
 }
 
-/* safe area padding for mobile bottom bar */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -108,7 +103,6 @@ body {
   padding-top: env(safe-area-inset-top);
 }
 
-/* hide scrollbar but keep scroll */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -117,7 +111,6 @@ body {
   scrollbar-width: none;
 }
 
-/* skeleton shimmer (solid, no gradient) */
 @keyframes pulse-bg {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
@@ -130,7 +123,6 @@ body {
   @apply bg-ink-700;
 }
 
-/* mascot (Pip the fox) gentle idle bob, respects reduced motion */
 @keyframes mascot-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
@@ -143,7 +135,6 @@ body {
   .mascot-float { animation: none; }
 }
 
-/* pIN field: mask digits via CSS instead of type=password, so the browsers saved-passwords / password-manager menu never pops up. (WebKit/Blink.) */
 .pin-mask {
   -webkit-text-security: disc;
   text-security: disc;

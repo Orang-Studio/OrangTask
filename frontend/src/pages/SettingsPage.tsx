@@ -12,27 +12,34 @@ import { useTheme } from '../hooks/useTheme'
 import { useLangStore, LANGUAGES, setLanguage, getEndonym, t, tCount, tNodes, type Language, type MessageKey } from '../lib/i18n'
 import { WebhookManager } from '../components/WebhookManager'
 import { useApiKeys, useCreateApiKey, useDeleteApiKey } from '../hooks/useApiKeys'
+import { useGithubStatus, useSyncGithub, useUpdateGithubSettings, useDisconnectGithub } from '../hooks/useGithub'
 import { api } from '../lib/api'
 import { formatDueDate } from '../lib/date'
 import { safeHttpUrl } from '../lib/safeUrl'
 import { getPushState, enablePush, disablePush, sendTestPush, showLocalTestNotification, type PushState } from '../lib/push'
 import { useHaptics } from '../hooks/useHaptics'
 
-type Section = 'profile' | 'appearance' | 'language' | 'notifications' | 'webhooks' | 'integrations' | 'data' | 'legal'
+type Section = 'profile' | 'appearance' | 'notifications' | 'webhooks' | 'github' | 'integrations' | 'data' | 'legal'
+
+const SECTION_IDS: Section[] = ['profile', 'appearance', 'notifications', 'webhooks', 'github', 'integrations', 'data', 'legal']
 
 export function SettingsPage() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const { user, setUser, logout } = useAuthStore()
   const { theme, setTheme } = useTheme()
   const haptics = useHaptics()
-  const [section, setSection] = useState<Section>('profile')
+  const requested = params.get('section') as Section | null
+  const [section, setSection] = useState<Section>(
+    requested && SECTION_IDS.includes(requested) ? requested : 'profile',
+  )
 
   const SECTIONS: { id: Section; label: string; icon: typeof User }[] = [
     { id: 'profile', label: t('settings.profile' as MessageKey), icon: User },
     { id: 'appearance', label: t('settings.appearance' as MessageKey), icon: Palette },
-    { id: 'language', label: t('language.title'), icon: Languages },
     { id: 'notifications', label: t('notifications.title' as MessageKey), icon: Bell },
     { id: 'webhooks', label: t('settings.webhooks' as MessageKey), icon: Webhook },
+    { id: 'github', label: t('github.title' as MessageKey), icon: Github },
     { id: 'integrations', label: t('settings.integrations' as MessageKey), icon: Plug },
     { id: 'data', label: t('settings.data' as MessageKey), icon: Database },
     { id: 'legal', label: t('settings.legal' as MessageKey), icon: FileText },
@@ -87,10 +94,11 @@ export function SettingsPage() {
                 ))}
               </div>
             </div>
+            <LanguageSelect />
           </div>
         )}
         {section === 'notifications' && <NotificationsSection />}
-        {section === 'language' && <LanguageSection />}
+        {section === 'github' && <GithubSection />}
         {section === 'webhooks' && (
           <div className="max-w-2xl">
             <SectionTitle title={t('settings.webhooks' as MessageKey)} />
@@ -112,34 +120,177 @@ function SectionTitle({ title }: { title: string }) {
   return <h2 className="text-base font-bold uppercase tracking-wide mb-4">{title}</h2>
 }
 
-function LanguageSection() {
+function LanguageSelect() {
   const pref = useLangStore((s) => s.pref)
   const haptics = useHaptics()
   const options: ('system' | Language)[] = ['system', ...LANGUAGES]
+
   return (
-    <div className="max-w-md space-y-4">
-      <SectionTitle title={t('language.title')} />
-      <p className="text-sm text-gray-500 dark:text-ink-400">
-        {t('language.description')}
-      </p>
-      <div className="grid gap-2">
-        {options.map((option) => {
-          const selected = pref === option
-          const label = option === 'system' ? t('language.system') : getEndonym(option)
-          return (
-            <button
-              key={option}
-              onClick={() => { haptics.tap(); setLanguage(option) }}
-              className={`flex items-center justify-between px-4 py-3 border transition-colors ${
-                selected ? 'border-orange-500 bg-orange-50 dark:bg-ink-750' : 'border-gray-300 dark:border-ink-600'
-              }`}
-            >
-              <span className="text-sm">{label}</span>
-              {selected && <Check size={16} className="text-orange-500" />}
-            </button>
-          )
-        })}
+    <div>
+      <label htmlFor="language-select" className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">
+        {t('language.title')}
+      </label>
+      <div className="relative">
+        <Languages size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <select
+          id="language-select"
+          value={pref}
+          onChange={(e) => { haptics.tap(); setLanguage(e.target.value as 'system' | Language) }}
+          className="input-field w-full pl-9 appearance-none cursor-pointer"
+        >
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option === 'system' ? t('language.system') : getEndonym(option)}
+            </option>
+          ))}
+        </select>
       </div>
+      <p className="text-sm text-gray-500 dark:text-ink-400 mt-2">{t('language.description')}</p>
+    </div>
+  )
+}
+
+function GithubSection() {
+  const haptics = useHaptics()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { data: status, isLoading } = useGithubStatus()
+  const syncGithub = useSyncGithub()
+  const updateSettings = useUpdateGithubSettings()
+  const disconnect = useDisconnectGithub()
+  const [banner, setBanner] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const connected = searchParams.get('github_connected')
+    const err = searchParams.get('github_error')
+    if (connected) setBanner(t('github.connectedBanner' as MessageKey))
+    if (err) setError(t('github.connectError' as MessageKey))
+    if (connected || err) {
+      searchParams.delete('github_connected')
+      searchParams.delete('github_error')
+      setSearchParams(searchParams, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const connection = status?.connection ?? null
+
+  const connect = async () => {
+    haptics.tap()
+    setError('')
+    try {
+      const { url } = await api.get<{ url: string }>('/github/connect')
+      window.location.href = url
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('github.connectError' as MessageKey))
+    }
+  }
+
+  const runSync = async () => {
+    setError('')
+    try {
+      await syncGithub.mutateAsync()
+      haptics.success()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('github.syncError' as MessageKey))
+    }
+  }
+
+  const trackers: { key: 'sync_issues' | 'sync_pull_requests' | 'sync_security'; label: string; desc: string; count: number }[] = [
+    {
+      key: 'sync_issues',
+      label: t('github.issues' as MessageKey),
+      desc: t('github.issuesDescription' as MessageKey),
+      count: status?.counts.issues ?? 0,
+    },
+    {
+      key: 'sync_pull_requests',
+      label: t('github.pullRequests' as MessageKey),
+      desc: t('github.pullRequestsDescription' as MessageKey),
+      count: status?.counts.pull_requests ?? 0,
+    },
+    {
+      key: 'sync_security',
+      label: t('github.security' as MessageKey),
+      desc: t('github.securityDescription' as MessageKey),
+      count: status?.counts.security ?? 0,
+    },
+  ]
+
+  if (isLoading) {
+    return <div className="py-6 text-sm text-gray-400">{t('common.loading')}</div>
+  }
+
+  return (
+    <div className="max-w-2xl space-y-5">
+      <SectionTitle title={t('github.title' as MessageKey)} />
+      <p className="text-sm text-gray-500 dark:text-ink-400">{t('github.description' as MessageKey)}</p>
+
+      {banner && (
+        <div className="px-3 py-2 text-sm bg-orange-50 dark:bg-ink-750 text-orange-700 dark:text-orange-400">{banner}</div>
+      )}
+      {error && <div className="px-3 py-2 text-sm text-red-500">{error}</div>}
+
+      <div className="surface p-4 flex items-center gap-3">
+        <Github size={18} className="text-gray-500 dark:text-ink-300" />
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium">
+            {connection ? t('github.signedInAs' as MessageKey, { login: connection.github_login || '' }) : t('github.notConnected' as MessageKey)}
+          </div>
+          <div className="text-xs text-gray-400 truncate">
+            {!status?.configured
+              ? t('github.notConfigured' as MessageKey)
+              : connection?.last_synced_at
+                ? t('github.lastSynced' as MessageKey, { date: formatDueDate(connection.last_synced_at) })
+                : t('github.neverSynced' as MessageKey)}
+          </div>
+        </div>
+        {connection ? (
+          <div className="flex gap-2">
+            <button onClick={runSync} disabled={syncGithub.isPending} className="btn-secondary text-sm disabled:opacity-50">
+              {syncGithub.isPending ? t('github.syncing' as MessageKey) : t('github.syncNow' as MessageKey)}
+            </button>
+            <button
+              onClick={() => {
+                if (!confirm(t('github.disconnectConfirm' as MessageKey))) return
+                haptics.error()
+                disconnect.mutate(true)
+              }}
+              className="btn-secondary text-sm inline-flex items-center"
+            >
+              <Unlink size={14} className="mr-1.5" /> {t('common.disconnect' as MessageKey)}
+            </button>
+          </div>
+        ) : (
+          <button onClick={connect} disabled={!status?.configured} className="btn-primary text-sm disabled:opacity-40">
+            {t('github.signIn' as MessageKey)}
+          </button>
+        )}
+      </div>
+
+      {connection?.last_error && <p className="text-sm text-red-500">{connection.last_error}</p>}
+
+      <div className="space-y-2">
+        {trackers.map((tracker) => (
+          <div key={tracker.key} className="surface p-4 flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium">{tracker.label}</div>
+              <div className="text-xs text-gray-400">{tracker.desc}</div>
+            </div>
+            {connection && <span className="text-xs text-gray-400">{tracker.count}</span>}
+            <NotifToggle
+              checked={connection ? connection[tracker.key] : false}
+              onChange={(v) => {
+                if (!connection) return
+                haptics.tap()
+                updateSettings.mutate({ [tracker.key]: v })
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      <p className="text-xs text-gray-400">{t('github.accessNote' as MessageKey)}</p>
     </div>
   )
 }

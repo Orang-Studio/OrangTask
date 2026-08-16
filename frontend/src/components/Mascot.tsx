@@ -1,11 +1,9 @@
 export type MascotPose = 'idle' | 'happy' | 'sleeping' | 'searching'
-
 const FUR = '#f97316'
 const FUR_DARK = '#ea580c'
 const FUR_LIGHT = '#fb923c'
 const CREAM = '#ffe8cf'
 const INK = '#1a1a1a'
-
 export function Mascot({
   pose = 'idle',
   size = 132,
@@ -21,12 +19,10 @@ export function Mascot({
   const eyeY = 104
   const lx = 104
   const rx = 136
-
   const closedHappy = (cx: number) =>
     `M ${cx - 7} ${eyeY + 2} Q ${cx} ${eyeY - 6} ${cx + 7} ${eyeY + 2}`
   const closedSleep = (cx: number) =>
     `M ${cx - 7} ${eyeY - 1} Q ${cx} ${eyeY + 5} ${cx + 7} ${eyeY - 1}`
-
   const eyesClosed = pose === 'happy' || pose === 'sleeping'
   const closedPath = pose === 'sleeping' ? closedSleep : closedHappy
 

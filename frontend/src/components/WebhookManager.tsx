@@ -8,9 +8,7 @@ import { Webhook } from '../lib/api'
 import { formatDueDate } from '../lib/date'
 import { useHaptics } from '../hooks/useHaptics'
 import { t, type MessageKey } from '../lib/i18n'
-
 const OUTGOING_EVENTS = ['task.created', 'task.updated', 'task.completed', 'task.deleted', 'task.due_soon', 'list.shared']
-
 function DeliveryLog({ webhookId }: { webhookId: string }) {
   const { data: deliveries } = useWebhookDeliveries(webhookId)
   if (!deliveries || deliveries.length === 0) {
@@ -43,18 +41,15 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
   const [expanded, setExpanded] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-
   const incomingUrl = webhook.incoming_token
     ? `${window.location.origin}/api/hooks/${webhook.incoming_token}`
     : null
-
   const handleTest = async () => {
     haptics.tap()
     const result = await testWebhook.mutateAsync(webhook.id)
     setTestResult(result.error ? t('webhook.testError' as MessageKey, { error: result.error }) : t('webhook.testOk' as MessageKey, { statusCode: result.statusCode }))
     setTimeout(() => setTestResult(null), 4000)
   }
-
   return (
     <div className="surface">
       <div className="flex items-center gap-3 px-4 py-3">
@@ -157,7 +152,6 @@ export function WebhookManager() {
   const [url, setUrl] = useState('')
   const [direction, setDirection] = useState<'outgoing' | 'incoming'>('outgoing')
   const [selectedEvents, setSelectedEvents] = useState<string[]>(['task.completed'])
-
   const handleCreate = async () => {
     if (!name.trim()) return
     if (direction === 'outgoing' && !url.trim()) return

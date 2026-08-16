@@ -1,14 +1,11 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
 type Theme = 'dark' | 'light' | 'system'
-
 interface ThemeState {
   theme: Theme
   setTheme: (t: Theme) => void
 }
-
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
@@ -18,7 +15,6 @@ export const useThemeStore = create<ThemeState>()(
     { name: 'orangtask-theme' }
   )
 )
-
 function applyTheme(theme: Theme) {
   const root = document.documentElement
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches

@@ -11,7 +11,6 @@ import sql from './db/client.js'
 import { addClient, removeClient } from './ws/pubsub.js'
 import { startDueSoonJob } from './services/notifications.js'
 import { rateLimit } from './middleware/rateLimit.js'
-
 import authRoutes from './routes/auth.js'
 import listsRoutes from './routes/lists.js'
 import tasksRoutes from './routes/tasks.js'
@@ -22,16 +21,15 @@ import userRoutes from './routes/user.js'
 import pushRoutes from './routes/push.js'
 import apiKeysRoutes from './routes/apiKeys.js'
 import i18nRoutes from './routes/i18n.js'
+import githubRoutes from './routes/github.js'
+import scratchpadsRoutes from './routes/scratchpads.js'
 import { webhooks as webhookRoutes } from './routes/webhooks.js'
 import webhookIncoming from './routes/webhooks.js'
 
 const app = new Hono<AppEnv>()
-
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>()
-
 const APP_URL = process.env.APP_URL || 'http://localhost:5173'
 const isProd = process.env.NODE_ENV === 'production'
-
 const allowedOrigins = isProd
   ? [APP_URL]
   : [APP_URL, 'http://localhost:5173', 'http://localhost:3000']
@@ -45,9 +43,7 @@ app.use('*', cors({
 
 app.use('*', secureHeaders())
 app.use('*', logger())
-
 app.use('/api/*', rateLimit({ windowMs: 60_000, max: 600, keyPrefix: 'api' }))
-
 app.route('/api/auth', authRoutes)
 app.route('/api/lists', listsRoutes)
 app.route('/api/tasks', tasksRoutes)
@@ -59,6 +55,8 @@ app.route('/api/push', pushRoutes)
 app.route('/api/webhooks', webhookRoutes)
 app.route('/api/api-keys', apiKeysRoutes)
 app.route('/api/i18n', i18nRoutes)
+app.route('/api/github', githubRoutes)
+app.route('/api/scratchpads', scratchpadsRoutes)
 
 app.route('/api', webhookIncoming)
 
@@ -120,16 +118,11 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/registerSW.js', serveStatic({ path: './public/registerSW.js' }))
   app.get('*', serveStatic({ path: './public/index.html' }))
 }
-
 const PORT = parseInt(process.env.PORT || '3001')
-
 await runMigrations()
 console.log('Migrations complete')
-
 startDueSoonJob()
-
 console.log(`OrangTask backend running on http://localhost:${PORT}`)
-
 export default {
   port: PORT,
   fetch: app.fetch,
