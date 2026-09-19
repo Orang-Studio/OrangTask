@@ -1,8 +1,4 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import {
-  Sun, CalendarDays, AlertCircle, Layers, Plus, Settings, LogOut,
-  PanelLeftClose, PanelLeftOpen, UserCheck, NotebookPen,
-} from 'lucide-react'
 import { useState } from 'react'
 import { useLists, useCreateList } from '../hooks/useLists'
 import { useTasks } from '../hooks/useTasks'
