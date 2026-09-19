@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Calendar, Flag, Tag as TagIcon, Trash2, Plus, Check, UserCircle2, ChevronDown, ExternalLink } from 'lucide-react'
-import { Task, Tag } from '../lib/api'
 import { Avatar } from './Avatar'
 import { PRIORITY_LABELS, PRIORITY_COLORS } from './PriorityDot'
 import { toDateTimeLocal } from '../lib/date'
