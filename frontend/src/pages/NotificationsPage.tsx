@@ -1,4 +1,3 @@
-import { ArrowLeft, Bell, Check, CheckCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useNotifications, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { EmptyState } from '../components/EmptyState'
