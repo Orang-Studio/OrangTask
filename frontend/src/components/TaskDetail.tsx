@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Calendar, Flag, Repeat, Tag as TagIcon, Trash2, Plus, Check, UserCircle2, ChevronDown, ExternalLink, Users } from 'lucide-react'
-import { Task, Tag } from '../lib/api'
 import { Avatar } from './Avatar'
 import { RecurrenceField } from './RecurrencePicker'
 import { PRIORITY_LABELS, PRIORITY_COLORS } from './PriorityDot'
