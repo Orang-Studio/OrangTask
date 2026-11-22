@@ -6,6 +6,7 @@
 *.keystore
 keystore.properties
 google-services.json
+!android/app/google-services.json
 
 # deps
 node_modules/

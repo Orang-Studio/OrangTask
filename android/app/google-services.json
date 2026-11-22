@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "351069449749",
+    "project_id": "future-system-302416",
+    "storage_bucket": "future-system-302416.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:351069449749:android:35e5f4ca7b08e43abb681c",
+        "android_client_info": {
+          "package_name": "lt.oranges.orangtask"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "351069449749-fpeuf52bf65l9k8524fcdqgiji0h03kn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzN4Y2XxSFpWl-t51u5LN_6n4X1798xiU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "351069449749-bof7rodpbbm0nov1u6pmuui27mbtpp00.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
