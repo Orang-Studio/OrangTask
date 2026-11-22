@@ -1,8 +1,4 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { useLists, useReorderLists } from '../hooks/useLists'
-import { NewListModal } from './NewListModal'
-import { SortableList, SortableItem } from './Sortable'
 import { useTasks } from '../hooks/useTasks'
 import { useAuthStore } from '../stores/auth'
 import { Logo } from './Logo'
