@@ -3,25 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Minus, Plus } from 'lucide-react'
 import { useHaptics } from '../hooks/useHaptics'
 import { t, tCount, type MessageKey } from '../lib/i18n'
-import {
-  FREQUENCIES,
-  LAST_WEEK_ORDINAL,
-  MAX_COUNT,
-  MAX_INTERVAL,
-  type Recurrence,
-  type RecurrenceEnd,
-  type RecurrenceFreq,
-  defaultRecurrence,
-  describeRecurrence,
-  freqLabel,
-  ordinalLabel,
-  parseRecurrence,
-  recurrenceEnd,
-  toRrule,
-  unitKey,
-  weekdayName,
-  weekdayOrder,
-} from '../lib/recurrence'
+
 
 const FREQ_LABEL_KEYS: Record<RecurrenceFreq, MessageKey> = {
   DAILY: 'repeat.daily' as MessageKey,
