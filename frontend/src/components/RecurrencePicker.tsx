@@ -4,24 +4,6 @@ import { X, Minus, Plus } from 'lucide-react'
 import { useHaptics } from '../hooks/useHaptics'
 import { t, tCount, type MessageKey } from '../lib/i18n'
 
-
-const FREQ_LABEL_KEYS: Record<RecurrenceFreq, MessageKey> = {
-  DAILY: 'repeat.daily' as MessageKey,
-  WEEKLY: 'repeat.weekly' as MessageKey,
-  MONTHLY: 'repeat.monthly' as MessageKey,
-  YEARLY: 'repeat.yearly' as MessageKey,
-}
-
-const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
-const ORDINALS = [1, 2, 3, 4, LAST_WEEK_ORDINAL]
-
-const chipClass = (selected: boolean) =>
-  `px-3 h-9 text-sm font-medium border transition-colors ${
-    selected
-      ? 'border-orange-500 bg-orange-50 dark:bg-ink-700 text-orange-600 dark:text-orange-400'
-      : 'border-gray-300 dark:border-ink-600 hover:border-orange-500'
-  }`
-
 const selectClass =
   'px-2 h-9 text-sm bg-white dark:bg-ink-750 border border-gray-300 dark:border-ink-500 outline-none focus:border-orange-500'
 
