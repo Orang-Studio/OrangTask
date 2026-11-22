@@ -1,8 +1,4 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useTasks } from '../hooks/useTasks'
-import { useAuthStore } from '../stores/auth'
-import { Logo } from './Logo'
-import { ListIcon } from '../lib/listIcons'
 import { safeHttpUrl } from '../lib/safeUrl'
 import { useHaptics } from '../hooks/useHaptics'
 import { t, type MessageKey } from '../lib/i18n'
