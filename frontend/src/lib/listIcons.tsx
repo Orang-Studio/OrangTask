@@ -27,6 +27,8 @@ export const LIST_ICON_KEYS = Object.keys(LIST_ICONS)
 
 export const DEFAULT_LIST_ICON = 'list'
 
+export const LIST_COLORS = ['#f97316', '#ef4444', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280']
+
 export function ListIcon({
   icon,
   color,

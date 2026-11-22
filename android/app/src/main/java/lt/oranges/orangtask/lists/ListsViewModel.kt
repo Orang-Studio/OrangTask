@@ -18,10 +18,16 @@ class ListsViewModel @Inject constructor(
     val lists: StateFlow<List<ListEntity>> = listRepository.lists
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun createList(name: String, onCreated: (String) -> Unit) {
+    fun createList(name: String, color: String, icon: String?, onCreated: (String) -> Unit) {
         viewModelScope.launch {
-            runCatching { listRepository.createList(name) }
+            runCatching { listRepository.createList(name, color, icon) }
                 .onSuccess { onCreated(it.id) }
         }
+    }
+
+    suspend fun suggestIcon(name: String): String? = listRepository.suggestIcon(name)
+
+    fun reorder(ids: List<String>) {
+        viewModelScope.launch { runCatching { listRepository.reorder(ids) } }
     }
 }

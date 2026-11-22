@@ -1,32 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Plus, Layers, ChevronRight, Hash, CalendarDays, AlertCircle,
+  Plus, Layers, ChevronRight, CalendarDays, AlertCircle,
 } from 'lucide-react'
-import { useLists, useCreateList } from '../hooks/useLists'
+import { useLists, useReorderLists } from '../hooks/useLists'
+import { NewListModal } from '../components/NewListModal'
+import { SortableList, SortableItem } from '../components/Sortable'
 import { useHaptics } from '../hooks/useHaptics'
 import { EmptyState } from '../components/EmptyState'
-import { ListIcon, DEFAULT_LIST_ICON } from '../lib/listIcons'
+import { ListIcon } from '../lib/listIcons'
 import { t, type MessageKey } from '../lib/i18n'
 
 export function ListsPage() {
   const { data: lists } = useLists()
-  const createList = useCreateList()
+  const reorderLists = useReorderLists()
   const navigate = useNavigate()
   const haptics = useHaptics()
 
-  const [adding, setAdding] = useState(false)
-  const [newName, setNewName] = useState('')
-
-  const handleCreate = async () => {
-    const name = newName.trim()
-    if (!name) { setAdding(false); return }
-    const list = await createList.mutateAsync({ name, color: '#f97316', icon: DEFAULT_LIST_ICON })
-    setNewName('')
-    setAdding(false)
-
-    if (list?.id) navigate(`/list/${list.id}`)
-  }
+  const [newListOpen, setNewListOpen] = useState(false)
 
   const rowClass =
     'flex items-center gap-3 px-4 md:px-6 h-14 border-b border-gray-100 dark:border-ink-800 ' +
@@ -39,7 +30,7 @@ export function ListsPage() {
         <Layers size={20} className="text-orange-500" />
         <h1 className="text-lg font-bold uppercase tracking-wide">{t('lists.title' as MessageKey)}</h1>
         <button
-          onClick={() => { haptics.tap(); setAdding(true) }}
+          onClick={() => { haptics.tap(); setNewListOpen(true) }}
           className="ml-auto flex items-center gap-1.5 px-3 h-9 bg-orange-500 text-white text-sm font-bold uppercase tracking-wide active:bg-orange-600"
           aria-label={t('lists.newListLabel' as MessageKey)}
         >
@@ -48,24 +39,6 @@ export function ListsPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-
-        {adding && (
-          <div className="flex items-center gap-3 px-4 md:px-6 h-14 border-b border-gray-100 dark:border-ink-800">
-            <Hash size={18} className="text-gray-400" />
-            <input
-              autoFocus
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onBlur={handleCreate}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreate()
-                if (e.key === 'Escape') { setNewName(''); setAdding(false) }
-              }}
-              placeholder={t('lists.namePlaceholder' as MessageKey)}
-              className="input-field flex-1 h-9 text-sm"
-            />
-          </div>
-        )}
 
         <p className="px-4 md:px-6 pt-4 pb-1 text-xs uppercase tracking-wider text-gray-400 font-semibold">{t('lists.viewsSection' as MessageKey)}</p>
         {[
@@ -76,28 +49,34 @@ export function ListsPage() {
           <button key={to} className={rowClass} onClick={() => { haptics.tap(); navigate(to) }}>
             <Icon size={18} className="text-gray-400" />
             <span className="font-medium">{label}</span>
-            <ChevronRight size={18} className="ml-auto text-gray-300 dark:text-ink-600" />
+            <ChevronRight size={18} className="ml-auto text-gray-300 dark:text-gray-400" />
           </button>
         ))}
 
         <p className="px-4 md:px-6 pt-4 pb-1 text-xs uppercase tracking-wider text-gray-400 font-semibold">{t('lists.listsSection' as MessageKey)}</p>
-        {lists?.map((list) => (
-          <button key={list.id} className={rowClass} onClick={() => { haptics.tap(); navigate(`/list/${list.id}`) }}>
-            <ListIcon icon={list.icon} color={list.color} />
-            <span className="font-medium truncate">{list.name}</span>
-            {list.my_role && list.my_role !== 'owner' && (
-              <span className="text-[10px] uppercase tracking-wide text-gray-400 border border-gray-200 dark:border-ink-600 px-1.5 py-0.5">
-                {list.my_role}
-              </span>
-            )}
-            {(list.task_count ?? 0) > 0 && (
-              <span className="ml-auto text-xs text-gray-400">{list.task_count}</span>
-            )}
-            <ChevronRight size={18} className={`${(list.task_count ?? 0) > 0 ? 'ml-2' : 'ml-auto'} text-gray-300 dark:text-ink-600`} />
-          </button>
-        ))}
+        <SortableList ids={lists?.map((l) => l.id) ?? []} onReorder={(ids) => reorderLists.mutate(ids)}>
+          {lists?.map((list) => (
+            <SortableItem key={list.id} id={list.id} className="bg-gray-50 dark:bg-ink-900">
+              {() => (
+                <button className={rowClass} onClick={() => { haptics.tap(); navigate(`/list/${list.id}`) }}>
+                  <ListIcon icon={list.icon} color={list.color} />
+                  <span className="font-medium truncate">{list.name}</span>
+                  {list.my_role && list.my_role !== 'owner' && (
+                    <span className="text-[10px] uppercase tracking-wide text-gray-400 border border-gray-200 dark:border-ink-600 px-1.5 py-0.5">
+                      {list.my_role}
+                    </span>
+                  )}
+                  {(list.task_count ?? 0) > 0 && (
+                    <span className="ml-auto text-xs text-gray-400">{list.task_count}</span>
+                  )}
+                  <ChevronRight size={18} className={`${(list.task_count ?? 0) > 0 ? 'ml-2' : 'ml-auto'} text-gray-300 dark:text-gray-400`} />
+                </button>
+              )}
+            </SortableItem>
+          ))}
+        </SortableList>
 
-        {lists && lists.length === 0 && !adding && (
+        {lists && lists.length === 0 && (
           <EmptyState
             icon={Layers}
             title={t('lists.emptyTitle' as MessageKey)}
@@ -106,6 +85,8 @@ export function ListsPage() {
           />
         )}
       </div>
+
+      <NewListModal open={newListOpen} onClose={() => setNewListOpen(false)} onCreated={(id) => navigate(`/list/${id}`)} />
     </div>
   )
 }

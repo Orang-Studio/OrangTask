@@ -9,8 +9,9 @@ import { QuickAdd } from './QuickAdd'
 import { TaskListSkeleton } from './Skeleton'
 import { EmptyState } from './EmptyState'
 import {
-  useTasks, useCreateTask, useCompleteTask, useDeleteTask, useUpdateTask, SmartView,
+  useTasks, useCreateTask, useCompleteTask, useDeleteTask, useUpdateTask, useReorderTasks, SmartView,
 } from '../hooks/useTasks'
+import { SortableList, SortableItem } from './Sortable'
 import { useLayout } from './Layout'
 import { useHaptics } from '../hooks/useHaptics'
 
@@ -24,17 +25,19 @@ interface Props {
   showQuickAdd?: boolean
   headerAccessory?: React.ReactNode
   defaultPriority?: string
+  reorderable?: boolean
 }
 
 export function TaskListView({
   title, smart, listId, emptyIcon, emptyTitle, emptyDescription,
-  showQuickAdd = true, headerAccessory, defaultPriority,
+  showQuickAdd = true, headerAccessory, defaultPriority, reorderable = false,
 }: Props) {
   const { data: tasks, isLoading } = useTasks({ smart, listId })
   const createTask = useCreateTask()
   const completeTask = useCompleteTask()
   const deleteTask = useDeleteTask()
   const updateTask = useUpdateTask()
+  const reorderTasks = useReorderTasks()
   const { registerQuickAdd } = useLayout()
   const haptics = useHaptics()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -99,23 +102,38 @@ export function TaskListView({
           {isLoading ? (
             <TaskListSkeleton />
           ) : tasks && tasks.length > 0 ? (
-            <AnimatePresence initial={false}>
-              {tasks.map((task) => (
-                <div key={task.id} className="animate-slide-in group">
-                  <TaskItem
-                    task={task}
-                    selected={selectedTask?.id === task.id}
-                    onToggleComplete={(t) => completeTask.mutate({ id: t.id, complete: t.status !== 'done' })}
-                    onDelete={(t) => {
-                      haptics.error()
-                      deleteTask.mutate(t)
-                      if (selectedTask?.id === t.id) closeDetail()
-                    }}
-                    onOpen={(t) => setSelectedTask(t)}
-                  />
-                </div>
-              ))}
-            </AnimatePresence>
+            <SortableList
+              ids={tasks.map((t) => t.id)}
+              onReorder={(ids) => reorderTasks.mutate(ids)}
+              disabled={!reorderable || !listId || !!smart}
+              immediate={Boolean(reorderable && listId && !smart)}
+            >
+              <AnimatePresence initial={false}>
+                {tasks.map((task) => {
+                  const canReorder = Boolean(reorderable && listId && !smart)
+                  return (
+                    <SortableItem key={task.id} id={task.id} useHandle={canReorder} className="animate-slide-in group">
+                      {(dragging, handleProps) => (
+                        <TaskItem
+                          task={task}
+                          selected={selectedTask?.id === task.id}
+                          dragging={dragging}
+                          reorderable={canReorder}
+                          dragHandleProps={handleProps}
+                          onToggleComplete={(t) => completeTask.mutate({ id: t.id, complete: t.status !== 'done' })}
+                          onDelete={(t) => {
+                            haptics.error()
+                            deleteTask.mutate(t)
+                            if (selectedTask?.id === t.id) closeDetail()
+                          }}
+                          onOpen={(t) => setSelectedTask(t)}
+                        />
+                      )}
+                    </SortableItem>
+                  )
+                })}
+              </AnimatePresence>
+            </SortableList>
           ) : (
             <EmptyState icon={emptyIcon} title={emptyTitle} description={emptyDescription} />
           )}
@@ -127,7 +145,7 @@ export function TaskListView({
       <AnimatePresence>
         {selectedTask && (
           <TaskDetail
-            key={selectedTask.id}
+            key="task-detail"
             task={selectedTask}
             onClose={closeDetail}
             onUpdate={(patch) => updateTask.mutate(patch)}

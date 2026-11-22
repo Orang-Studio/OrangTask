@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
@@ -36,7 +37,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
+import lt.oranges.orangtask.ui.components.OrangSnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,6 +51,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -67,6 +71,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.channels.ReceiveChannel
 import lt.oranges.orangtask.R
+import java.util.Locale
+import java.time.format.DateTimeFormatter
+import lt.oranges.orangtask.core.db.TaskEntity
 import lt.oranges.orangtask.notifications.NotificationBell
 import lt.oranges.orangtask.ui.components.EmptyState
 import lt.oranges.orangtask.ui.components.LIST_COLORS
@@ -97,7 +104,7 @@ private val SMART_CONFIGS = mapOf(
     ),
     "upcoming" to SmartConfig(
         R.string.upcoming, Icons.Outlined.CalendarMonth,
-        R.string.no_upcoming_tasks, R.string.upcoming_empty_description, false,
+        R.string.no_upcoming_tasks, R.string.upcoming_empty_description, true,
     ),
     "overdue" to SmartConfig(
         R.string.overdue, Icons.Outlined.ErrorOutline,
@@ -202,8 +209,39 @@ fun TaskListScreen(
             }
             HorizontalDivider(color = if (isDarkTheme()) Ink700 else Color(0xFFE5E7EB))
 
+            if (viewModel.kind == "upcoming" && !isListRoute) {
+                val month by viewModel.calendarMonth.collectAsStateWithLifecycle()
+                val day by viewModel.selectedDay.collectAsStateWithLifecycle()
+                val lists by viewModel.lists.collectAsStateWithLifecycle()
+                UpcomingCalendar(
+                    month = month,
+                    selected = day,
+                    tasks = tasks,
+                    listColors = lists.associate { it.id to it.color },
+                    onMonth = { viewModel.calendarMonth.value = it },
+                    onSelect = { viewModel.selectedDay.value = it },
+                )
+                Text(
+                    day.format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.getDefault())).uppercase(),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+                )
+            }
             Box(modifier = Modifier.weight(1f)) {
+                val dayTasks = if (viewModel.kind == "upcoming" && !isListRoute) {
+                    val day by viewModel.selectedDay.collectAsStateWithLifecycle()
+                    tasks.filter { it.dueDay() == day }
+                } else tasks
                 when {
+                    viewModel.kind == "upcoming" && !isListRoute && dayTasks.isEmpty() -> Text(
+                        tr(R.string.no_tasks_this_day),
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
                     viewModel.initialLoading && tasks.isEmpty() -> TaskListSkeleton()
                     tasks.isEmpty() -> EmptyState(
                         icon = if (isListRoute) listIconFor(list?.icon) else smart!!.icon,
@@ -212,17 +250,13 @@ fun TaskListScreen(
                         description = if (isListRoute) tr(R.string.list_empty_description)
                         else tr(smart!!.emptyDescriptionRes),
                     )
-                    else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(tasks, key = { it.id }) { task ->
-                            TaskRow(
-                                task = task,
-                                showListName = !isListRoute,
-                                onToggleComplete = { viewModel.toggleComplete(task) },
-                                onDelete = { viewModel.deleteTask(task) },
-                                onOpen = { viewModel.openTask(task) },
-                            )
-                        }
-                    }
+                    else -> TaskLazyList(
+                        tasks = dayTasks,
+                        showListName = !isListRoute,
+                        // positions are per list like desktop only list views reorder
+                        reorderable = isListRoute && canEdit,
+                        viewModel = viewModel,
+                    )
                 }
             }
 
@@ -231,7 +265,7 @@ fun TaskListScreen(
             }
         }
 
-        SnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter))
+        OrangSnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter).imePadding())
     }
 
     selectedTask?.let { task ->
@@ -249,6 +283,7 @@ fun TaskListScreen(
             listName = list?.name ?: "",
             members = viewModel.members,
             isOwner = list?.myRole == "owner",
+            currentUserId = viewModel.myUserId,
             onInvite = viewModel::inviteMember,
             onSetRole = viewModel::setMemberRole,
             onRemove = viewModel::removeMember,
@@ -258,6 +293,73 @@ fun TaskListScreen(
             },
             onDismiss = { shareOpen = false },
         )
+    }
+}
+
+@Composable
+private fun TaskLazyList(
+    tasks: List<TaskEntity>,
+    showListName: Boolean,
+    reorderable: Boolean,
+    viewModel: TaskListViewModel,
+) {
+    val haptics = rememberHaptics()
+    val listState = rememberLazyListState()
+    // order shown while a drag runs and until Room emits the saved order
+    var localOrder by remember { mutableStateOf<List<TaskEntity>?>(null) }
+    val shown = localOrder ?: tasks
+
+    val reorder = rememberReorderState(
+        listState = listState,
+        onMove = { from, to ->
+            val current = (localOrder ?: tasks).toMutableList()
+            val fromIndex = current.indexOfFirst { it.id == from }
+            val toIndex = current.indexOfFirst { it.id == to }
+            if (fromIndex >= 0 && toIndex >= 0) {
+                current.add(toIndex, current.removeAt(fromIndex))
+                localOrder = current
+                haptics.tap()
+            }
+        },
+        onDrop = {
+            val order = localOrder
+            if (order == null || order.map { it.id } == tasks.map { it.id }) {
+                localOrder = null
+            } else {
+                viewModel.reorder(order.map { it.id })
+            }
+        },
+    )
+
+    LaunchedEffect(tasks) {
+        if (reorder.draggingKey == null) localOrder = null
+    }
+
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+        items(shown, key = { it.id }) { task ->
+            val dragging = reorder.draggingKey == task.id
+            Box(
+                modifier = (if (dragging) {
+                    Modifier
+                        .zIndex(1f)
+                        .graphicsLayer { translationY = reorder.draggingOffset }
+                        .shadow(8.dp)
+                } else {
+                    Modifier.animateItem()
+                }).then(
+                    if (reorderable) Modifier.reorderOnHold(reorder, task.id, onStart = { haptics.longPress() })
+                    else Modifier,
+                ),
+            ) {
+                TaskRow(
+                    task = task,
+                    showListName = showListName,
+                    onToggleComplete = { viewModel.toggleComplete(task) },
+                    onDelete = { viewModel.deleteTask(task) },
+                    onOpen = { viewModel.openTask(task) },
+                )
+            }
+        }
     }
 }
 

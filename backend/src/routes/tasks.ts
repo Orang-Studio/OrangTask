@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import sql from '../db/client.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { fireWebhooks } from '../services/webhooks.js'
+import { broadcastManyToListMembers, broadcastToListMembers, publishToUser } from '../ws/pubsub.js'
 import { createNotification } from '../services/notifications.js'
 import {
   MAX,
@@ -61,14 +62,12 @@ app.get('/', async (c) => {
   if (smart === 'today') {
     tasks = await sql`
       SELECT t.*, au.name as assignee_name, au.avatar_url as assignee_avatar,
-        ARRAY_AGG(DISTINCT tg.name) FILTER (WHERE tg.id IS NOT NULL) as tag_names,
-        ARRAY_AGG(DISTINCT tg.id) FILTER (WHERE tg.id IS NOT NULL) as tag_ids
+        (SELECT ARRAY_AGG(tg.name ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_names,
+        (SELECT ARRAY_AGG(tg.id ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_ids
       FROM tasks t
       JOIN lists l ON l.id = t.list_id
       LEFT JOIN list_members lm ON lm.list_id = t.list_id AND lm.user_id = ${userId}
       LEFT JOIN users au ON au.id = t.assigned_to
-      LEFT JOIN task_tags tt ON tt.task_id = t.id
-      LEFT JOIN tags tg ON tg.id = tt.tag_id
       WHERE (l.owner_id = ${userId} OR lm.user_id = ${userId})
         AND t.status != 'done'
         AND (t.due_date::date = CURRENT_DATE OR t.start_date::date = CURRENT_DATE)
@@ -81,16 +80,14 @@ app.get('/', async (c) => {
     tasks = await sql`
       SELECT t.*, au.name as assignee_name, au.avatar_url as assignee_avatar,
         l.name as list_name,
-        ARRAY_AGG(DISTINCT tg.name) FILTER (WHERE tg.id IS NOT NULL) as tag_names,
-        ARRAY_AGG(DISTINCT tg.id) FILTER (WHERE tg.id IS NOT NULL) as tag_ids
+        (SELECT ARRAY_AGG(tg.name ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_names,
+        (SELECT ARRAY_AGG(tg.id ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_ids
       FROM tasks t
       JOIN lists l ON l.id = t.list_id
       LEFT JOIN list_members lm ON lm.list_id = t.list_id AND lm.user_id = ${userId}
       LEFT JOIN users au ON au.id = t.assigned_to
-      LEFT JOIN task_tags tt ON tt.task_id = t.id
-      LEFT JOIN tags tg ON tg.id = tt.tag_id
       WHERE (l.owner_id = ${userId} OR lm.user_id = ${userId})
-        AND t.assigned_to = ${userId}
+        AND ${userId} = ANY(t.assignee_ids)
         AND t.status != 'done'
       GROUP BY t.id, au.id, l.name
       ORDER BY t.due_date NULLS LAST, t.position
@@ -99,14 +96,12 @@ app.get('/', async (c) => {
   } else if (smart === 'week') {
     tasks = await sql`
       SELECT t.*, au.name as assignee_name, au.avatar_url as assignee_avatar,
-        ARRAY_AGG(DISTINCT tg.name) FILTER (WHERE tg.id IS NOT NULL) as tag_names,
-        ARRAY_AGG(DISTINCT tg.id) FILTER (WHERE tg.id IS NOT NULL) as tag_ids
+        (SELECT ARRAY_AGG(tg.name ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_names,
+        (SELECT ARRAY_AGG(tg.id ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_ids
       FROM tasks t
       JOIN lists l ON l.id = t.list_id
       LEFT JOIN list_members lm ON lm.list_id = t.list_id AND lm.user_id = ${userId}
       LEFT JOIN users au ON au.id = t.assigned_to
-      LEFT JOIN task_tags tt ON tt.task_id = t.id
-      LEFT JOIN tags tg ON tg.id = tt.tag_id
       WHERE (l.owner_id = ${userId} OR lm.user_id = ${userId})
         AND t.status != 'done'
         AND t.due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + interval '7 days'
@@ -115,17 +110,42 @@ app.get('/', async (c) => {
       ORDER BY t.due_date, t.position
       LIMIT ${limit} OFFSET ${offset}
     `
-  } else if (smart === 'overdue') {
+  } else if (smart === 'calendar') {
+    // month grid of the Upcoming page every dated top level task in from to done ones too
+    const { from, to } = c.req.query()
+    const start = new Date(from ?? '')
+    const end = new Date(to ?? '')
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+      return c.json({ error: 'from and to must be dates, with from before to' }, 400)
+    }
+    if (end.getTime() - start.getTime() > 62 * 86400000) {
+      return c.json({ error: 'Range can be at most 62 days' }, 400)
+    }
     tasks = await sql`
       SELECT t.*, au.name as assignee_name, au.avatar_url as assignee_avatar,
-        ARRAY_AGG(DISTINCT tg.name) FILTER (WHERE tg.id IS NOT NULL) as tag_names,
-        ARRAY_AGG(DISTINCT tg.id) FILTER (WHERE tg.id IS NOT NULL) as tag_ids
+        l.name as list_name, l.color as list_color,
+        (SELECT ARRAY_AGG(tg.name ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_names,
+        (SELECT ARRAY_AGG(tg.id ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_ids
       FROM tasks t
       JOIN lists l ON l.id = t.list_id
       LEFT JOIN list_members lm ON lm.list_id = t.list_id AND lm.user_id = ${userId}
       LEFT JOIN users au ON au.id = t.assigned_to
-      LEFT JOIN task_tags tt ON tt.task_id = t.id
-      LEFT JOIN tags tg ON tg.id = tt.tag_id
+      WHERE (l.owner_id = ${userId} OR lm.user_id = ${userId})
+        AND t.due_date >= ${start} AND t.due_date < ${end}
+        AND t.parent_id IS NULL
+      GROUP BY t.id, au.id, l.id
+      ORDER BY t.due_date, t.position
+      LIMIT ${limit} OFFSET ${offset}
+    `
+  } else if (smart === 'overdue') {
+    tasks = await sql`
+      SELECT t.*, au.name as assignee_name, au.avatar_url as assignee_avatar,
+        (SELECT ARRAY_AGG(tg.name ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_names,
+        (SELECT ARRAY_AGG(tg.id ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_ids
+      FROM tasks t
+      JOIN lists l ON l.id = t.list_id
+      LEFT JOIN list_members lm ON lm.list_id = t.list_id AND lm.user_id = ${userId}
+      LEFT JOIN users au ON au.id = t.assigned_to
       WHERE (l.owner_id = ${userId} OR lm.user_id = ${userId})
         AND t.status != 'done'
         AND t.due_date < CURRENT_DATE
@@ -137,14 +157,12 @@ app.get('/', async (c) => {
   } else if (smart === 'all') {
     tasks = await sql`
       SELECT t.*, au.name as assignee_name, au.avatar_url as assignee_avatar,
-        ARRAY_AGG(DISTINCT tg.name) FILTER (WHERE tg.id IS NOT NULL) as tag_names,
-        ARRAY_AGG(DISTINCT tg.id) FILTER (WHERE tg.id IS NOT NULL) as tag_ids
+        (SELECT ARRAY_AGG(tg.name ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_names,
+        (SELECT ARRAY_AGG(tg.id ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_ids
       FROM tasks t
       JOIN lists l ON l.id = t.list_id
       LEFT JOIN list_members lm ON lm.list_id = t.list_id AND lm.user_id = ${userId}
       LEFT JOIN users au ON au.id = t.assigned_to
-      LEFT JOIN task_tags tt ON tt.task_id = t.id
-      LEFT JOIN tags tg ON tg.id = tt.tag_id
       WHERE (l.owner_id = ${userId} OR lm.user_id = ${userId})
         AND t.parent_id IS NULL
       GROUP BY t.id, au.id
@@ -161,13 +179,11 @@ app.get('/', async (c) => {
 
     tasks = await sql`
       SELECT t.*, au.name as assignee_name, au.avatar_url as assignee_avatar,
-        ARRAY_AGG(DISTINCT tg.name) FILTER (WHERE tg.id IS NOT NULL) as tag_names,
-        ARRAY_AGG(DISTINCT tg.id) FILTER (WHERE tg.id IS NOT NULL) as tag_ids,
+        (SELECT ARRAY_AGG(tg.name ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_names,
+        (SELECT ARRAY_AGG(tg.id ORDER BY tg.id) FROM task_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tt.task_id = t.id) as tag_ids,
         (SELECT COUNT(*) FROM tasks sub WHERE sub.parent_id = t.id) as subtask_count
       FROM tasks t
       LEFT JOIN users au ON au.id = t.assigned_to
-      LEFT JOIN task_tags tt ON tt.task_id = t.id
-      LEFT JOIN tags tg ON tg.id = tt.tag_id
       WHERE ${query}
       GROUP BY t.id, au.id
       ORDER BY t.position, t.created_at
@@ -181,10 +197,44 @@ app.get('/', async (c) => {
   return c.json({ tasks, nextOffset })
 })
 
+// assignee_ids wins a bare assigned_to older clients means just that one
+function normalizeAssignees(body: Record<string, unknown>): string[] | null | undefined {
+  if ('assignee_ids' in body) {
+    const ids = body.assignee_ids ?? []
+    if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string' || uuidField(id, 'id'))) return undefined
+    return [...new Set(ids as string[])]
+  }
+  if ('assigned_to' in body) {
+    if (uuidField(body.assigned_to, 'assigned_to')) return undefined
+    return body.assigned_to ? [body.assigned_to as string] : []
+  }
+  return null
+}
+
+async function allMembers(ids: string[], listId: string): Promise<boolean> {
+  for (const id of ids) if (!(await getListRole(id, listId))) return false
+  return true
+}
+
+async function notifyAssignees(
+  actor: { name: string },
+  actorId: string,
+  ids: (string | null | undefined)[],
+  title: string,
+  data: { task_id: string; list_id: string },
+) {
+  for (const id of new Set(ids)) {
+    if (!id || id === actorId) continue
+    await createNotification(id, 'task_assigned', `${actor.name} assigned you a task: ${title}`, undefined, data)
+  }
+}
+
 app.post('/', async (c) => {
   const userId = c.get('userId')
   const body = await c.req.json()
-  const { list_id, title, notes, priority, due_date, start_date, parent_id, assigned_to, recurrence_rule } = body
+  const { list_id, title, notes, priority, due_date, start_date, parent_id, recurrence_rule } = body
+  const assignee_ids = normalizeAssignees(body)
+  const assigned_to = assignee_ids?.[0] ?? null
 
   if (!list_id || !title) return c.json({ error: 'list_id and title required' }, 400)
 
@@ -208,7 +258,8 @@ app.post('/', async (c) => {
     if (parentIssue) return c.json({ error: parentIssue }, 400)
   }
 
-  if (assigned_to && !(await getListRole(assigned_to, list_id))) {
+  if (assignee_ids === undefined) return c.json({ error: 'assignee_ids must be a list of user ids' }, 400)
+  if (!(await allMembers(assignee_ids ?? [], list_id))) {
     return c.json({ error: 'Assignee is not a member of this list' }, 400)
   }
 
@@ -218,9 +269,9 @@ app.post('/', async (c) => {
   `
 
   const [task] = await sql`
-    INSERT INTO tasks (list_id, parent_id, created_by, assigned_to, title, notes, priority, due_date, start_date, position, recurrence_rule)
+    INSERT INTO tasks (list_id, parent_id, created_by, assigned_to, assignee_ids, title, notes, priority, due_date, start_date, position, recurrence_rule)
     VALUES (
-      ${list_id}, ${parent_id || null}, ${userId}, ${assigned_to || null},
+      ${list_id}, ${parent_id || null}, ${userId}, ${assigned_to}, ${assignee_ids ?? []},
       ${title}, ${notes || null}, ${priority || 'none'},
       ${due_date || null}, ${start_date || null}, ${maxPos.pos},
       ${recurrence_rule || null}
@@ -228,16 +279,10 @@ app.post('/', async (c) => {
     RETURNING *
   `
 
-  if (assigned_to && assigned_to !== userId) {
-    const user = c.get('user')
-    await createNotification(
-      assigned_to,
-      'task_assigned',
-      `${user.name} assigned you a task: ${title}`,
-      undefined,
-      { task_id: task.id, list_id }
-    )
-  }
+  await notifyAssignees(c.get('user'), userId, assignee_ids ?? [], title, {
+    task_id: task.id,
+    list_id,
+  })
 
   broadcastToListMembers(list_id, { type: 'task.created', data: task }).catch(() => {})
   fireWebhooks(userId, 'task.created', task).catch(() => {})
@@ -275,16 +320,24 @@ app.patch('/reorder', async (c) => {
   const moves = items.filter((i) => allowed.has(i.id))
   if (moves.length === 0) return c.json({ ok: true, updated: 0 })
 
-  await sql`
+  const updated = await sql`
     UPDATE tasks SET position = v.position, updated_at = now()
     FROM unnest(
       ${sql.array(moves.map((m) => m.id))}::uuid[],
       ${sql.array(moves.map((m) => m.position))}::int[]
     ) AS v(id, position)
-    WHERE tasks.id = v.id
+    WHERE tasks.id = v.id AND tasks.position IS DISTINCT FROM v.position
+    RETURNING tasks.*
   `
 
-  return c.json({ ok: true, updated: moves.length })
+  // only rows that actually moved so other clients follow the new order
+  const byList = new Map<string, unknown[]>()
+  for (const task of updated) {
+    byList.set(task.list_id, [...(byList.get(task.list_id) ?? []), { type: 'task.updated', data: task }])
+  }
+  for (const [listId, events] of byList) broadcastManyToListMembers(listId, events).catch(() => {})
+
+  return c.json({ ok: true, updated: updated.length })
 })
 
 app.patch('/:id', async (c) => {
@@ -309,8 +362,14 @@ app.patch('/:id', async (c) => {
   if (!task) return c.json({ error: 'Not found' }, 404)
   if (task.my_role === 'viewer') return c.json({ error: 'Viewers cannot edit tasks' }, 403)
 
-  if (body.assigned_to && !(await getListRole(body.assigned_to, task.list_id))) {
-    return c.json({ error: 'Assignee is not a member of this list' }, 400)
+  const assignees = normalizeAssignees(body)
+  if (assignees === undefined) return c.json({ error: 'assignee_ids must be a list of user ids' }, 400)
+  if (assignees !== null) {
+    if (!(await allMembers(assignees, task.list_id))) {
+      return c.json({ error: 'Assignee is not a member of this list' }, 400)
+    }
+    body.assignee_ids = assignees
+    body.assigned_to = assignees[0] ?? null
   }
 
   let movedPosition: number | null = null
@@ -345,7 +404,7 @@ app.patch('/:id', async (c) => {
     }
   }
 
-  const allowed = ['title', 'notes', 'priority', 'status', 'due_date', 'start_date', 'assigned_to', 'position', 'parent_id', 'recurrence_rule']
+  const allowed = ['title', 'notes', 'priority', 'status', 'due_date', 'start_date', 'assigned_to', 'assignee_ids', 'position', 'parent_id', 'recurrence_rule']
 
   const sets: string[] = ['updated_at = now()']
   const values: unknown[] = []
@@ -373,16 +432,9 @@ app.patch('/:id', async (c) => {
     values as never[]
   )
 
-  if (body.assigned_to && body.assigned_to !== task.assigned_to && body.assigned_to !== userId) {
-    const user = c.get('user')
-    await createNotification(
-      body.assigned_to,
-      'task_assigned',
-      `${user.name} assigned you a task: ${updated.title}`,
-      undefined,
-      { task_id: id, list_id: task.list_id }
-    )
-  }
+  const before = new Set<string>(task.assignee_ids ?? [])
+  const newlyAssigned = (assignees ?? []).filter((a) => !before.has(a))
+  await notifyAssignees(c.get('user'), userId, newlyAssigned, updated.title, { task_id: id, list_id: task.list_id })
 
   broadcastToListMembers(task.list_id, { type: 'task.updated', data: updated }).catch(() => {})
   fireWebhooks(userId, 'task.updated', updated).catch(() => {})
@@ -463,6 +515,15 @@ app.post('/:id/tags/:tagId', async (c) => {
   const task = await canAccessTask(userId, taskId)
   if (!task) return c.json({ error: 'Not found' }, 404)
   if (task.my_role === 'viewer') return c.json({ error: 'Viewers cannot edit tasks' }, 403)
+
+  // only your own tags or ones a member already uses in this list
+  const [usable] = await sql`
+    SELECT 1 FROM tags tg WHERE tg.id = ${tagId} AND (tg.owner_id = ${userId} OR EXISTS (
+      SELECT 1 FROM task_tags tt JOIN tasks t ON t.id = tt.task_id
+      WHERE tt.tag_id = tg.id AND t.list_id = ${task.list_id}
+    ))
+  `
+  if (!usable) return c.json({ error: 'Tag not found' }, 404)
 
   await sql`
     INSERT INTO task_tags (task_id, tag_id) VALUES (${taskId}, ${tagId})

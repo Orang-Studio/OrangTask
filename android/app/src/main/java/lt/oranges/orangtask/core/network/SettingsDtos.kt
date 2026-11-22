@@ -1,5 +1,7 @@
 package lt.oranges.orangtask.core.network
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -21,7 +23,12 @@ data class UpdateProfileRequest(
 @Serializable data class DeleteAccountRequest(val email: String)
 @Serializable data class PinStatusResponse(@SerialName("has_pin") val hasPin: Boolean = false)
 
-@Serializable data class ChannelPref(val push: Boolean = true, val email: Boolean = false)
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class ChannelPref(
+    @EncodeDefault val push: Boolean = true,
+    @EncodeDefault val email: Boolean = false,
+)
 
 @Serializable data class NotificationPrefs(val prefs: Map<String, ChannelPref> = emptyMap())
 
@@ -129,3 +136,39 @@ data class KeepImportResult(
     val subtasks: Int = 0,
     val skipped: Int = 0,
 )
+
+@Serializable
+data class GithubConnectionDto(
+    @SerialName("github_login") val githubLogin: String? = null,
+    @SerialName("sync_issues") val syncIssues: Boolean = true,
+    @SerialName("sync_pull_requests") val syncPullRequests: Boolean = true,
+    @SerialName("sync_security") val syncSecurity: Boolean = true,
+    @SerialName("last_synced_at") val lastSyncedAt: String? = null,
+    @SerialName("last_error") val lastError: String? = null,
+)
+
+@Serializable
+data class GithubCountsDto(
+    val issues: Int = 0,
+    @SerialName("pull_requests") val pullRequests: Int = 0,
+    val security: Int = 0,
+)
+
+@Serializable
+data class GithubStatusResponse(
+    val configured: Boolean = false,
+    val connection: GithubConnectionDto? = null,
+    val counts: GithubCountsDto = GithubCountsDto(),
+)
+
+@Serializable data class GithubConnectResponse(val url: String)
+
+@Serializable
+data class GithubSettingsRequest(
+    @SerialName("sync_issues") val syncIssues: Boolean? = null,
+    @SerialName("sync_pull_requests") val syncPullRequests: Boolean? = null,
+    @SerialName("sync_security") val syncSecurity: Boolean? = null,
+)
+
+@Serializable data class GithubConnectionResponse(val connection: GithubConnectionDto)
+@Serializable data class GithubDisconnectRequest(val deleteTasks: Boolean = false)

@@ -21,7 +21,7 @@ export async function runMigrations() {
   `
 
   const migrationsDir = join(__dirname, 'migrations')
-  const files = ['001_initial.sql', '002_refresh_tokens_pin.sql', '003_push_notifications.sql', '004_password_reset.sql', '005_oauth_accounts.sql', '006_api_keys.sql', '007_device_tokens.sql', '008_email_security.sql', '009_github_scratchpads.sql'].sort()
+  const files = ['001_initial.sql', '002_refresh_tokens_pin.sql', '003_push_notifications.sql', '004_password_reset.sql', '005_oauth_accounts.sql', '006_api_keys.sql', '007_device_tokens.sql', '008_email_security.sql', '009_github_scratchpads.sql', '010_demo_account.sql', '011_user_delete_fks.sql', '012_companion_sessions.sql', '013_member_list_position.sql', '014_task_assignees.sql'].sort()
 
   for (const file of files) {
     const [existing] = await sql`SELECT id FROM schema_migrations WHERE filename = ${file}`

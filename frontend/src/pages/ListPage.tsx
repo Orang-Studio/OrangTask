@@ -6,10 +6,8 @@ import { useLists, useDeleteList, useUpdateList } from '../hooks/useLists'
 import { ShareModal } from '../components/ShareModal'
 import { useNavigate } from 'react-router-dom'
 import { useHaptics } from '../hooks/useHaptics'
-import { LIST_ICONS, LIST_ICON_KEYS } from '../lib/listIcons'
+import { LIST_COLORS as COLORS, LIST_ICONS, LIST_ICON_KEYS } from '../lib/listIcons'
 import { t, type MessageKey } from '../lib/i18n'
-
-const COLORS = ['#f97316', '#ef4444', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280']
 
 export function ListPage() {
   const { id } = useParams<{ id: string }>()
@@ -180,6 +178,7 @@ export function ListPage() {
         emptyTitle={t('list.emptyTitle' as MessageKey)}
         emptyDescription={t('list.emptyDescription' as MessageKey)}
         headerAccessory={accessory}
+        reorderable={canEdit}
       />
       {shareOpen && <ShareModal listId={list.id} listName={list.name} isOwner={isOwner} onClose={() => setShareOpen(false)} />}
     </>

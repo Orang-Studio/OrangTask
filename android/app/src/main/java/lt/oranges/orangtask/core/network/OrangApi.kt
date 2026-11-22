@@ -31,6 +31,9 @@ interface OrangApi {
     @PATCH("api/tasks/{id}")
     suspend fun updateTask(@Path("id") id: String, @Body body: JsonObject): TaskResponse
 
+    @PATCH("api/tasks/reorder")
+    suspend fun reorderTasks(@Body body: JsonObject): OkResponse
+
     @DELETE("api/tasks/{id}")
     suspend fun deleteTask(@Path("id") id: String): OkResponse
 
@@ -55,11 +58,32 @@ interface OrangApi {
     @POST("api/lists")
     suspend fun createList(@Body body: CreateListRequest): ListResponse
 
+    @POST("api/lists/suggest-icon")
+    suspend fun suggestListIcon(@Body body: SuggestIconRequest): SuggestIconResponse
+
+    @PATCH("api/lists/reorder")
+    suspend fun reorderLists(@Body body: JsonObject): OkResponse
+
     @PATCH("api/lists/{id}")
     suspend fun updateList(@Path("id") id: String, @Body body: JsonObject): ListResponse
 
     @DELETE("api/lists/{id}")
     suspend fun deleteList(@Path("id") id: String): OkResponse
+
+    @GET("api/scratchpads")
+    suspend fun getScratchpads(
+        @Query("limit") limit: Int = PAGE_SIZE,
+        @Query("offset") offset: Int = 0,
+    ): ScratchpadsResponse
+
+    @POST("api/scratchpads")
+    suspend fun createScratchpad(@Body body: CreateScratchpadRequest): ScratchpadResponse
+
+    @PATCH("api/scratchpads/{id}")
+    suspend fun updateScratchpad(@Path("id") id: String, @Body body: JsonObject): ScratchpadResponse
+
+    @DELETE("api/scratchpads/{id}")
+    suspend fun deleteScratchpad(@Path("id") id: String): OkResponse
 
     @GET("api/lists/{id}/members")
     suspend fun getMembers(
@@ -147,6 +171,21 @@ interface OrangApi {
 
     @POST("api/webhooks/{id}/test")
     suspend fun testWebhook(@Path("id") id: String): TestWebhookResponse
+
+    @GET("api/github/status")
+    suspend fun getGithubStatus(): GithubStatusResponse
+
+    @GET("api/github/connect")
+    suspend fun connectGithub(@Query("platform") platform: String = "android"): GithubConnectResponse
+
+    @PATCH("api/github/settings")
+    suspend fun updateGithubSettings(@Body body: GithubSettingsRequest): GithubConnectionResponse
+
+    @POST("api/github/sync")
+    suspend fun syncGithub(): JsonObject
+
+    @POST("api/github/disconnect")
+    suspend fun disconnectGithub(@Body body: GithubDisconnectRequest): OkResponse
 
     @GET("api/notifications")
     suspend fun getNotifications(): NotificationsResponse

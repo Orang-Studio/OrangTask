@@ -95,6 +95,7 @@ export function SettingsPage() {
               </div>
             </div>
             <LanguageSelect />
+            <AboutVersion />
           </div>
         )}
         {section === 'notifications' && <NotificationsSection />}
@@ -102,7 +103,7 @@ export function SettingsPage() {
         {section === 'webhooks' && (
           <div className="max-w-2xl">
             <SectionTitle title={t('settings.webhooks' as MessageKey)} />
-            <p className="text-sm text-gray-500 dark:text-ink-400 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               {t('settings.webhooksDescription' as MessageKey)}
             </p>
             <WebhookManager />
@@ -145,7 +146,18 @@ function LanguageSelect() {
           ))}
         </select>
       </div>
-      <p className="text-sm text-gray-500 dark:text-ink-400 mt-2">{t('language.description')}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{t('language.description')}</p>
+    </div>
+  )
+}
+
+function AboutVersion() {
+  return (
+    <div className="pt-4 border-t border-gray-200 dark:border-ink-700">
+      <div className="text-xs uppercase tracking-wide text-gray-400 mb-2">{t('about.title' as MessageKey)}</div>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        {t('about.version' as MessageKey, { version: __APP_VERSION__ })}
+      </p>
     </div>
   )
 }
@@ -224,7 +236,7 @@ function GithubSection() {
   return (
     <div className="max-w-2xl space-y-5">
       <SectionTitle title={t('github.title' as MessageKey)} />
-      <p className="text-sm text-gray-500 dark:text-ink-400">{t('github.description' as MessageKey)}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">{t('github.description' as MessageKey)}</p>
 
       {banner && (
         <div className="px-3 py-2 text-sm bg-orange-50 dark:bg-ink-750 text-orange-700 dark:text-orange-400">{banner}</div>
@@ -351,7 +363,7 @@ function ProfileSection({ user, setUser }: { user: any; setUser: (u: any) => voi
             {name?.[0]?.toUpperCase()}
           </div>
         )}
-        <div className="text-sm text-gray-500 dark:text-ink-400">{user?.email}</div>
+        <div className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</div>
       </div>
 
       <div>
@@ -373,7 +385,7 @@ function ProfileSection({ user, setUser }: { user: any; setUser: (u: any) => voi
           <span className="text-sm font-medium">{t('settings.appPin' as MessageKey)}</span>
           {hasPin && <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 rounded">{t('common.enabled')}</span>}
         </div>
-        <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
           {t('settings.pinDescription' as MessageKey)}
         </p>
         {hasPin ? (
@@ -474,7 +486,7 @@ function ConnectedAccounts() {
         <Link2 size={16} className="text-gray-400" />
         <span className="text-sm font-medium">{t('settings.connectedAccounts' as MessageKey)}</span>
       </div>
-      <p className="text-sm text-gray-500 dark:text-ink-400 mb-3">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
         {t('settings.connectedAccountsDescription' as MessageKey)}
       </p>
 
@@ -689,7 +701,7 @@ function ApiKeysManager() {
       {revealed && (
         <div className="surface p-4 border-orange-300 dark:border-orange-800">
           <div className="text-sm font-medium mb-1">{t('settings.apiKeyCreated' as MessageKey, { name: revealed.name })}</div>
-          <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
             {t('settings.apiKeyCopyWarning' as MessageKey)}
           </p>
           <div className="flex gap-2">
@@ -765,7 +777,7 @@ function IntegrationsSection() {
     <div className="max-w-2xl space-y-8">
       <div className="space-y-4">
         <SectionTitle title={t('settings.apiKeys' as MessageKey)} />
-        <p className="text-sm text-gray-500 dark:text-ink-400">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {t('settings.apiKeysDescription' as MessageKey)}
         </p>
         <ApiKeysManager />
@@ -773,7 +785,7 @@ function IntegrationsSection() {
 
       <div className="space-y-4">
         <SectionTitle title={t('settings.webhooksAndIntegrations' as MessageKey)} />
-        <p className="text-sm text-gray-500 dark:text-ink-400">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {t('settings.webhooksIntegrationsDescription' as MessageKey)}
         </p>
         <div className="space-y-2">
@@ -782,7 +794,7 @@ function IntegrationsSection() {
               <div className="flex items-center gap-2 font-medium mb-1">
                 <Plug size={16} className="text-orange-500" /> {ex.name}
               </div>
-              <p className="text-sm text-gray-500 dark:text-ink-400">{ex.desc}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{ex.desc}</p>
             </div>
           ))}
         </div>
@@ -891,7 +903,7 @@ function KeepImport() {
   return (
     <div>
       <div className="text-sm font-medium mb-1">{t('settings.keepImportTitle' as MessageKey)}</div>
-      <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
         {tNodes('settings.keepImportDescription' as MessageKey, {
           takeout: (
             <a href="https://takeout.google.com/" target="_blank" rel="noreferrer" className="text-orange-500 hover:underline inline-flex items-center gap-0.5">
@@ -970,7 +982,7 @@ function DataSection({ user, logout }: { user: any; logout: () => void }) {
 
       <div>
         <div className="text-sm font-medium mb-1">{t('settings.exportData' as MessageKey)}</div>
-        <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">{t('settings.exportDataDescription' as MessageKey)}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t('settings.exportDataDescription' as MessageKey)}</p>
         <button onClick={exportData} className="btn-secondary">
           <Download size={16} className="mr-2" /> {t('settings.exportJson' as MessageKey)}
         </button>
@@ -982,7 +994,7 @@ function DataSection({ user, logout }: { user: any; logout: () => void }) {
 
       <div className="pt-6 border-t border-gray-200 dark:border-ink-700">
         <div className="text-sm font-medium text-red-500 mb-1">{t('settings.deleteAccount' as MessageKey)}</div>
-        <p className="text-sm text-gray-500 dark:text-ink-400 mb-2">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
           {t('settings.deleteAccountDescription' as MessageKey)}
         </p>
         {showDelete ? (

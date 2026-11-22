@@ -2,12 +2,14 @@ package lt.oranges.orangtask.tasks
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import lt.oranges.orangtask.core.db.ListDao
+import lt.oranges.orangtask.core.network.MemberDto
 import lt.oranges.orangtask.core.db.TagEntity
 import lt.oranges.orangtask.core.db.TaskDao
 import lt.oranges.orangtask.core.db.TaskEntity
@@ -122,6 +124,7 @@ class TaskRepository @Inject constructor(
             parentId = request.parentId,
             createdBy = null,
             assignedTo = request.assignedTo,
+            assigneeIds = listOfNotNull(request.assignedTo),
             assigneeName = null,
             assigneeAvatar = null,
             title = request.title,
@@ -196,6 +199,27 @@ class TaskRepository @Inject constructor(
         }
     }
 
+    // positions are per list or per parent task so ids must be the full order of one lists top level tasks or of one tasks subtasks
+    suspend fun reorder(ids: List<String>) {
+        val before = ids.mapNotNull { taskDao.getById(it) }
+        val index = ids.withIndex().associate { it.value to it.index }
+        taskDao.upsertAll(before.map { it.copy(position = index.getValue(it.id)) })
+        // offline drafts have no server id yet they keep the local position only
+        val items = ids.withIndex().filterNot { it.value.startsWith("local-") }.map { (i, id) ->
+            JsonObject(mapOf("id" to JsonPrimitive(id), "position" to JsonPrimitive(i)))
+        }
+        if (items.isEmpty()) return
+        val body = fieldsOf("items" to JsonArray(items))
+        try {
+            api.reorderTasks(body)
+        } catch (e: IOException) {
+            offlineQueue.enqueue("PATCH", "api/tasks/reorder", body)
+        } catch (e: Exception) {
+            taskDao.upsertAll(before)
+            throw e
+        }
+    }
+
     suspend fun setTitle(id: String, title: String) =
         patchTask(id, fieldsOf("title" to JsonPrimitive(title))) { it.copy(title = title) }
 
@@ -217,10 +241,23 @@ class TaskRepository @Inject constructor(
             it.copy(recurrenceRule = rule)
         }
 
-    suspend fun setAssignee(id: String, userId: String?, name: String?, avatar: String?) =
-        patchTask(id, fieldsOf("assigned_to" to (userId?.let(::JsonPrimitive) ?: JsonNull))) {
-            it.copy(assignedTo = userId, assigneeName = name, assigneeAvatar = avatar)
+    suspend fun setAssignees(id: String, members: List<MemberDto>) {
+        val first = members.firstOrNull()
+        patchTask(
+            id,
+            fieldsOf(
+                "assignee_ids" to JsonArray(members.map { JsonPrimitive(it.id) }),
+                "assigned_to" to (first?.id?.let(::JsonPrimitive) ?: JsonNull),
+            ),
+        ) {
+            it.copy(
+                assigneeIds = members.map { m -> m.id },
+                assignedTo = first?.id,
+                assigneeName = first?.name,
+                assigneeAvatar = first?.avatarUrl,
+            )
         }
+    }
 
     suspend fun addTag(taskId: String, tag: TagEntity) {
         val before = taskDao.getById(taskId) ?: return
@@ -236,15 +273,15 @@ class TaskRepository @Inject constructor(
         }
     }
 
-    suspend fun removeTag(taskId: String, tag: TagEntity) {
+    suspend fun removeTag(taskId: String, tagId: String, tagName: String) {
         val before = taskDao.getById(taskId) ?: return
         taskDao.upsert(
-            before.copy(tagIds = before.tagIds - tag.id, tagNames = before.tagNames - tag.name)
+            before.copy(tagIds = before.tagIds - tagId, tagNames = before.tagNames - tagName)
         )
         try {
-            api.removeTagFromTask(taskId, tag.id)
+            api.removeTagFromTask(taskId, tagId)
         } catch (e: IOException) {
-            offlineQueue.enqueue("DELETE", "api/tasks/$taskId/tags/${tag.id}")
+            offlineQueue.enqueue("DELETE", "api/tasks/$taskId/tags/$tagId")
         } catch (e: Exception) {
             taskDao.upsert(before)
             throw e

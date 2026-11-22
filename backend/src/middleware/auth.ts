@@ -59,6 +59,7 @@ export async function authMiddleware(c: Context<AppEnv>, next: Next) {
     email: session.email,
     name: session.name,
     avatar_url: session.avatar_url,
+    is_guest: typeof session.email === 'string' && session.email.endsWith('@guest.orangtask.local'),
   })
 
   await next()

@@ -9,6 +9,10 @@ import kotlinx.serialization.json.JsonObject
 import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.network.ApiKeyDto
+import lt.oranges.orangtask.core.network.GithubConnectionDto
+import lt.oranges.orangtask.core.network.GithubDisconnectRequest
+import lt.oranges.orangtask.core.network.GithubSettingsRequest
+import lt.oranges.orangtask.core.network.GithubStatusResponse
 import lt.oranges.orangtask.core.network.ChannelPref
 import lt.oranges.orangtask.core.network.CreateApiKeyRequest
 import lt.oranges.orangtask.core.network.CreateWebhookRequest
@@ -78,6 +82,21 @@ class SettingsRepository @Inject constructor(
         api.putNotificationPrefs(NotificationPrefs(prefs)).prefs
 
     suspend fun apiKeys(): List<ApiKeyDto> = api.getApiKeys().keys
+
+    suspend fun githubStatus(): GithubStatusResponse = api.getGithubStatus()
+
+    suspend fun githubConnectUrl(): String = api.connectGithub().url
+
+    suspend fun updateGithubSettings(body: GithubSettingsRequest): GithubConnectionDto =
+        api.updateGithubSettings(body).connection
+
+    suspend fun syncGithub() {
+        api.syncGithub()
+    }
+
+    suspend fun disconnectGithub(deleteTasks: Boolean) {
+        api.disconnectGithub(GithubDisconnectRequest(deleteTasks))
+    }
 
     suspend fun createApiKey(name: String): CreatedApiKeyDto =
         api.createApiKey(CreateApiKeyRequest(name.trim())).key

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>lt.oranges.orangtask</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <name>OrangTask</name>
+  <summary>Your tasks, in the tray</summary>
+  <summary xml:lang="lt">Jūsų užduotys sistemos dėkle</summary>
+  <developer id="lt.oranges">
+    <name>Orang Studio</name>
+  </developer>
+  <description>
+    <p>
+      The native desktop client for OrangTask. It keeps your lists in sync with
+      task.oranges.lt and works offline, queueing changes until you reconnect.
+    </p>
+    <ul>
+      <li>A tray popup with a concise task list: click a task to complete it, hover the list chips to switch lists</li>
+      <li>A live tray badge with today's and overdue counts</li>
+      <li>Quick add from anywhere with natural dates and priorities, e.g. "report friday 3pm !high"</li>
+      <li>Native reminder notifications that can complete or snooze a task</li>
+      <li>KRunner search for your tasks</li>
+      <li>Drag and drop text, links and files to capture tasks</li>
+      <li>A scratchpad sticky note on the desktop</li>
+    </ul>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Your lists with a task open</caption>
+      <image>https://raw.githubusercontent.com/Orang-Studio/OrangTask/main/desktop/screenshots/main-task-detail.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The tray popup</caption>
+      <image>https://raw.githubusercontent.com/Orang-Studio/OrangTask/main/desktop/screenshots/popup-today.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Quick add from anywhere</caption>
+      <image>https://raw.githubusercontent.com/Orang-Studio/OrangTask/main/desktop/screenshots/quick-add.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>A scratchpad as a desktop sticky note</caption>
+      <image>https://raw.githubusercontent.com/Orang-Studio/OrangTask/main/desktop/screenshots/sticky-note.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Dark theme</caption>
+      <image>https://raw.githubusercontent.com/Orang-Studio/OrangTask/main/desktop/screenshots/main-today-dark.png</image>
+    </screenshot>
+  </screenshots>
+  <launchable type="desktop-id">lt.oranges.orangtask.desktop</launchable>
+  <url type="homepage">https://task.oranges.lt</url>
+  <url type="bugtracker">https://github.com/Orang-Studio/OrangTask/issues</url>
+  <url type="vcs-browser">https://github.com/Orang-Studio/OrangTask</url>
+  <url type="translate">https://oranges.lt/translate/projects/orangtask/</url>
+  <categories>
+    <category>Office</category>
+    <category>ProjectManagement</category>
+  </categories>
+  <provides>
+    <binary>orangtask</binary>
+    <dbus type="user">lt.oranges.orangtask</dbus>
+  </provides>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="@PROJECT_VERSION@" date="2026-09-24"/>
+  </releases>
+</component>

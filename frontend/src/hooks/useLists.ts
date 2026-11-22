@@ -25,6 +25,29 @@ export function useUpdateList() {
   })
 }
 
+export function useReorderLists() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      api.patch('/lists/reorder', { items: ids.map((id, position) => ({ id, position })) }),
+    onMutate: async (ids) => {
+      await qc.cancelQueries({ queryKey: ['lists'] })
+      const previous = qc.getQueryData<List[]>(['lists'])
+      const index = new Map(ids.map((id, i) => [id, i]))
+      if (previous) {
+        qc.setQueryData<List[]>(['lists'], previous
+          .map((l) => (index.has(l.id) ? { ...l, position: index.get(l.id)! } : l))
+          .sort((a, b) => a.position - b.position))
+      }
+      return { previous }
+    },
+    onError: (_e, _ids, ctx) => {
+      if (ctx?.previous) qc.setQueryData(['lists'], ctx.previous)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['lists'] }),
+  })
+}
+
 export function useDeleteList() {
   const qc = useQueryClient()
   return useMutation({
@@ -71,10 +94,11 @@ export function useRemoveMember() {
   })
 }
 
-export function useTags() {
+// with a list also returns tags other members already use in it
+export function useTags(listId?: string) {
   return useQuery({
-    queryKey: ['tags'],
-    queryFn: () => fetchAllPages<Tag>('/tags', 'tags'),
+    queryKey: listId ? ['tags', listId] : ['tags'],
+    queryFn: () => fetchAllPages<Tag>('/tags', 'tags', listId ? new URLSearchParams({ listId }) : undefined),
   })
 }
 

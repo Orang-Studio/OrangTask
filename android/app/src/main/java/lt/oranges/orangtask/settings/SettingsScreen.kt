@@ -4,6 +4,11 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,10 +29,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.IntegrationInstructions
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Upload
@@ -38,7 +46,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
+import lt.oranges.orangtask.ui.components.OrangSnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -56,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.pluralStringResource
 import lt.oranges.orangtask.core.i18n.tr
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +75,7 @@ import androidx.core.content.FileProvider
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
+import lt.oranges.orangtask.BuildConfig
 import lt.oranges.orangtask.R
 import lt.oranges.orangtask.core.network.UserDto
 import lt.oranges.orangtask.ui.components.Avatar
@@ -85,6 +95,7 @@ private const val SECTION_APPEARANCE = "appearance"
 private const val SECTION_LANGUAGE = "language"
 private const val SECTION_NOTIFICATIONS = "notifications"
 private const val SECTION_WEBHOOKS = "webhooks"
+private const val SECTION_GITHUB = "github"
 private const val SECTION_INTEGRATIONS = "integrations"
 private const val SECTION_DATA = "data"
 
@@ -96,9 +107,14 @@ private val SECTIONS = listOf(
     SectionInfo(SECTION_LANGUAGE, R.string.language_title, Icons.Outlined.Language),
     SectionInfo(SECTION_NOTIFICATIONS, R.string.settings_notifications, Icons.Outlined.Notifications),
     SectionInfo(SECTION_WEBHOOKS, R.string.settings_webhooks, Icons.Outlined.Webhook),
+    SectionInfo(SECTION_GITHUB, R.string.github_title, Icons.Outlined.Code),
     SectionInfo(SECTION_INTEGRATIONS, R.string.settings_integrations, Icons.Outlined.IntegrationInstructions),
     SectionInfo(SECTION_DATA, R.string.settings_data, Icons.Outlined.Storage),
 )
+
+// not a section the row opens the policy in the browser
+private val PRIVACY = SectionInfo("privacy", R.string.privacy_policy, Icons.Outlined.PrivacyTip)
+private const val PRIVACY_URL = "https://task.oranges.lt/legal"
 
 private fun themeLabelRes(mode: ThemeMode): Int = when (mode) {
     ThemeMode.SYSTEM -> R.string.theme_system
@@ -134,68 +150,88 @@ fun SettingsScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = if (section.isEmpty()) 16.dp else 4.dp),
-            ) {
-                if (section.isEmpty()) {
-                    Icon(Icons.Outlined.Settings, contentDescription = null, tint = Orange500, modifier = Modifier.size(20.dp))
-                    Text(tr(R.string.settings_heading), fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        AnimatedContent(
+            targetState = section,
+            transitionSpec = {
+                if (targetState.isEmpty()) {
+                    slideInHorizontally(animationSpec = tween(260), initialOffsetX = { -it }) togetherWith
+                        slideOutHorizontally(animationSpec = tween(260), targetOffsetX = { it })
                 } else {
-                    IconButton(onClick = { section = "" }) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = tr(R.string.content_description_back),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    slideInHorizontally(animationSpec = tween(260), initialOffsetX = { it }) togetherWith
+                        slideOutHorizontally(animationSpec = tween(260), targetOffsetX = { -it })
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            label = "settings-section",
+        ) { visibleSection ->
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .padding(horizontal = if (visibleSection.isEmpty()) 16.dp else 4.dp),
+                ) {
+                    if (visibleSection.isEmpty()) {
+                        Icon(Icons.Outlined.Settings, contentDescription = null, tint = Orange500, modifier = Modifier.size(20.dp))
+                        Text(tr(R.string.settings_heading), fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    } else {
+                        IconButton(onClick = { section = "" }) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = tr(R.string.content_description_back),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        val sectionLabelRes = SECTIONS.firstOrNull { it.key == visibleSection }?.labelRes
+                        Text(
+                            (if (sectionLabelRes == null) "" else tr(sectionLabelRes)).uppercase(),
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp,
                         )
                     }
-                    val sectionLabelRes = SECTIONS.firstOrNull { it.key == section }?.labelRes
-                    Text(
-                        (if (sectionLabelRes == null) "" else tr(sectionLabelRes)).uppercase(),
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp,
-                    )
                 }
-            }
-            HorizontalDivider(color = if (dark) Ink700 else Color(0xFFE5E7EB))
+                HorizontalDivider(color = if (dark) Ink700 else Color(0xFFE5E7EB))
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-            ) {
-                when (section) {
-                    "" -> SettingsIndex(
-                        user = user,
-                        onOpen = { haptics.tap(); section = it },
-                        onLogout = {
-                            haptics.tap()
-                            onLogout()
-                        },
-                    )
-                    SECTION_PROFILE -> ProfileSection(user, viewModel, onUserChanged)
-                    SECTION_APPEARANCE -> AppearanceSection(viewModel)
-                    SECTION_LANGUAGE -> LanguageSection()
-                    SECTION_NOTIFICATIONS -> NotificationPrefsSection(viewModel)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                ) {
+                    when (visibleSection) {
+                        "" -> SettingsIndex(
+                            user = user,
+                            onOpen = { haptics.tap(); section = it },
+                            onLogout = {
+                                haptics.tap()
+                                onLogout()
+                            },
+                        )
+                        SECTION_PROFILE -> ProfileSection(user, viewModel, onUserChanged)
+                        SECTION_APPEARANCE -> AppearanceSection(viewModel)
+                        SECTION_LANGUAGE -> LanguageSection()
+                        SECTION_NOTIFICATIONS -> NotificationPrefsSection(viewModel)
 
-                    SECTION_WEBHOOKS -> WebhooksSection(onError = { viewModel.errors.tryEmit(it) })
-                    SECTION_INTEGRATIONS -> IntegrationsSection(onError = { viewModel.errors.tryEmit(it) })
-                    SECTION_DATA -> DataSection(user, viewModel, onLogout)
+                        SECTION_WEBHOOKS -> WebhooksSection(onError = { viewModel.errors.tryEmit(it) })
+                        SECTION_GITHUB -> GithubSection(onError = { viewModel.errors.tryEmit(it) })
+                        SECTION_INTEGRATIONS -> IntegrationsSection(onError = { viewModel.errors.tryEmit(it) })
+                        SECTION_DATA -> DataSection(user, viewModel, onLogout)
+                    }
                 }
             }
         }
 
-        SnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter))
+        OrangSnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter).imePadding())
     }
 }
 
 @Composable
 private fun SettingsIndex(user: UserDto?, onOpen: (String) -> Unit, onLogout: () -> Unit) {
     val dark = isDarkTheme()
+    val uriHandler = LocalUriHandler.current
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -216,13 +252,13 @@ private fun SettingsIndex(user: UserDto?, onOpen: (String) -> Unit, onLogout: ()
         }
 
         Column {
-            SECTIONS.forEach { info ->
+            (SECTIONS + PRIVACY).forEach { info ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOpen(info.key) }
+                        .clickable { if (info === PRIVACY) uriHandler.openUri(PRIVACY_URL) else onOpen(info.key) }
                         .height(52.dp),
                 ) {
                     Icon(
@@ -392,6 +428,16 @@ private fun AppearanceSection(viewModel: SettingsViewModel) {
                 )
             }
         }
+        Spacer(Modifier.height(24.dp))
+        HorizontalDivider(color = if (dark) Ink700 else Color(0xFFE5E7EB))
+        Spacer(Modifier.height(12.dp))
+        FieldLabel(tr(R.string.about_title))
+        Spacer(Modifier.height(6.dp))
+        Text(
+            tr(R.string.about_version, BuildConfig.VERSION_NAME),
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

@@ -17,6 +17,7 @@ data class TaskEntity(
     val assignedTo: String?,
     val assigneeName: String?,
     val assigneeAvatar: String?,
+    val assigneeIds: List<String> = emptyList(),
     val title: String,
     val notes: String?,
     val priority: String,
@@ -49,6 +50,16 @@ data class ListEntity(
     val isShared: Boolean,
     val myRole: String?,
     val createdAt: String?,
+)
+
+@Entity(tableName = "scratchpads")
+data class ScratchpadEntity(
+    @PrimaryKey val id: String,
+    val title: String,
+    val content: String,
+    val position: Int,
+    val createdAt: String?,
+    val updatedAt: String?,
 )
 
 @Entity(tableName = "tags")

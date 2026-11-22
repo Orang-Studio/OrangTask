@@ -37,6 +37,7 @@
     <string name="clear_due_date">Clear due date</string>
     <string name="close">Close</string>
     <string name="collapse">Collapse</string>
+    <string name="color_label">Color</string>
     <string name="complete">COMPLETE</string>
     <string name="complete_security_check">Complete security check</string>
     <string name="completed">COMPLETED</string>
@@ -45,6 +46,7 @@
     <string name="continue_with_google">Continue with Google</string>
     <string name="copy_key">Copy key</string>
     <string name="copy_url">Copy URL</string>
+    <string name="could_not_delete_task">Could not delete task</string>
     <string name="could_not_read_keep_zip">Could not read that file. Select the .zip from Google Takeout (don\'t unzip it).</string>
     <string name="create">Create</string>
     <string name="create_account">Create account</string>
@@ -65,6 +67,8 @@
     <string name="delete_forever">Delete forever</string>
     <string name="delete_list">Delete list</string>
     <string name="delete_list_confirmation">Delete \"%1$s\" and all its tasks?</string>
+    <string name="delete_note">Delete note</string>
+    <string name="delete_note_confirmation">Delete \"%1$s\"?</string>
     <string name="delete_subtask">Delete subtask</string>
     <string name="delete_task">Delete task</string>
     <string name="delete_webhook">Delete webhook</string>
@@ -74,6 +78,7 @@
     <string name="direct_api_access_example_label">Direct API access example</string>
     <string name="disabled">Disabled</string>
     <string name="done">Done</string>
+    <string name="edit">Edit</string>
     <string name="email">Email</string>
     <string name="email_label">Email</string>
     <string name="email_placeholder">you@example.com</string>
@@ -92,7 +97,20 @@
     <string name="fcm_default_channel">orangtask_reminders</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="forgot_pin">Forgot PIN?</string>
+    <string name="format_bold">Bold</string>
+    <string name="format_bullet_list">Bullet list</string>
+    <string name="format_code">Code</string>
+    <string name="format_code_block">Code block</string>
+    <string name="format_divider">Divider</string>
+    <string name="format_heading">Heading</string>
+    <string name="format_italic">Italic</string>
+    <string name="format_link">Link</string>
+    <string name="format_numbered_list">Numbered list</string>
+    <string name="format_quote">Quote</string>
+    <string name="format_strikethrough">Strikethrough</string>
+    <string name="format_task_item">Checklist item</string>
     <string name="google_keep">Google Keep</string>
+    <string name="icon_label">Icon</string>
     <string name="import_from_google_keep">Import from Google Keep</string>
     <string name="import_google_keep_description">Export your notes with Google Takeout (takeout.google.com), then choose the .zip it gives you, no need to unzip. Checklists become subtasks and labels become tags.</string>
     <string name="import_into_list">Import into list</string>
@@ -143,6 +161,7 @@
     <string name="login_footer">Free and open source. Self-host it yourself.</string>
     <string name="login_tagline">Tasks that sync everywhere</string>
     <string name="magic_link">Magic link</string>
+    <string name="magic_link_opens_app">Tap the link in the email. OrangTask should open and sign you in automatically.</string>
     <string name="magic_link_placeholder">https://…/auth/magic?token=…</string>
     <string name="mark_all_read">Mark all read</string>
     <string name="members">Members</string>
@@ -152,6 +171,8 @@
     <string name="network_error">Network error, check your connection</string>
     <string name="new_api_key">New API key</string>
     <string name="new_label">New</string>
+    <string name="new_list">New list</string>
+    <string name="new_note">New note</string>
     <plurals name="new_notifications">
         <item quantity="one">%1$d new</item>
         <item quantity="other">%1$d new</item>
@@ -166,6 +187,7 @@
     <string name="no_lists_yet">No lists yet</string>
     <string name="no_notifications">No notifications</string>
     <string name="no_overdue_tasks">No overdue tasks</string>
+    <string name="no_scratchpads_yet">No notes yet</string>
     <string name="no_search_results">No results for \"%1$s\"</string>
     <string name="no_tasks_in_list">No tasks in this list</string>
     <string name="no_tasks_yet">No tasks yet</string>
@@ -177,7 +199,7 @@
     <string name="notification_action_snooze_one_hour">Snooze 1h</string>
     <string name="notification_channel_description">Task reminders and updates</string>
     <string name="notification_channel_name">Reminders</string>
-    <string name="notification_delivery_description">Push delivers to devices where you\'ve enabled it (browser push today, native Android push arrives in a later update). Email goes to your account address.</string>
+    <string name="notification_delivery_description">Push delivers to devices where you\'ve enabled it. Email goes to your account address.</string>
     <string name="notifications">Notifications</string>
     <string name="notifications_caught_up">You\'re all caught up. New activity will show here.</string>
     <string name="notifications_heading">NOTIFICATIONS</string>
@@ -194,12 +216,14 @@
     <string name="password_min_length_error">Password must be at least 8 characters</string>
     <string name="password_placeholder">••••••••</string>
     <string name="paste_magic_link_error">Paste the link from your email</string>
+    <string name="invalid_magic_link_error">Paste a valid OrangTask sign-in link or token</string>
     <string name="pin_description">Optional. Require a 4-6 digit PIN to open the app on this account.</string>
     <string name="pin_digits_placeholder">4-6 digits</string>
     <string name="pin_placeholder">••••</string>
     <string name="pin_reset_code_placeholder">123456</string>
     <string name="pin_reset_message">We emailed a reset code to your account address.</string>
     <string name="please_wait">Please wait…</string>
+    <string name="preview">Preview</string>
     <string name="priority_high">High</string>
     <string name="priority_low">Low</string>
     <string name="priority_medium">Medium</string>
@@ -207,7 +231,6 @@
     <string name="push">Push</string>
     <string name="quick_add_placeholder">Add a task… (try \"report friday 5pm !high\")</string>
     <string name="reading_zip">Reading zip…</string>
-    <string name="recurrence_rule_placeholder">Recurrence rule (e.g. FREQ=DAILY)</string>
     <string name="recurring">Recurring</string>
     <string name="remove_member_description">Remove %1$s</string>
     <string name="remove_pin">Remove PIN</string>
@@ -215,6 +238,58 @@
     <string name="remove_tag">Remove tag</string>
     <string name="rename">Rename</string>
     <string name="rename_list">Rename list</string>
+    <string name="repeat_after">After</string>
+    <string name="repeat_custom_rule">Custom rule</string>
+    <string name="repeat_custom_rule_notice">This task uses a rule the picker can’t edit. Choosing an option below replaces it.</string>
+    <string name="repeat_daily">Daily</string>
+    <string name="repeat_decrease_interval">Decrease interval</string>
+    <string name="repeat_edit">Edit recurrence</string>
+    <string name="repeat_ends">Ends</string>
+    <string name="repeat_ends_never">Never</string>
+    <string name="repeat_ends_on_date">On date</string>
+    <string name="repeat_every">Repeat every</string>
+    <string name="repeat_freq_day">Day</string>
+    <string name="repeat_freq_month">Month</string>
+    <string name="repeat_freq_week">Week</string>
+    <string name="repeat_freq_year">Year</string>
+    <string name="repeat_increase_interval">Increase interval</string>
+    <string name="repeat_monthly">Monthly</string>
+    <string name="repeat_monthly_day_option">Day %1$d</string>
+    <string name="repeat_monthly_nth">%1$s %2$s</string>
+    <string name="repeat_never">Does not repeat</string>
+    <plurals name="repeat_occurrences">
+        <item quantity="one">occurrence</item>
+        <item quantity="other">occurrences</item>
+    </plurals>
+    <string name="repeat_on_days">Repeat on</string>
+    <string name="repeat_ordinal_first">First</string>
+    <string name="repeat_ordinal_fourth">Fourth</string>
+    <string name="repeat_ordinal_last">Last</string>
+    <string name="repeat_ordinal_second">Second</string>
+    <string name="repeat_ordinal_third">Third</string>
+    <string name="repeat_remove">Don’t repeat</string>
+    <string name="repeat_summary_every">Every %1$d %2$s</string>
+    <string name="repeat_summary_until">until %1$s</string>
+    <string name="repeat_title">Repeat</string>
+    <plurals name="repeat_unit_days">
+        <item quantity="one">day</item>
+        <item quantity="other">days</item>
+    </plurals>
+    <plurals name="repeat_unit_months">
+        <item quantity="one">month</item>
+        <item quantity="other">months</item>
+    </plurals>
+    <plurals name="repeat_unit_weeks">
+        <item quantity="one">week</item>
+        <item quantity="other">weeks</item>
+    </plurals>
+    <plurals name="repeat_unit_years">
+        <item quantity="one">year</item>
+        <item quantity="other">years</item>
+    </plurals>
+    <string name="repeat_weekdays">Weekdays</string>
+    <string name="repeat_weekly">Weekly</string>
+    <string name="repeat_yearly">Yearly</string>
     <string name="request_failed">Request failed (%1$d)</string>
     <string name="resend_code">Resend code</string>
     <string name="resend_verification_email">Resend verification email</string>
@@ -234,6 +309,14 @@
     <string name="save_profile">Save profile</string>
     <string name="saved">Saved ✓</string>
     <string name="saving">Saving…</string>
+    <string name="scratchpad_content_placeholder">Write anything here…</string>
+    <string name="scratchpad_empty_note">This note is empty.</string>
+    <string name="scratchpad_title_placeholder">Note title…</string>
+    <string name="scratchpads">Scratchpads</string>
+    <string name="scratchpads_empty_description">Scratchpads are plain notes without checkboxes, for anything that is not a task.</string>
+    <string name="scratchpads_formatting_hint">Formatting: **bold**, *italic*, ~~strikethrough~~, `code`, ## heading, - bullet, 1. numbered, - [ ] checklist, &gt; quote, [text](url), ``` code block, --- divider.</string>
+    <string name="scratchpads_heading">SCRATCHPADS</string>
+    <string name="scratchpads_untitled">Untitled note</string>
     <string name="search">Search</string>
     <string name="search_tasks_placeholder">Search tasks…</string>
     <string name="search_unavailable">Search unavailable</string>
@@ -250,6 +333,7 @@
     <string name="settings">Settings</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_data">Data</string>
+    <string name="privacy_policy">Privacy policy</string>
     <string name="settings_heading">SETTINGS</string>
     <string name="settings_integrations">Integrations</string>
     <string name="settings_notifications">Notifications</string>
@@ -258,7 +342,7 @@
     <string name="share">Share</string>
     <string name="share_list_title">SHARE \"%1$s\"</string>
     <string name="sign_in">Sign in</string>
-    <string name="sign_in_link_label">Paste the sign-in link</string>
+    <string name="sign_in_link_label">Didn\'t open? Paste the link or token</string>
     <string name="sign_in_link_sent">We sent a sign-in link to %1$s</string>
     <string name="sign_out">Sign out</string>
     <string name="sign_out_instead">Sign out instead</string>
@@ -274,6 +358,7 @@
         <item quantity="one">%1$d subtask</item>
         <item quantity="other">%1$d subtasks</item>
     </plurals>
+    <string name="subtask_title">Subtask title</string>
     <string name="subtasks">Subtasks</string>
     <string name="tag">Tag</string>
     <string name="task_assigned_description">When someone assigns you a task</string>
@@ -286,6 +371,7 @@
     </plurals>
     <string name="task_due_soon_description">1 hour before a task is due</string>
     <string name="task_due_soon_label">Task due soon</string>
+    <string name="task_deleted">Deleted \"%1$s\"</string>
     <string name="teammate_email_placeholder">teammate@example.com</string>
     <string name="theme">Theme</string>
     <string name="theme_dark">Dark</string>
@@ -295,6 +381,7 @@
     <string name="today_empty_description">You are all caught up. Add a task below to plan your day.</string>
     <string name="type_at_least_two_characters">Type at least 2 characters</string>
     <string name="type_email_to_confirm">Type %1$s to confirm:</string>
+    <string name="undo">Undo</string>
     <string name="unassigned">Unassigned</string>
     <string name="unlock">Unlock</string>
     <string name="unlock_your_tasks">Unlock your tasks</string>
@@ -318,4 +405,37 @@
     <string name="webhooks_integrations_heading">WEBHOOKS &amp; INTEGRATIONS</string>
     <string name="wrong_pin_try_again">Wrong PIN, try again</string>
     <string name="your_email">your email</string>
+    <string name="about_title">About</string>
+    <string name="about_version">OrangTask version %1$s</string>
+    <string name="github_access_note">OrangTask only reads the items it syncs and never writes to your repositories.</string>
+    <string name="github_connect_on_web">Connect your GitHub account to start syncing.</string>
+    <string name="github_connected">GitHub connected.</string>
+    <string name="github_connect_error">Couldn\'t connect GitHub. Please try again.</string>
+    <string name="github_connecting">Connecting…</string>
+    <string name="github_description">Bring your GitHub issues, pull requests and security alerts in as tasks.</string>
+    <string name="github_disconnect">Disconnect</string>
+    <string name="github_disconnect_confirm">Disconnect GitHub? Synced items will be removed from this account.</string>
+    <string name="github_issues">Issues</string>
+    <string name="github_issues_description">Issues assigned to you.</string>
+    <string name="github_last_synced">Last synced %1$s</string>
+    <string name="github_never_synced">Never synced</string>
+    <string name="github_not_configured">GitHub is not configured on this server.</string>
+    <string name="github_not_connected">Not connected</string>
+    <string name="github_pull_requests">Pull requests</string>
+    <string name="github_pull_requests_description">Pull requests you opened or were asked to review.</string>
+    <string name="github_security">Security alerts</string>
+    <string name="github_security_description">Dependabot and code scanning alerts on your repositories.</string>
+    <string name="github_sign_in">Connect GitHub</string>
+    <string name="github_signed_in_as">Signed in as %1$s</string>
+    <string name="github_sync_now">Sync now</string>
+    <string name="github_syncing">Syncing…</string>
+    <string name="github_title">GitHub</string>
+    <string name="no_time">No time</string>
+    <string name="edit_time">Edit time</string>
+    <string name="everyone">Everyone</string>
+    <string name="previous_month">Previous month</string>
+    <string name="next_month">Next month</string>
+    <string name="no_tasks_this_day">No tasks this day</string>
+    <string name="widget_today_name">OrangTask: Today</string>
+    <string name="widget_today_description">Overdue and today’s tasks, tick to complete</string>
 </resources>

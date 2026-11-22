@@ -5,15 +5,25 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -28,10 +38,17 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import lt.oranges.orangtask.ui.components.OrangSnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,13 +72,18 @@ import androidx.navigation.navArgument
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.AppStrings
 import lt.oranges.orangtask.core.network.UserDto
 import lt.oranges.orangtask.core.sync.SyncCoordinator
 import lt.oranges.orangtask.lists.ListsScreen
+import lt.oranges.orangtask.lists.ListsViewModel
+import lt.oranges.orangtask.lists.NewListDialog
 import lt.oranges.orangtask.notifications.NotificationsScreen
+import lt.oranges.orangtask.scratchpads.ScratchpadsScreen
 import lt.oranges.orangtask.search.SearchScreen
 import lt.oranges.orangtask.settings.SettingsScreen
 import lt.oranges.orangtask.tasks.TaskListScreen
+import lt.oranges.orangtask.tasks.UndoableTaskDeleteViewModel
 import lt.oranges.orangtask.ui.components.isDarkTheme
 import lt.oranges.orangtask.ui.components.rememberHaptics
 import lt.oranges.orangtask.ui.theme.Ink700
@@ -81,11 +103,36 @@ class SyncViewModel @Inject constructor(
     }
 }
 
+internal fun isMainMenuRoute(route: String?): Boolean = when (route) {
+    "view/{kind}", "lists", "search", "settings" -> true
+    else -> false
+}
+
+internal enum class MainTab { TODAY, LISTS, SEARCH, SETTINGS }
+
+internal fun mainTabForRoute(route: String?): MainTab? = when {
+    route == "view/{kind}" -> MainTab.TODAY
+    route == "lists" || route == "scratchpads" || route?.startsWith("list/") == true -> MainTab.LISTS
+    route == "search" -> MainTab.SEARCH
+    route == "settings" -> MainTab.SETTINGS
+    else -> null
+}
+
+internal fun disablesTabTransition(initialRoute: String?, targetRoute: String?): Boolean {
+    if (isMainMenuRoute(initialRoute) && isMainMenuRoute(targetRoute)) return true
+
+    val initialTab = mainTabForRoute(initialRoute)
+    val targetTab = mainTabForRoute(targetRoute)
+    return initialTab != null && targetTab != null && initialTab != targetTab
+}
+
 @Composable
 fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit = {}) {
     val navController = rememberNavController()
     val syncViewModel: SyncViewModel = hiltViewModel()
+    val taskDeleteViewModel: UndoableTaskDeleteViewModel = hiltViewModel()
     val haptics = rememberHaptics()
+    val snackbar = remember { SnackbarHostState() }
 
     LifecycleStartEffect(Unit) {
         syncViewModel.start()
@@ -93,6 +140,23 @@ fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit
     }
 
     val context = LocalContext.current
+    LaunchedEffect(taskDeleteViewModel, context) {
+        taskDeleteViewModel.notices.collect { deletion ->
+            val result = snackbar.showSnackbar(
+                message = AppStrings.get(context, R.string.task_deleted, deletion.title),
+                actionLabel = AppStrings.get(context, R.string.undo),
+                duration = SnackbarDuration.Short,
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                taskDeleteViewModel.undo(deletion.taskId)
+            } else {
+                taskDeleteViewModel.commit(deletion.taskId)
+            }
+        }
+    }
+    LaunchedEffect(taskDeleteViewModel) {
+        taskDeleteViewModel.errors.collect { snackbar.showSnackbar(it) }
+    }
     val notifPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -118,16 +182,32 @@ fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit
         }
     }
 
+    // above the tab bar too so it is opened here rather than inside ListsScreen
+    var newListOpen by rememberSaveable { mutableStateOf(false) }
+    val listsViewModel: ListsViewModel = hiltViewModel()
+
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { OrangSnackbarHost(hostState = snackbar, modifier = Modifier.imePadding()) },
         bottomBar = {
             OrangTabBar(
                 todayActive = currentRoute == "view/{kind}" && currentKind == "today",
-                listsActive = currentRoute == "lists" || onListRoute,
+                listsActive = mainTabForRoute(currentRoute) == MainTab.LISTS,
                 searchActive = currentRoute == "search",
                 settingsActive = currentRoute == "settings",
                 onToday = { haptics.tap(); switchTab("view/today") },
-                onLists = { haptics.tap(); switchTab("lists") },
+                onLists = {
+                    haptics.tap()
+                    // the tab restores the last open list tapping it again inside a list goes to all lists
+                    if (onListRoute) {
+                        if (!navController.popBackStack("lists", inclusive = false)) {
+                            navController.navigate("lists") { launchSingleTop = true }
+                        }
+                    } else {
+                        switchTab("lists")
+                    }
+                },
                 onAdd = {
                     haptics.tap()
                     val hasQuickAdd = onListRoute ||
@@ -143,7 +223,47 @@ fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit
         NavHost(
             navController = navController,
             startDestination = "view/{kind}",
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding),
+            enterTransition = {
+                if (disablesTabTransition(initialState.destination.route, targetState.destination.route)) {
+                    EnterTransition.None
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300),
+                    )
+                }
+            },
+            exitTransition = {
+                if (disablesTabTransition(initialState.destination.route, targetState.destination.route)) {
+                    ExitTransition.None
+                } else {
+                    slideOutHorizontally(
+                        targetOffsetX = { -it },
+                        animationSpec = tween(300),
+                    )
+                }
+            },
+            popEnterTransition = {
+                if (disablesTabTransition(initialState.destination.route, targetState.destination.route)) {
+                    EnterTransition.None
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { -it },
+                        animationSpec = tween(300),
+                    )
+                }
+            },
+            popExitTransition = {
+                if (disablesTabTransition(initialState.destination.route, targetState.destination.route)) {
+                    ExitTransition.None
+                } else {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(300),
+                    )
+                }
+            },
         ) {
             composable(
                 route = "view/{kind}",
@@ -174,7 +294,12 @@ fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit
                 ListsScreen(
                     onOpenView = { kind -> navController.navigate("view/$kind") },
                     onOpenList = { id -> navController.navigate("list/$id") },
+                    onOpenScratchpads = { navController.navigate("scratchpads") },
+                    onNewList = { newListOpen = true },
                 )
+            }
+            composable("scratchpads") {
+                ScratchpadsScreen(onBack = { navController.popBackStack() })
             }
             composable("search") {
                 SearchScreen(
@@ -191,6 +316,18 @@ fun MainScaffold(user: UserDto?, onLogout: () -> Unit, onUserChanged: () -> Unit
                 SettingsScreen(user = user, onLogout = onLogout, onUserChanged = onUserChanged)
             }
         }
+    }
+
+    AnimatedVisibility(visible = newListOpen, enter = fadeIn(tween(150)), exit = fadeOut(tween(150))) {
+        NewListDialog(
+            onDismiss = { newListOpen = false },
+            onSuggest = listsViewModel::suggestIcon,
+            onCreate = { name, color, icon ->
+                newListOpen = false
+                listsViewModel.createList(name, color, icon) { id -> navController.navigate("list/$id") }
+            },
+        )
+    }
     }
 }
 

@@ -1,17 +1,19 @@
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from './components/Layout'
 import { LoginPage } from './pages/LoginPage'
 import { PinPage } from './pages/PinPage'
 import { MagicPage } from './pages/MagicPage'
-import { TodayPage, UpcomingPage, OverduePage, AllTasksPage, AssignedPage } from './pages/SmartViews'
+import { TodayPage, OverduePage, AllTasksPage, AssignedPage } from './pages/SmartViews'
+import { UpcomingPage } from './pages/CalendarPage'
 import { ListPage } from './pages/ListPage'
 import { ListsPage } from './pages/ListsPage'
 import { ScratchpadsPage } from './pages/ScratchpadsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { LegalPage } from './pages/LegalPage'
+import { DeleteAccountPage } from './pages/DeleteAccountPage'
 import { useAuthStore } from './stores/auth'
 import { useTheme } from './hooks/useTheme'
 import { useLangStore, resolveLanguage, applyLanguage } from './lib/i18n'
@@ -30,8 +32,9 @@ const queryClient = new QueryClient({
 
 function LanguageGate({ children }: { children: React.ReactNode }) {
   const pref = useLangStore((s) => s.pref)
-  applyLanguage(resolveLanguage(pref))
-  return <>{children}</>
+  const lang = resolveLanguage(pref)
+  applyLanguage(lang)
+  return <Fragment key={lang}>{children}</Fragment>
 }
 
 function AuthGate({ children }: { children: React.ReactNode }) {
@@ -75,6 +78,7 @@ function AppRoutes() {
       <Route path="/pin" element={<PinPage />} />
       <Route path="/auth/magic" element={<MagicPage />} />
       <Route path="/legal" element={<LegalPage />} />
+      <Route path="/delete-account" element={<DeleteAccountPage />} />
 
       <Route
         element={

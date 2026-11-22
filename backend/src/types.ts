@@ -3,6 +3,7 @@ export interface AppUser {
   email: string
   name: string
   avatar_url?: string | null
+  is_guest?: boolean
 }
 
 export type AppVariables = {

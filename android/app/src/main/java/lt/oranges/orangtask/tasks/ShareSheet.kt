@@ -64,6 +64,7 @@ fun ShareSheet(
     listName: String,
     members: List<MemberDto>,
     isOwner: Boolean,
+    currentUserId: String = "",
     onInvite: (email: String, role: String) -> Unit,
     onSetRole: (userId: String, role: String) -> Unit,
     onRemove: (userId: String) -> Unit,
@@ -75,6 +76,8 @@ fun ShareSheet(
     var email by rememberSaveable { mutableStateOf("") }
     var role by rememberSaveable { mutableStateOf("editor") }
     var confirmLeave by remember { mutableStateOf(false) }
+    val ownerCount = members.count { it.role == "owner" }
+    val canLeave = !isOwner || ownerCount > 1
 
     fun invite() {
         val value = email.trim()
@@ -149,7 +152,7 @@ fun ShareSheet(
                 Column {
                     FieldLabel(tr(R.string.members))
                     Spacer(Modifier.height(4.dp))
-                    if (members.none { it.role != "owner" }) {
+                    if (members.size <= 1) {
                         Text(
                             tr(R.string.just_you_invite_collaborate),
                             fontSize = 13.sp,
@@ -158,9 +161,10 @@ fun ShareSheet(
                         )
                     }
                     members.forEach { member ->
+                        val isSelf = currentUserId.isNotEmpty() && member.id == currentUserId
                         MemberRow(
                             member = member,
-                            canManage = isOwner && member.role != "owner",
+                            canManage = isOwner && !isSelf,
                             onSetRole = { onSetRole(member.id, it) },
                             onRemove = {
                                 haptics.error()
@@ -170,7 +174,7 @@ fun ShareSheet(
                     }
                 }
 
-                if (!isOwner) {
+                if (canLeave) {
                     HorizontalDivider(color = if (dark) Ink700 else Color(0xFFE5E7EB))
                     Text(
                         tr(R.string.leave_list),
@@ -226,9 +230,7 @@ private fun MemberRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (member.role == "owner") {
-            RoleBadge(roleLabel(member.role), highlight = true)
-        } else if (canManage) {
+        if (canManage) {
             RolePicker(role = member.role, onRole = onSetRole, compact = true)
             IconButton(onClick = onRemove) {
                 Icon(
@@ -239,7 +241,7 @@ private fun MemberRow(
                 )
             }
         } else {
-            RoleBadge(roleLabel(member.role))
+            RoleBadge(roleLabel(member.role), highlight = member.role == "owner")
         }
     }
 }
@@ -290,7 +292,7 @@ private fun RolePicker(role: String, onRole: (String) -> Unit, compact: Boolean 
                 .padding(horizontal = 10.dp, vertical = if (compact) 6.dp else 12.dp),
         )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            listOf("editor", "viewer").forEach { option ->
+            listOf("owner", "editor", "viewer").forEach { option ->
                 DropdownMenuItem(
                     text = {
                         Text(

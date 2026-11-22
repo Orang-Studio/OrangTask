@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
+}
+.dark {
   color-scheme: dark;
 }
 
@@ -21,7 +24,6 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* light / dark theme surfaces */
 .dark body {
   background-color: #161616;
   color: #ffffff;
@@ -32,7 +34,6 @@ body {
   color: #161616;
 }
 
-/* scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

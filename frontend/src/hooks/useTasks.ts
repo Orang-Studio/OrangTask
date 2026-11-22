@@ -19,6 +19,19 @@ export function useTasks(opts: { listId?: string; smart?: SmartView; parentId?: 
   })
 }
 
+export function useCalendarTasks(from: Date, to: Date) {
+  const pendingDeletionIds = usePendingTaskDeletionIds()
+  const range = { smart: 'calendar', from: from.toISOString(), to: to.toISOString() }
+
+  return useQuery({
+    // under tasks so every task mutation refreshes the calendar too
+    queryKey: ['tasks', range],
+    queryFn: () => fetchAllPages<Task>('/tasks', 'tasks', new URLSearchParams(range)),
+    select: (tasks) => tasks.filter((task) => !pendingDeletionIds.has(task.id)),
+    placeholderData: (previous) => previous,
+  })
+}
+
 export function useCreateTask() {
   const qc = useQueryClient()
   return useMutation({
@@ -101,7 +114,37 @@ export function useDeleteTask() {
 export function useReorderTasks() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (items: { id: string; position: number }[]) => api.patch('/tasks/reorder', { items }),
-    onSettled: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+    mutationFn: (ids: string[]) =>
+      api.patch('/tasks/reorder', { items: ids.map((id, position) => ({ id, position })) }),
+    onMutate: async (ids) => {
+      await qc.cancelQueries({ queryKey: ['tasks'] })
+      const previous = qc.getQueriesData<Task[]>({ queryKey: ['tasks'] })
+      const index = new Map(ids.map((id, i) => [id, i]))
+      previous.forEach(([key, old]) => {
+        if (!old?.some((t) => index.has(t.id))) return
+        const moved = old.map((t) => (index.has(t.id) ? { ...t, position: index.get(t.id)! } : t))
+        // smart views sort by date only list and subtask views follow positions
+        const opts = key[1] as { listId?: string; smart?: string } | undefined
+        if (opts?.listId && !opts.smart) moved.sort((a, b) => a.position - b.position)
+        qc.setQueryData(key, moved)
+      })
+      return { previous }
+    },
+    onError: (_e, ids, ctx) => {
+      // offline the new order stays on screen and is sent on reconnect
+      if (!navigator.onLine) {
+        useOfflineStore.getState().enqueue({
+          type: 'update',
+          path: '/tasks/reorder',
+          method: 'PATCH',
+          body: { items: ids.map((id, position) => ({ id, position })) },
+        })
+        return
+      }
+      ctx?.previous?.forEach(([key, data]) => qc.setQueryData(key, data))
+    },
+    onSettled: () => {
+      if (navigator.onLine) qc.invalidateQueries({ queryKey: ['tasks'] })
+    },
   })
 }

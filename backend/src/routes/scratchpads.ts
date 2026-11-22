@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import sql from '../db/client.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { publishToUser } from '../ws/pubsub.js'
 import { MAX, firstError, pageParams, textField } from '../lib/validate.js'
 import type { AppEnv } from '../types.js'
 
@@ -41,6 +42,7 @@ app.post('/', async (c) => {
     RETURNING *
   `
 
+  publishToUser(userId, { type: 'scratchpad.created', data: scratchpad }).catch(() => {})
   return c.json({ scratchpad }, 201)
 })
 
@@ -66,6 +68,7 @@ app.patch('/:id', async (c) => {
   `
   if (!scratchpad) return c.json({ error: 'Not found' }, 404)
 
+  publishToUser(userId, { type: 'scratchpad.updated', data: scratchpad }).catch(() => {})
   return c.json({ scratchpad })
 })
 
@@ -78,6 +81,7 @@ app.delete('/:id', async (c) => {
   `
   if (!deleted) return c.json({ error: 'Not found' }, 404)
 
+  publishToUser(userId, { type: 'scratchpad.deleted', data: { id } }).catch(() => {})
   return c.json({ ok: true })
 })
 

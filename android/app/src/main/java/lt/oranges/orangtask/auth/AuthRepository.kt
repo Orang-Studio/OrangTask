@@ -72,8 +72,8 @@ class AuthRepository @Inject constructor(
     suspend fun providers() = api.providers()
 
     suspend fun verifyMagicLink(pasted: String): LoginOutcome {
-        val token = Regex("token=([0-9a-fA-F]+)").find(pasted)?.groupValues?.get(1)
-            ?: pasted.trim()
+        val token = MagicLink.tokenFrom(pasted)
+            ?: throw IllegalArgumentException(AppStrings.get(context, R.string.invalid_magic_link_error))
         val res = api.verifyMagicLink(token)
         storeTokensOrFail(res)
         return if (res.requiresPin) LoginOutcome.RequiresPin else {

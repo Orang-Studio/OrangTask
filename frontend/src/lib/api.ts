@@ -116,6 +116,7 @@ export interface User {
   name: string
   avatar_url?: string | null
   pin_enabled?: boolean
+  is_guest?: boolean
 }
 
 export interface List {
@@ -144,9 +145,11 @@ export interface Task {
   id: string
   list_id: string
   list_name?: string
+  list_color?: string | null
   parent_id?: string | null
   created_by?: string
   assigned_to?: string | null
+  assignee_ids?: string[]
   assignee_name?: string | null
   assignee_avatar?: string | null
   title: string

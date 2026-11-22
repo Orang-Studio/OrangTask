@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { motion, useAnimation } from 'framer-motion'
-import { Check, Trash2, CheckCircle2, GitBranch } from 'lucide-react'
+import { Check, Trash2, CheckCircle2, GitBranch, GripVertical } from 'lucide-react'
 import { Task } from '../lib/api'
 import { Avatar } from './Avatar'
 import { PriorityDot } from './PriorityDot'
@@ -16,9 +16,12 @@ interface Props {
   onDelete: (task: Task) => void
   onOpen: (task: Task) => void
   selected?: boolean
+  dragging?: boolean
+  reorderable?: boolean
+  dragHandleProps?: Record<string, unknown>
 }
 
-export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }: Props) {
+export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected, dragging = false, reorderable = false, dragHandleProps }: Props) {
   const haptics = useHaptics()
   const isMobile = useIsMobile()
   const controls = useAnimation()
@@ -26,6 +29,9 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
   const done = task.status === 'done'
   const overdue = !done && isOverdue(task.due_date)
   const rowRef = useRef<HTMLDivElement>(null)
+  // the swipe gesture keeps running under a reorder drag its end must not act
+  const reorderedRef = useRef(false)
+  if (dragging) reorderedRef.current = true
   const handleComplete = () => {
     if (!done) {
       haptics.success()
@@ -42,6 +48,11 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
   }
 
   const handleSwipeEnd = (_e: unknown, info: { offset: { x: number } }) => {
+    if (reorderedRef.current) {
+      reorderedRef.current = false
+      controls.start({ x: 0 })
+      return
+    }
     const rowWidth = rowRef.current?.getBoundingClientRect().width ?? 0
     const reachedThreshold = crossesTaskSwipeThreshold(info.offset.x, rowWidth)
 
@@ -73,17 +84,32 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
 
       <motion.div
         ref={rowRef}
-        drag={isMobile ? 'x' : false}
+        drag={isMobile && !dragging ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.6}
-        onDragStart={() => haptics.drag()}
+        onPointerDown={() => { if (!dragging) reorderedRef.current = false }}
+        onDragStart={() => { if (!dragging) haptics.drag() }}
         onDragEnd={handleSwipeEnd}
         animate={controls}
-        className={`relative flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-800 cursor-pointer transition-colors
+        className={`relative flex items-center gap-3 ${reorderable ? 'pl-1.5 pr-4' : 'px-4'} py-3 border-b border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-800 cursor-pointer transition-colors
           ${selected ? 'bg-orange-50 dark:bg-ink-750' : 'hover:bg-gray-50 dark:hover:bg-ink-750'}
           ${completing ? 'animate-fade-out' : ''}`}
         onClick={() => onOpen(task)}
       >
+
+        {reorderable && (
+          <button
+            type="button"
+            {...dragHandleProps}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Reorder task"
+            className={`flex-shrink-0 flex items-center justify-center w-6 h-8 -mr-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-ink-300 touch-none transition-opacity ${
+              dragging ? 'opacity-100 cursor-grabbing' : 'opacity-35 group-hover:opacity-100 cursor-grab'
+            }`}
+          >
+            <GripVertical size={15} />
+          </button>
+        )}
 
         <button
           onClick={(e) => {
@@ -103,7 +129,7 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
             <PriorityDot priority={task.priority} />
             <span
               className={`text-[15px] leading-tight truncate transition-all ${
-                done ? 'line-through text-gray-400 dark:text-ink-400' : ''
+                done ? 'line-through text-gray-400 dark:text-gray-400' : ''
               }`}
             >
               {task.title}
@@ -117,14 +143,14 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
                   className={`text-xs px-1.5 py-0.5 rounded ${
                     overdue
                       ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400'
-                      : 'bg-gray-100 text-gray-600 dark:bg-ink-700 dark:text-ink-400'
+                      : 'bg-gray-100 text-gray-600 dark:bg-ink-700 dark:text-gray-400'
                   }`}
                 >
                   {formatDueDate(task.due_date)}
                 </span>
               )}
               {(task.subtask_count ?? 0) > 0 && (
-                <span className="text-xs text-gray-500 dark:text-ink-400 flex items-center gap-0.5">
+                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-0.5">
                   <GitBranch size={11} />
                   {task.subtask_count}
                 </span>
@@ -138,13 +164,14 @@ export function TaskItem({ task, onToggleComplete, onDelete, onOpen, selected }:
                 </span>
               ))}
               {task.assigned_to && (
-                <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-ink-400">
+                <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                   <Avatar name={task.assignee_name} url={task.assignee_avatar} size={16} />
                   {task.assignee_name}
+                  {(task.assignee_ids?.length ?? 0) > 1 && ` +${task.assignee_ids!.length - 1}`}
                 </span>
               )}
               {task.list_name && (
-                <span className="text-xs text-gray-400 dark:text-ink-500 truncate">
+                <span className="text-xs text-gray-400 dark:text-gray-500 truncate">
                   {task.list_name}
                 </span>
               )}

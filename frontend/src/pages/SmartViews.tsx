@@ -1,4 +1,4 @@
-import { Sun, CalendarDays, AlertCircle, Layers, UserCheck } from 'lucide-react'
+import { Sun, AlertCircle, Layers, UserCheck } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Task } from '../lib/api'
@@ -115,7 +115,7 @@ function SmartPage({ config }: { config: SmartConfig }) {
       <AnimatePresence>
         {selectedTask && (
           <TaskDetail
-            key={selectedTask.id}
+            key="task-detail"
             task={selectedTask}
             onClose={() => setSelectedTask(null)}
             onUpdate={(patch) => updateTask.mutate(patch)}
@@ -131,13 +131,6 @@ export const TodayPage = () => (
   <SmartPage config={{
     title: t('today.title' as MessageKey), smart: 'today', icon: Sun, allowAdd: true, pose: 'happy',
     emptyTitle: t('today.emptyTitle' as MessageKey), emptyDescription: t('today.emptyDescription' as MessageKey),
-  }} />
-)
-
-export const UpcomingPage = () => (
-  <SmartPage config={{
-    title: t('upcoming.title' as MessageKey), smart: 'week', icon: CalendarDays, allowAdd: false, pose: 'sleeping',
-    emptyTitle: t('upcoming.emptyTitle' as MessageKey), emptyDescription: t('upcoming.emptyDescription' as MessageKey),
   }} />
 )
 

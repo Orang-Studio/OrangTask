@@ -6,22 +6,23 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.google.services)
 }
 
 val keystoreProps = Properties().apply {
     val f = rootProject.file("keystore.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-val appVersionName = (findProperty("versionName") as String?) ?: "1.0.0"
-val appVersionCode = (findProperty("versionCode") as String?)?.toInt() ?: 1
+val appVersionName = (findProperty("versionName") as String?) ?: "1.1.3"
+val appVersionCode = (findProperty("versionCode") as String?)?.toInt() ?: 10103
 android {
     namespace = "lt.oranges.orangtask"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "lt.oranges.orangtask"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
 
@@ -40,9 +41,6 @@ android {
     }
 
     buildTypes {
-        debug {
-            applicationIdSuffix = ".debug"
-        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -101,9 +99,11 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     implementation(libs.work.runtime)
+    implementation(libs.glance.appwidget)
     implementation(libs.hilt.work)
     ksp(libs.hilt.work.compiler)
     implementation(libs.coil.compose)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
 }
+

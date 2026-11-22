@@ -41,7 +41,7 @@ interface TaskDao {
     fun observeOverdue(dayStart: Long): Flow<List<TaskEntity>>
 
     @Query(
-        "SELECT * FROM tasks WHERE status != 'done' AND assignedTo = :userId " +
+        "SELECT * FROM tasks WHERE status != 'done' AND assigneeIds LIKE '%\"' || :userId || '\"%' " +
             "ORDER BY CASE WHEN dueAtMillis IS NULL THEN 1 ELSE 0 END, dueAtMillis, position"
     )
     fun observeAssigned(userId: String): Flow<List<TaskEntity>>
@@ -112,6 +112,31 @@ interface ListDao {
 
     @Query("UPDATE lists SET taskCount = MAX(0, taskCount + :delta) WHERE id = :id")
     suspend fun adjustTaskCount(id: String, delta: Int)
+}
+
+@Dao
+interface ScratchpadDao {
+
+    @Query("SELECT * FROM scratchpads ORDER BY position, createdAt")
+    fun observeAll(): Flow<List<ScratchpadEntity>>
+
+    @Query("SELECT * FROM scratchpads WHERE id = :id")
+    fun observeById(id: String): Flow<ScratchpadEntity?>
+
+    @Query("SELECT * FROM scratchpads WHERE id = :id")
+    suspend fun getById(id: String): ScratchpadEntity?
+
+    @Upsert
+    suspend fun upsert(scratchpad: ScratchpadEntity)
+
+    @Upsert
+    suspend fun upsertAll(scratchpads: List<ScratchpadEntity>)
+
+    @Query("DELETE FROM scratchpads WHERE id = :id")
+    suspend fun deleteById(id: String)
+
+    @Query("DELETE FROM scratchpads WHERE id NOT IN (:ids)")
+    suspend fun deleteNotIn(ids: List<String>)
 }
 
 @Dao

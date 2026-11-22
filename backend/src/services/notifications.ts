@@ -43,7 +43,7 @@ export async function startDueSoonJob() {
       const tasks = await sql`
         SELECT t.*, u.email, u.id as user_id_field
         FROM tasks t
-        JOIN users u ON u.id = t.assigned_to OR u.id = t.created_by
+        JOIN users u ON u.id = ANY(t.assignee_ids) OR u.id = t.created_by
         WHERE t.due_date BETWEEN now() AND now() + interval '1 hour 5 minutes'
           AND t.status != 'done'
           AND NOT EXISTS (

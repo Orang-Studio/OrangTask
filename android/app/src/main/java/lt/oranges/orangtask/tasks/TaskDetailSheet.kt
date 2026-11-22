@@ -5,6 +5,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +30,9 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.LocalOffer
@@ -47,6 +55,8 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +65,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import lt.oranges.orangtask.core.i18n.tr
@@ -100,20 +111,60 @@ fun TaskDetailSheet(
 
     var title by rememberSaveable(task.id) { mutableStateOf(task.title) }
     var notes by rememberSaveable(task.id) { mutableStateOf(task.notes ?: "") }
-    var recurrence by rememberSaveable(task.id) { mutableStateOf(task.recurrenceRule ?: "") }
     var newSubtask by rememberSaveable(task.id) { mutableStateOf("") }
     var newTagName by rememberSaveable(task.id) { mutableStateOf("") }
     var showTagPicker by rememberSaveable(task.id) { mutableStateOf(false) }
     var showAssignPicker by remember { mutableStateOf(false) }
+    val subtaskDrafts = remember(task.id) { mutableMapOf<String, String>() }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var pendingDayMillis by remember { mutableStateOf<Long?>(null) }
 
+    // subtask order shown while a drag runs and until Room emits the saved order
+    val focusManager = LocalFocusManager.current
+    var localSubtasks by remember(task.id) { mutableStateOf<List<TaskEntity>?>(null) }
+    val shownSubtasks = localSubtasks ?: subtasks
+    val subtaskReorder = rememberColumnReorderState(
+        onMove = { from, to ->
+            val current = (localSubtasks ?: subtasks).toMutableList()
+            val fromIndex = current.indexOfFirst { it.id == from }
+            val toIndex = current.indexOfFirst { it.id == to }
+            if (fromIndex >= 0 && toIndex >= 0) {
+                current.add(toIndex, current.removeAt(fromIndex))
+                localSubtasks = current
+                haptics.tap()
+            }
+        },
+        onDrop = {
+            val order = localSubtasks
+            if (order == null || order.map { it.id } == subtasks.map { it.id }) {
+                localSubtasks = null
+            } else {
+                viewModel.reorder(order.map { it.id })
+            }
+        },
+    )
+    LaunchedEffect(subtasks) {
+        if (subtaskReorder.draggingKey == null) localSubtasks = null
+    }
+
     fun commitDrafts() {
         if (title.trim() != task.title && title.isNotBlank()) viewModel.setTitle(task.id, title)
         if (notes != (task.notes ?: "")) viewModel.setNotes(task.id, notes)
-        if (recurrence.trim() != (task.recurrenceRule ?: "")) viewModel.setRecurrence(task.id, recurrence)
+        subtasks.forEach { subtask ->
+            val draft = subtaskDrafts[subtask.id] ?: return@forEach
+            if (draft.trim() != subtask.title && draft.isNotBlank()) viewModel.setTitle(subtask.id, draft)
+        }
+        // a typed subtask is kept even when the sheet closes before Done
+        if (newSubtask.isNotBlank()) {
+            viewModel.addSubtask(task, newSubtask)
+            newSubtask = ""
+        }
     }
+
+    // also covers the sheet leaving composition without going through dismiss
+    val latestCommit by rememberUpdatedState(::commitDrafts)
+    DisposableEffect(task.id) { onDispose { latestCommit() } }
 
     fun dismiss() {
         commitDrafts()
@@ -201,6 +252,20 @@ fun TaskDetailSheet(
                     )
                     if (task.dueAtMillis != null) {
                         Icon(
+                            Icons.Outlined.Schedule,
+                            contentDescription = tr(R.string.edit_time),
+                            tint = muted,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clickable {
+                                    pendingDayMillis = Instant.ofEpochMilli(task.dueAtMillis)
+                                        .atZone(ZoneId.systemDefault())
+                                        .toLocalDate()
+                                        .toEpochDay() * 86_400_000L
+                                    showTimePicker = true
+                                },
+                        )
+                        Icon(
                             Icons.Outlined.Close,
                             contentDescription = tr(R.string.clear_due_date),
                             tint = muted,
@@ -241,7 +306,11 @@ fun TaskDetailSheet(
             }
 
             if (members.size > 1) {
-                val assignee = members.find { it.id == task.assignedTo }
+                val ids = task.assigneeIds
+                val assignees = members.filter { it.id in ids }
+                val everyone = assignees.size == members.size
+                // keep the member order so the first one assigned_to is stable
+                fun assign(next: Set<String>) = viewModel.setAssignees(task.id, members.filter { it.id in next })
                 DetailRow(icon = Icons.Outlined.Person) {
                     Box {
                         Row(
@@ -252,9 +321,14 @@ fun TaskDetailSheet(
                                 .clickable { showAssignPicker = true }
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                         ) {
-                            if (assignee != null) {
-                                Avatar(name = assignee.name, url = assignee.avatarUrl, size = 20.dp)
-                                Text(assignee.name, fontSize = 14.sp)
+                            if (assignees.isNotEmpty()) {
+                                assignees.take(3).forEach { Avatar(name = it.name, url = it.avatarUrl, size = 20.dp) }
+                                Text(
+                                    if (everyone) tr(R.string.everyone) else assignees.joinToString { it.name },
+                                    fontSize = 14.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             } else {
                                 Text(tr(R.string.assign_to), fontSize = 14.sp, color = muted)
                             }
@@ -266,23 +340,34 @@ fun TaskDetailSheet(
                             DropdownMenuItem(
                                 text = { Text(tr(R.string.unassigned)) },
                                 onClick = {
-                                    viewModel.setAssignee(task.id, null)
+                                    assign(emptySet())
                                     showAssignPicker = false
                                 },
                             )
+                            DropdownMenuItem(
+                                leadingIcon = { Icon(Icons.Outlined.Group, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                                text = { Text(tr(R.string.everyone)) },
+                                trailingIcon = {
+                                    if (everyone) Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(14.dp))
+                                },
+                                onClick = {
+                                    haptics.tap()
+                                    assign(members.map { it.id }.toSet())
+                                    showAssignPicker = false
+                                },
+                            )
+                            // toggling a person keeps the menu open so several can be picked
                             members.forEach { member ->
+                                val on = member.id in ids
                                 DropdownMenuItem(
                                     leadingIcon = { Avatar(name = member.name, url = member.avatarUrl, size = 20.dp) },
                                     text = { Text(member.name) },
                                     trailingIcon = {
-                                        if (task.assignedTo == member.id) {
-                                            Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(14.dp))
-                                        }
+                                        if (on) Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(14.dp))
                                     },
                                     onClick = {
                                         haptics.tap()
-                                        viewModel.setAssignee(task.id, member)
-                                        showAssignPicker = false
+                                        assign(if (on) ids.toSet() - member.id else ids.toSet() + member.id)
                                     },
                                 )
                             }
@@ -294,7 +379,10 @@ fun TaskDetailSheet(
             DetailRow(icon = Icons.Outlined.LocalOffer, alignTop = true) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        tags.filter { it.id in task.tagIds }.forEach { tag ->
+                        task.tagIds.forEachIndexed { index, tagId ->
+                            val tagName = task.tagNames.getOrNull(index)
+                                ?: tags.find { it.id == tagId }?.name
+                                ?: return@forEachIndexed
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -303,7 +391,7 @@ fun TaskDetailSheet(
                                     .padding(horizontal = 8.dp, vertical = 4.dp),
                             ) {
                                 Text(
-                                    tag.name,
+                                    tagName,
                                     fontSize = 13.sp,
                                     color = if (dark) Color(0xFFFB923C) else Color(0xFFC2410C),
                                 )
@@ -313,7 +401,10 @@ fun TaskDetailSheet(
                                     tint = muted,
                                     modifier = Modifier
                                         .size(12.dp)
-                                        .clickable { viewModel.removeTag(task.id, tag) },
+                                        .clickable {
+                                            haptics.tap()
+                                            viewModel.removeTag(task.id, tagId, tagName)
+                                        },
                                 )
                             }
                         }
@@ -380,50 +471,44 @@ fun TaskDetailSheet(
             }
 
             DetailRow(icon = Icons.Outlined.Repeat) {
-                OrangTextField(
-                    value = recurrence,
-                    onValueChange = { recurrence = it },
-                    placeholder = tr(R.string.recurrence_rule_placeholder),
-                    modifier = Modifier.onFocusChanged { state ->
-                        if (!state.isFocused && recurrence.trim() != (task.recurrenceRule ?: "")) {
-                            viewModel.setRecurrence(task.id, recurrence)
-                        }
-                    },
+                RecurrenceField(
+                    rule = task.recurrenceRule,
+                    anchor = task.dueAtMillis
+                        ?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate() }
+                        ?: LocalDate.now(),
+                    onChange = { viewModel.setRecurrence(task.id, it.orEmpty()) },
                 )
             }
 
             Column {
                 FieldLabel(tr(R.string.subtasks))
                 Spacer(Modifier.height(8.dp))
-                subtasks.forEach { subtask ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    ) {
-                        TaskCheckbox(
-                            done = subtask.done,
-                            onClick = {
-                                haptics.tap()
-                                viewModel.toggleComplete(subtask)
-                            },
-                            size = 20.dp,
-                        )
-                        Text(
-                            text = subtask.title,
-                            fontSize = 14.sp,
-                            textDecoration = if (subtask.done) TextDecoration.LineThrough else null,
-                            color = if (subtask.done) muted else MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Icon(
-                            Icons.Outlined.Delete,
-                            contentDescription = tr(R.string.delete_subtask),
-                            tint = muted,
+                subtaskReorder.keys = shownSubtasks.map { it.id }
+                shownSubtasks.forEach { subtask ->
+                    // keyed so a row keeps its gesture and draft while it moves
+                    key(subtask.id) {
+                        val dragging = subtaskReorder.draggingKey == subtask.id
+                        // one modifier chain whether lifted or not so the rows gesture keeps running when the drag starts
+                        Box(
                             modifier = Modifier
-                                .size(16.dp)
-                                .clickable { viewModel.deleteTask(subtask) },
-                        )
+                                .zIndex(if (dragging) 1f else 0f)
+                                .graphicsLayer {
+                                    translationY = if (dragging) subtaskReorder.draggingOffset else 0f
+                                }
+                                .shadow(if (dragging) 6.dp else 0.dp)
+                                .background(if (dragging) (if (dark) Ink850 else Color.White) else Color.Transparent)
+                                .reorderOnHold(subtaskReorder, subtask.id, onStart = {
+                                    haptics.longPress()
+                                    // drop the keyboard so the list isnt squeezed while dragging
+                                    focusManager.clearFocus()
+                                }),
+                        ) {
+                            SubtaskRow(
+                                subtask = subtask,
+                                viewModel = viewModel,
+                                onDraftChanged = { id, value -> subtaskDrafts[id] = value },
+                            )
+                        }
                     }
                 }
                 Row(
@@ -435,7 +520,7 @@ fun TaskDetailSheet(
                     BasicTextField(
                         value = newSubtask,
                         onValueChange = { newSubtask = it },
-                        singleLine = true,
+                        singleLine = false,
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                         cursorBrush = SolidColor(Orange500),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -487,7 +572,10 @@ fun TaskDetailSheet(
 
     if (showDatePicker) {
         val dateState = rememberDatePickerState(
-            initialSelectedDateMillis = task.dueAtMillis ?: System.currentTimeMillis(),
+            initialSelectedDateMillis = (
+                task.dueAtMillis?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate() }
+                    ?: LocalDate.now()
+                ).toEpochDay() * 86_400_000L,
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -529,7 +617,18 @@ fun TaskDetailSheet(
                 }) { Text(tr(R.string.set)) }
             },
             dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) { Text(tr(R.string.cancel)) }
+                Row {
+                    TextButton(onClick = {
+                        pendingDayMillis?.let { day ->
+                            val due = LocalDate.ofEpochDay(day / 86_400_000L)
+                                .atStartOfDay(ZoneId.systemDefault())
+                                .toInstant()
+                            viewModel.setDueDate(task.id, due)
+                        }
+                        showTimePicker = false
+                    }) { Text(tr(R.string.no_time)) }
+                    TextButton(onClick = { showTimePicker = false }) { Text(tr(R.string.cancel)) }
+                }
             },
             text = { TimePicker(state = timeState) },
         )
@@ -556,5 +655,77 @@ private fun DetailRow(
                 .size(18.dp),
         )
         Box(modifier = Modifier.weight(1f)) { content() }
+    }
+}
+
+@Composable
+private fun SubtaskRow(
+    subtask: TaskEntity,
+    viewModel: TaskListViewModel,
+    onDraftChanged: (String, String) -> Unit,
+) {
+    val haptics = rememberHaptics()
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    var draft by rememberSaveable(subtask.id) { mutableStateOf(subtask.title) }
+
+    fun commit() {
+        if (draft.trim() != subtask.title && draft.isNotBlank()) viewModel.setTitle(subtask.id, draft)
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+    ) {
+        TaskCheckbox(
+            done = subtask.done,
+            onClick = {
+                haptics.tap()
+                viewModel.toggleComplete(subtask)
+            },
+            size = 20.dp,
+        )
+        BasicTextField(
+            value = draft,
+            onValueChange = {
+                draft = it
+                onDraftChanged(subtask.id, it)
+            },
+            singleLine = false,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 14.sp,
+                textDecoration = if (subtask.done) TextDecoration.LineThrough else null,
+                color = if (subtask.done) muted else MaterialTheme.colorScheme.onSurface,
+            ),
+            cursorBrush = SolidColor(Orange500),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { commit() }),
+            decorationBox = { inner ->
+                Box {
+                    if (draft.isEmpty()) {
+                        Text(
+                            tr(R.string.subtask_title),
+                            fontSize = 14.sp,
+                            color = muted.copy(alpha = 0.6f),
+                        )
+                    }
+                    inner()
+                }
+            },
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { state -> if (!state.isFocused) commit() },
+        )
+        Icon(
+            Icons.Outlined.Delete,
+            contentDescription = tr(R.string.delete_subtask),
+            tint = muted,
+            modifier = Modifier
+                .size(16.dp)
+                .clickable {
+                    haptics.error()
+                    viewModel.deleteTask(subtask)
+                },
+        )
     }
 }

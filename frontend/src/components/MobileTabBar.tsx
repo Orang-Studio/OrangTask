@@ -17,7 +17,7 @@ export function MobileTabBar({ onAdd, onSearch }: Props) {
 
   const tabClass = (active: boolean) =>
     `flex flex-col items-center justify-center flex-1 gap-0.5 h-full transition-colors ${
-      active ? 'text-orange-500' : 'text-gray-400 dark:text-ink-400'
+      active ? 'text-orange-500' : 'text-gray-400 dark:text-gray-400'
     }`
 
   return (

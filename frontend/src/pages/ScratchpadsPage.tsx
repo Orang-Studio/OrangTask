@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   NotebookPen, Plus, Trash2, Bold, Italic, Code, List, Heading, Strikethrough, Eye, Pencil,
+  Link2, ListOrdered, Quote, SquareCode, Minus, SquareCheck,
 } from 'lucide-react'
 import { Scratchpad } from '../lib/api'
 import { EmptyState } from '../components/EmptyState'
@@ -19,6 +20,12 @@ const FORMATS: { id: string; icon: typeof Bold; label: MessageKey; wrap: Wrap; l
   { id: 'code', icon: Code, label: 'scratchpads.code' as MessageKey, wrap: { before: '`', after: '`' } },
   { id: 'heading', icon: Heading, label: 'scratchpads.heading' as MessageKey, wrap: { before: '## ', after: '' }, line: true },
   { id: 'bullet', icon: List, label: 'scratchpads.bulletList' as MessageKey, wrap: { before: '- ', after: '' }, line: true },
+  { id: 'numbered', icon: ListOrdered, label: 'scratchpads.numberedList' as MessageKey, wrap: { before: '1. ', after: '' }, line: true },
+  { id: 'task', icon: SquareCheck, label: 'scratchpads.taskItem' as MessageKey, wrap: { before: '- [ ] ', after: '' }, line: true },
+  { id: 'quote', icon: Quote, label: 'scratchpads.quote' as MessageKey, wrap: { before: '> ', after: '' }, line: true },
+  { id: 'link', icon: Link2, label: 'scratchpads.link' as MessageKey, wrap: { before: '[', after: '](https://)' } },
+  { id: 'codeBlock', icon: SquareCode, label: 'scratchpads.codeBlock' as MessageKey, wrap: { before: '```\n', after: '\n```' } },
+  { id: 'rule', icon: Minus, label: 'scratchpads.horizontalRule' as MessageKey, wrap: { before: '---\n', after: '' }, line: true },
 ]
 
 export function ScratchpadsPage() {
@@ -29,8 +36,7 @@ export function ScratchpadsPage() {
   const haptics = useHaptics()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
+  const [draft, setDraft] = useState({ id: '', title: '', content: '' })
   const [preview, setPreview] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -47,23 +53,67 @@ export function ScratchpadsPage() {
     if (!pads.some((p) => p.id === selectedId)) setSelectedId(pads[0].id)
   }, [pads, selectedId])
 
+  const { title, content } = draft
+  const setTitle = (value: string) => setDraft((d) => ({ ...d, title: value }))
+  const setContent = (value: string) => setDraft((d) => ({ ...d, content: value }))
+
   useEffect(() => {
-    setTitle(selected?.title ?? '')
-    setContent(selected?.content ?? '')
+    setDraft({
+      id: selected?.id ?? '',
+      title: selected?.title ?? '',
+      content: selected?.content ?? '',
+    })
     setPreview(false)
   }, [selected?.id])
 
-  const debouncedTitle = useDebouncedValue(title, 600)
-  const debouncedContent = useDebouncedValue(content, 600)
+  const debouncedDraft = useDebouncedValue(draft, 600)
 
+  const saveDraft = (pending: { id: string; title: string; content: string }) => {
+    if (!pending.id) return
+    const pad = pads?.find((p) => p.id === pending.id)
+    if (!pad) return
+    if (pending.title === pad.title && pending.content === pad.content) return
+    updatePad.mutate({ id: pending.id, title: pending.title, content: pending.content })
+  }
+
+  const saveRef = useRef(saveDraft)
+  saveRef.current = saveDraft
+
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+
+  const baseRef = useRef({ title: '', content: '' })
   useEffect(() => {
     if (!selected) return
-    if (debouncedTitle === selected.title && debouncedContent === selected.content) return
-    updatePad.mutate({ id: selected.id, title: debouncedTitle, content: debouncedContent })
-  }, [debouncedTitle, debouncedContent])
+    const remote = { title: selected.title ?? '', content: selected.content ?? '' }
+    const d = draftRef.current
+    const typed = d.title !== baseRef.current.title || d.content !== baseRef.current.content
+    if (d.id !== selected.id || (d.title === remote.title && d.content === remote.content)) {
+      baseRef.current = remote
+    } else if (!typed) {
+      baseRef.current = remote
+      setDraft({ id: selected.id, ...remote })
+    }
+  }, [selected?.id, selected?.title, selected?.content])
+
+  useEffect(() => {
+    saveRef.current(debouncedDraft)
+  }, [debouncedDraft])
+
+  useEffect(() => () => saveRef.current(draftRef.current), [])
+
+  const flushDraft = () => saveDraft(draft)
+
+  const selectPad = (id: string) => {
+    haptics.tap()
+    if (id === selectedId) return
+    flushDraft()
+    setSelectedId(id)
+  }
 
   const addPad = async () => {
     haptics.tap()
+    flushDraft()
     const pad = await createPad.mutateAsync({ title: '', content: '' })
     setSelectedId(pad.id)
   }
@@ -71,6 +121,7 @@ export function ScratchpadsPage() {
   const removePad = async (pad: Scratchpad) => {
     if (!confirm(t('scratchpads.deleteConfirm' as MessageKey, { name: pad.title || t('scratchpads.untitled' as MessageKey) }))) return
     haptics.error()
+    if (pad.id !== draft.id) flushDraft()
     await deletePad.mutateAsync(pad.id)
   }
 
@@ -128,7 +179,7 @@ export function ScratchpadsPage() {
                   ? 'bg-orange-50 dark:bg-ink-750 text-orange-600 dark:text-orange-400'
                   : 'hover:bg-gray-50 dark:hover:bg-ink-750'
               }`}
-              onClick={() => { haptics.tap(); setSelectedId(pad.id) }}
+              onClick={() => selectPad(pad.id)}
             >
               <span className="text-sm truncate flex-1">{pad.title || t('scratchpads.untitled' as MessageKey)}</span>
               <button

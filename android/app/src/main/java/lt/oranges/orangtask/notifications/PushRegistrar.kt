@@ -1,5 +1,6 @@
 package lt.oranges.orangtask.notifications
 
+import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +24,11 @@ class PushRegistrar @Inject constructor(
         runCatching {
             FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
                 if (!token.isNullOrBlank()) send(token)
+            }.addOnFailureListener { error ->
+                Log.w("PushRegistrar", "Failed to obtain Firebase device token", error)
             }
+        }.onFailure { error ->
+            Log.w("PushRegistrar", "Firebase push initialization failed", error)
         }
     }
 
@@ -42,6 +47,9 @@ class PushRegistrar @Inject constructor(
     }
 
     private fun send(token: String) {
-        scope.launch { runCatching { api.registerDevice(DeviceTokenRequest(token)) } }
+        scope.launch {
+            runCatching { api.registerDevice(DeviceTokenRequest(token)) }
+                .onFailure { error -> Log.w("PushRegistrar", "Device token registration failed", error) }
+        }
     }
 }

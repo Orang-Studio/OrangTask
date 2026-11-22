@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import type { NativePlatform } from '../lib/platform.js'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.FROM_EMAIL || 'noreply@oranges.lt'
@@ -8,8 +9,23 @@ const logoImg = (size = 48) =>
   `<img src="${APP_URL}/icons/icon-192.png" width="${size}" height="${size}" alt="OrangTask"
     style="display: inline-block; border-radius: 12px; border: 0; outline: none; text-decoration: none;" />`
 
-export async function sendMagicLink(email: string, token: string) {
-  const url = `${APP_URL}/auth/magic?token=${token}`
+export type MagicLinkPlatform = 'web' | NativePlatform
+
+export function buildMagicLinkUrl(appUrl: string, token: string, platform: MagicLinkPlatform): string {
+  const url = new URL('/auth/magic', appUrl)
+  url.searchParams.set('token', token)
+  if (platform !== 'web') url.searchParams.set('platform', platform)
+  return url.toString()
+}
+
+export async function sendMagicLink(email: string, token: string, platform: MagicLinkPlatform = 'web') {
+  const url = buildMagicLinkUrl(APP_URL, token, platform)
+  const native = platform !== 'web'
+  const intro = {
+    web: 'Click the button below to sign in.',
+    android: 'Tap the button below to return to the OrangTask Android app.',
+    desktop: 'Click the button below to return to the OrangTask desktop app.',
+  }[platform]
 
   if (!resend) {
     console.log(`[DEV] Magic link for ${email}: ${url}`)
@@ -27,7 +43,7 @@ export async function sendMagicLink(email: string, token: string) {
           <h1 style="font-size: 24px; font-weight: 700; color: #111; margin: 0;">Sign in to OrangTask</h1>
         </div>
         <p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 32px; text-align: center;">
-          Click the button below to sign in. This link expires in 15 minutes.
+          ${intro} This link expires in 15 minutes.
         </p>
         <div style="text-align: center; margin-bottom: 32px;">
           <a href="${url}" style="background: #f97316; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; display: inline-block;">
@@ -35,6 +51,7 @@ export async function sendMagicLink(email: string, token: string) {
           </a>
         </div>
         <p style="color: #999; font-size: 13px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
+          ${native ? 'If the app does not open, copy the sign-in token shown in the browser and paste it in OrangTask.<br>' : ''}
           If you didn't request this, you can safely ignore this email.<br>
           This link will expire in 15 minutes.
         </p>

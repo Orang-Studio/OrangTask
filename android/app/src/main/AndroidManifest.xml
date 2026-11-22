@@ -42,6 +42,18 @@
             android:name=".notifications.NotificationActionReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".widget.TodayWidgetReceiver"
+            android:label="@string/widget_today_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_widget_info" />
+        </receiver>
+
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="@string/fcm_default_channel" />
@@ -62,12 +74,17 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="orangtask" android:host="auth-callback" />
                 <data android:scheme="orangtask" android:host="recaptcha" />
+                <data android:scheme="orangtask" android:host="github-callback" />
+                <data android:scheme="orangtask" android:host="magic-link" />
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="task.oranges.lt" />
+                <data
+                    android:scheme="https"
+                    android:host="task.oranges.lt"
+                    android:path="/auth/magic" />
             </intent-filter>
         </activity>
     </application>

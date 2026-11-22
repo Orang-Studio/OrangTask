@@ -13,10 +13,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import lt.oranges.orangtask.auth.AuthRepository
+import lt.oranges.orangtask.core.network.ScratchpadDto
 import lt.oranges.orangtask.core.network.TaskDto
 import lt.oranges.orangtask.core.ws.RealtimeClient
 import lt.oranges.orangtask.core.ws.RealtimeSignal
 import lt.oranges.orangtask.lists.ListRepository
+import lt.oranges.orangtask.scratchpads.ScratchpadRepository
 import lt.oranges.orangtask.tasks.TaskRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,6 +27,7 @@ import javax.inject.Singleton
 class SyncCoordinator @Inject constructor(
     private val taskRepository: TaskRepository,
     private val listRepository: ListRepository,
+    private val scratchpadRepository: ScratchpadRepository,
     private val realtime: RealtimeClient,
     private val authRepository: AuthRepository,
     private val offlineQueue: OfflineQueue,
@@ -73,6 +76,7 @@ class SyncCoordinator @Inject constructor(
             launch { listRepository.refreshLists() }
             launch { listRepository.refreshTags() }
             launch { taskRepository.refreshAllTasks() }
+            launch { scratchpadRepository.refreshScratchpads() }
         }
     }
 
@@ -95,6 +99,16 @@ class SyncCoordinator @Inject constructor(
                 scheduleRefresh()
             }
             "list.updated", "list.deleted" -> scheduleRefresh()
+            "scratchpad.created", "scratchpad.updated" -> {
+                val dto = data?.let {
+                    runCatching { json.decodeFromJsonElement(ScratchpadDto.serializer(), it) }.getOrNull()
+                }
+                if (dto != null) runCatching { scratchpadRepository.upsertFromServer(dto) }
+            }
+            "scratchpad.deleted" -> {
+                data?.get("id")?.jsonPrimitive?.contentOrNull
+                    ?.let { runCatching { scratchpadRepository.deleteLocal(it) } }
+            }
 
         }
     }

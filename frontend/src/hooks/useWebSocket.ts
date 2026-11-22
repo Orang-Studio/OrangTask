@@ -38,6 +38,11 @@ export function useWebSocket(enabled: boolean) {
           case 'list.deleted':
             queryClient.invalidateQueries({ queryKey: ['lists'] })
             break
+          case 'scratchpad.created':
+          case 'scratchpad.updated':
+          case 'scratchpad.deleted':
+            queryClient.invalidateQueries({ queryKey: ['scratchpads'] })
+            break
           case 'notification.new':
             queryClient.invalidateQueries({ queryKey: ['notifications'] })
             break

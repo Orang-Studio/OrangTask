@@ -23,8 +23,9 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
   const haptics = useHaptics()
 
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<'editor' | 'viewer'>('editor')
+  const [role, setRole] = useState<'owner' | 'editor' | 'viewer'>('editor')
   const [error, setError] = useState('')
+  const ownerCount = members?.filter((m) => m.role === 'owner').length ?? 1
 
   const handleLeave = async () => {
     if (!currentUser) return
@@ -85,9 +86,10 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
               <div className="flex gap-2 mt-2">
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as 'editor' | 'viewer')}
+                  onChange={(e) => setRole(e.target.value as 'owner' | 'editor' | 'viewer')}
                   className="input-field !w-28 flex-shrink-0"
                 >
+                  <option value="owner">{t('share.owner' as MessageKey)}</option>
                   <option value="editor">{t('share.editor' as MessageKey)}</option>
                   <option value="viewer">{t('share.viewer' as MessageKey)}</option>
                 </select>
@@ -107,50 +109,54 @@ export function ShareModal({ listId, listName, isOwner, onClose }: Props) {
           <div>
             <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">{t('share.members' as MessageKey)}</label>
             <div className="space-y-2">
-              {members && members.filter((m) => m.role !== 'owner').length === 0 && (
+              {members && members.length <= 1 && (
                 <p className="text-sm text-gray-400">{t('share.noMembers' as MessageKey)}</p>
               )}
-              {members?.map((m) => (
-                <div key={m.id} className="flex items-center gap-3">
-                  <Avatar name={m.name} url={m.avatar_url} size={32} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm truncate">{m.name}</div>
-                    <div className="text-xs text-gray-400 truncate">{m.email}</div>
+              {members?.map((m) => {
+                const isSelf = m.id === currentUser?.id
+                return (
+                  <div key={m.id} className="flex items-center gap-3">
+                    <Avatar name={m.name} url={m.avatar_url} size={32} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm truncate">{m.name}</div>
+                      <div className="text-xs text-gray-400 truncate">{m.email}</div>
+                    </div>
+                    {isOwner && !isSelf ? (
+                      <>
+                        <select
+                          value={m.role}
+                          onChange={(e) => {
+                            haptics.tap()
+                            updateRole.mutate({ listId, userId: m.id, role: e.target.value })
+                          }}
+                          className="input-field !w-24 !h-8 text-xs !py-0"
+                        >
+                          <option value="owner">{t('share.owner' as MessageKey)}</option>
+                          <option value="editor">{t('share.editor' as MessageKey)}</option>
+                          <option value="viewer">{t('share.viewer' as MessageKey)}</option>
+                        </select>
+                        <button
+                          onClick={() => removeMember.mutate({ listId, userId: m.id })}
+                          className="text-gray-400 hover:text-red-500"
+                          aria-label={t('share.removeMember' as MessageKey, { name: m.name })}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </>
+                    ) : m.role === 'owner' ? (
+                      <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 rounded">
+                        <Crown size={12} /> {t('share.owner' as MessageKey)}
+                      </span>
+                    ) : (
+                      <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-ink-700 rounded capitalize">{m.role === 'editor' ? t('share.editor' as MessageKey) : t('share.viewer' as MessageKey)}</span>
+                    )}
                   </div>
-                  {m.role === 'owner' ? (
-                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 rounded">
-                      <Crown size={12} /> {t('share.owner' as MessageKey)}
-                    </span>
-                  ) : isOwner ? (
-                    <>
-                      <select
-                        value={m.role}
-                        onChange={(e) => {
-                          haptics.tap()
-                          updateRole.mutate({ listId, userId: m.id, role: e.target.value })
-                        }}
-                        className="input-field !w-24 !h-8 text-xs !py-0"
-                      >
-                        <option value="editor">{t('share.editor' as MessageKey)}</option>
-                        <option value="viewer">{t('share.viewer' as MessageKey)}</option>
-                      </select>
-                      <button
-                        onClick={() => removeMember.mutate({ listId, userId: m.id })}
-                        className="text-gray-400 hover:text-red-500"
-                        aria-label={t('share.removeMember' as MessageKey, { name: m.name })}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-ink-700 rounded capitalize">{m.role === 'editor' ? t('share.editor' as MessageKey) : t('share.viewer' as MessageKey)}</span>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
-          {!isOwner && (
+          {(!isOwner || ownerCount > 1) && (
             <div className="pt-2 border-t border-gray-200 dark:border-ink-700">
               <button
                 onClick={handleLeave}

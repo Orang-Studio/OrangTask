@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Calendar, Flag, Tag as TagIcon, Trash2, Plus, Check, UserCircle2, ChevronDown, ExternalLink } from 'lucide-react'
+import { X, Calendar, Flag, Repeat, Tag as TagIcon, Trash2, Plus, Check, UserCircle2, ChevronDown, ExternalLink, Users } from 'lucide-react'
+import { Task, Tag } from '../lib/api'
 import { Avatar } from './Avatar'
+import { RecurrenceField } from './RecurrencePicker'
 import { PRIORITY_LABELS, PRIORITY_COLORS } from './PriorityDot'
 import { toDateTimeLocal } from '../lib/date'
 import { safeHttpUrl } from '../lib/safeUrl'
@@ -14,7 +16,8 @@ import {
   useRemoveTagFromTask,
   useListMembers,
 } from '../hooks/useLists'
-import { useTasks, useCreateTask, useCompleteTask, useDeleteTask } from '../hooks/useTasks'
+import { useTasks, useCreateTask, useCompleteTask, useDeleteTask, useUpdateTask, useReorderTasks } from '../hooks/useTasks'
+import { SortableList, SortableItem } from './Sortable'
 import { t, type MessageKey } from '../lib/i18n'
 
 interface Props {
@@ -26,16 +29,74 @@ interface Props {
 
 const PRIORITIES = ['none', 'low', 'medium', 'high'] as const
 
+function SubtaskRow({
+  subtask, onToggle, onRename, onDelete,
+}: {
+  subtask: Task
+  onToggle: () => void
+  onRename: (title: string) => void
+  onDelete: () => void
+}) {
+  const [draft, setDraft] = useState(subtask.title)
+
+  useEffect(() => {
+    setDraft(subtask.title)
+  }, [subtask.title])
+
+  const commit = () => {
+    const next = draft.trim()
+    if (!next) {
+      setDraft(subtask.title)
+      return
+    }
+    if (next !== subtask.title) onRename(next)
+  }
+
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <button
+        onClick={onToggle}
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+          subtask.status === 'done' ? 'bg-orange-500 border-orange-500' : 'border-gray-400 dark:border-ink-400'
+        }`}
+      >
+        {subtask.status === 'done' && <Check size={11} className="text-white" strokeWidth={3} />}
+      </button>
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+          if (e.key === 'Escape') {
+            setDraft(subtask.title)
+            ;(e.target as HTMLInputElement).blur()
+          }
+        }}
+        aria-label={t('taskDetail.subtaskTitleLabel' as MessageKey)}
+        className={`text-sm flex-1 min-w-0 bg-transparent outline-none focus:border-b focus:border-orange-500 ${
+          subtask.status === 'done' ? 'line-through text-gray-400' : ''
+        }`}
+      />
+      <button onClick={onDelete} className="text-gray-400 hover:text-red-500">
+        <Trash2 size={14} />
+      </button>
+    </div>
+  )
+}
+
 export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
   const isMobile = useIsMobile()
   const haptics = useHaptics()
-  const { data: allTags } = useTags()
+  const { data: allTags } = useTags(task?.list_id)
   const createTag = useCreateTag()
   const addTag = useAddTagToTask()
   const removeTag = useRemoveTagFromTask()
   const createSubtask = useCreateTask()
+  const updateTask = useUpdateTask()
   const completeTask = useCompleteTask()
   const deleteTask = useDeleteTask()
+  const reorderTasks = useReorderTasks()
   const { data: subtasks } = useTasks({ listId: task?.list_id, parentId: task?.id })
   const { data: members } = useListMembers(task?.list_id)
   const [title, setTitle] = useState('')
@@ -82,6 +143,10 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
     if (task) {
       setTitle(task.title)
       setNotes(task.notes || '')
+      setShowTagPicker(false)
+      setShowAssignPicker(false)
+      setNewSubtask('')
+      setNewTagName('')
     }
   }, [task?.id])
 
@@ -99,6 +164,12 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
   }
 
   const taskTagIds = task.tag_ids || []
+  const taskTagNames = task.tag_names || []
+  const attachedTags = taskTagIds.map((id, i) => ({
+    id,
+    name: taskTagNames[i] || allTags?.find((tg) => tg.id === id)?.name || id,
+    color: allTags?.find((tg) => tg.id === id)?.color ?? null,
+  }))
 
   const content = (
     <div className="flex flex-col h-full">
@@ -144,6 +215,15 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
+          <Repeat size={18} className="text-gray-400 flex-shrink-0" />
+          <RecurrenceField
+            rule={task.recurrence_rule}
+            anchor={task.due_date ? new Date(task.due_date) : new Date()}
+            onChange={(rule) => onUpdate({ id: task.id, recurrence_rule: rule })}
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
           <Flag size={18} className="text-gray-400 flex-shrink-0" />
           <div className="flex gap-2">
             {PRIORITIES.map((p) => (
@@ -167,7 +247,13 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
         </div>
 
         {members && members.length > 1 && (() => {
-          const assignee = members.find((m) => m.id === task.assigned_to)
+          const ids = task.assignee_ids ?? (task.assigned_to ? [task.assigned_to] : [])
+          const assignees = members.filter((m) => ids.includes(m.id))
+          const everyone = assignees.length === members.length
+          // assigned_to mirrors the first one so the row and older clients stay right
+          const assign = (next: string[]) =>
+            onUpdate({ id: task.id, assignee_ids: next, assigned_to: next[0] ?? null })
+          const option = 'flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-ink-700'
           return (
             <div className="flex items-start gap-3">
               <UserCircle2 size={18} className="text-gray-400 flex-shrink-0 mt-2" />
@@ -179,10 +265,16 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                   }}
                   className="flex items-center gap-2 px-3 h-9 text-sm font-medium border border-gray-300 dark:border-ink-600 hover:border-orange-500 transition-colors"
                 >
-                  {assignee ? (
+                  {assignees.length > 0 ? (
                     <>
-                      <Avatar name={assignee.name} url={assignee.avatar_url} size={20} />
-                      <span>{assignee.name}</span>
+                      <span className="flex -space-x-1.5">
+                        {assignees.slice(0, 3).map((m) => (
+                          <Avatar key={m.id} name={m.name} url={m.avatar_url} size={20} />
+                        ))}
+                      </span>
+                      <span className="truncate">
+                        {everyone ? t('taskDetail.everyone' as MessageKey) : assignees.map((m) => m.name).join(', ')}
+                      </span>
                     </>
                   ) : (
                     <span className="text-gray-400">{t('taskDetail.assignTo' as MessageKey)}</span>
@@ -194,33 +286,42 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
                   <div className="mt-2 p-1 surface rounded animate-slide-in">
                     <button
                       onClick={() => {
-                        onUpdate({ id: task.id, assigned_to: null })
-                        setShowAssignPicker(false)
+                        haptics.tap()
+                        assign([])
                       }}
-                      className={`flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-ink-700 ${
-                        !task.assigned_to ? 'text-orange-500 font-medium' : ''
-                      }`}
+                      className={`${option} ${ids.length === 0 ? 'text-orange-500 font-medium' : ''}`}
                     >
                       <UserCircle2 size={20} className="text-gray-400" />
                       {t('taskDetail.unassigned' as MessageKey)}
                     </button>
-                    {members.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          haptics.tap()
-                          onUpdate({ id: task.id, assigned_to: m.id })
-                          setShowAssignPicker(false)
-                        }}
-                        className={`flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-ink-700 ${
-                          task.assigned_to === m.id ? 'text-orange-500 font-medium' : ''
-                        }`}
-                      >
-                        <Avatar name={m.name} url={m.avatar_url} size={20} />
-                        <span className="truncate">{m.name}</span>
-                        {task.assigned_to === m.id && <Check size={14} className="ml-auto" />}
-                      </button>
-                    ))}
+                    <button
+                      onClick={() => {
+                        haptics.tap()
+                        assign(members.map((m) => m.id))
+                      }}
+                      className={`${option} ${everyone ? 'text-orange-500 font-medium' : ''}`}
+                    >
+                      <Users size={20} className="text-gray-400" />
+                      {t('taskDetail.everyone' as MessageKey)}
+                      {everyone && <Check size={14} className="ml-auto" />}
+                    </button>
+                    {members.map((m) => {
+                      const on = ids.includes(m.id)
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => {
+                            haptics.tap()
+                            assign(on ? ids.filter((id) => id !== m.id) : [...ids, m.id])
+                          }}
+                          className={`${option} ${on ? 'text-orange-500 font-medium' : ''}`}
+                        >
+                          <Avatar name={m.name} url={m.avatar_url} size={20} />
+                          <span className="truncate">{m.name}</span>
+                          {on && <Check size={14} className="ml-auto" />}
+                        </button>
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -233,22 +334,21 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
           <TagIcon size={18} className="text-gray-400 flex-shrink-0 mt-2" />
           <div className="flex-1">
             <div className="flex flex-wrap gap-2 items-center">
-              {allTags
-                ?.filter((t) => taskTagIds.includes(t.id))
-                .map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="flex items-center gap-1 text-sm px-2 py-1 bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 rounded"
+              {attachedTags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="flex items-center gap-1 text-sm px-2 py-1 bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 rounded"
+                  style={tag.color ? { color: tag.color } : undefined}
+                >
+                  {tag.name}
+                  <button
+                    onClick={() => removeTag.mutate({ taskId: task.id, tagId: tag.id })}
+                    className="hover:text-red-500"
                   >
-                    {tag.name}
-                    <button
-                      onClick={() => removeTag.mutate({ taskId: task.id, tagId: tag.id })}
-                      className="hover:text-red-500"
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
               <button
                 onClick={() => setShowTagPicker(!showTagPicker)}
                 className="flex items-center gap-1 text-sm px-2 py-1 border border-dashed border-gray-300 dark:border-ink-500 rounded hover:border-orange-500"
@@ -320,29 +420,22 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
 
         <div>
           <label className="text-xs uppercase tracking-wide text-gray-400 mb-2 block">{t('taskDetail.subtasks' as MessageKey)}</label>
-          <div className="space-y-1">
-            {subtasks?.map((st) => (
-              <div key={st.id} className="flex items-center gap-2 py-1">
-                <button
-                  onClick={() => completeTask.mutate({ id: st.id, complete: st.status !== 'done' })}
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    st.status === 'done' ? 'bg-orange-500 border-orange-500' : 'border-gray-400 dark:border-ink-400'
-                  }`}
-                >
-                  {st.status === 'done' && <Check size={11} className="text-white" strokeWidth={3} />}
-                </button>
-                <span className={`text-sm flex-1 ${st.status === 'done' ? 'line-through text-gray-400' : ''}`}>
-                  {st.title}
-                </span>
-                <button
-                  onClick={() => deleteTask.mutate(st)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
+          <SortableList ids={subtasks?.map((st) => st.id) ?? []} onReorder={(ids) => reorderTasks.mutate(ids)}>
+            <div className="space-y-1">
+              {subtasks?.map((st) => (
+                <SortableItem key={st.id} id={st.id} className="bg-white dark:bg-ink-850">
+                  {() => (
+                    <SubtaskRow
+                      subtask={st}
+                      onToggle={() => completeTask.mutate({ id: st.id, complete: st.status !== 'done' })}
+                      onRename={(next) => updateTask.mutate({ id: st.id, title: next })}
+                      onDelete={() => deleteTask.mutate(st)}
+                    />
+                  )}
+                </SortableItem>
+              ))}
+            </div>
+          </SortableList>
           <div className="flex items-center gap-2 mt-2">
             <Plus size={16} className="text-gray-400" />
             <input
@@ -350,6 +443,12 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
               onChange={(e) => setNewSubtask(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newSubtask.trim()) {
+                  createSubtask.mutate({ list_id: task.list_id, parent_id: task.id, title: newSubtask.trim() })
+                  setNewSubtask('')
+                }
+              }}
+              onBlur={() => {
+                if (newSubtask.trim()) {
                   createSubtask.mutate({ list_id: task.list_id, parent_id: task.id, title: newSubtask.trim() })
                   setNewSubtask('')
                 }
@@ -404,10 +503,10 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: Props) {
 
   return (
     <motion.div
-      initial={{ x: 400, opacity: 0 }}
+      initial={{ x: 48, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 400, opacity: 0 }}
-      transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+      exit={{ x: 48, opacity: 0 }}
+      transition={{ duration: 0.14, ease: 'easeOut' }}
       style={{ width }}
       className="relative border-l border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-850 h-full flex-shrink-0"
     >

@@ -24,5 +24,6 @@ object DbModule {
     @Provides fun provideTaskDao(db: OrangDb): TaskDao = db.taskDao()
     @Provides fun provideListDao(db: OrangDb): ListDao = db.listDao()
     @Provides fun provideTagDao(db: OrangDb): TagDao = db.tagDao()
+    @Provides fun provideScratchpadDao(db: OrangDb): ScratchpadDao = db.scratchpadDao()
     @Provides fun providePendingOpDao(db: OrangDb): PendingOpDao = db.pendingOpDao()
 }

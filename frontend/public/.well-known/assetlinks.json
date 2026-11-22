@@ -1,0 +1,15 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "lt.oranges.orangtask",
+      "sha256_cert_fingerprints": [
+        "E3:B8:3E:CC:C1:D7:B4:9D:92:E4:60:54:D9:A4:83:BB:09:56:D6:68:02:8A:F9:F3:57:A5:AB:03:26:6D:80:39",
+        "DA:10:73:55:CC:33:19:13:26:93:96:AE:44:CE:5E:F4:EC:72:7B:58:F7:40:3C:0B:05:74:53:4F:E8:16:DA:86",
+        "60:9C:36:A4:F1:44:7D:98:B5:79:7C:67:1E:B2:DA:59:FF:83:DA:82:8A:A7:B3:47:24:6F:44:BD:56:E6:1A:BD",
+        "D5:F7:24:2F:C8:B0:4D:24:7A:B8:CA:15:E5:AD:CA:82:47:D2:CB:5A:F6:1C:A0:12:BE:B0:2F:54:2F:C4:FE:3B"
+      ]
+    }
+  }
+]

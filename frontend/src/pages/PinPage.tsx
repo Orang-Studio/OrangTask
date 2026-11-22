@@ -99,7 +99,7 @@ export function PinPage() {
           <div className="flex flex-col items-center mb-8">
             <Logo size={48} />
             <h1 className="mt-4 text-xl font-bold uppercase tracking-wider">{t('pin.resetTitle' as MessageKey)}</h1>
-            <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">{recoverMsg}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{recoverMsg}</p>
           </div>
 
           <input
@@ -142,7 +142,7 @@ export function PinPage() {
         <div className="flex flex-col items-center mb-8">
           <Logo size={48} />
           <h1 className="mt-4 text-xl font-bold uppercase tracking-wider">{t('pin.enterPin' as MessageKey)}</h1>
-          <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">{t('pin.unlockHint' as MessageKey)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('pin.unlockHint' as MessageKey)}</p>
         </div>
 
         <input

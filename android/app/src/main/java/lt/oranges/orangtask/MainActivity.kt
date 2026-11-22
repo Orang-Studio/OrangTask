@@ -70,8 +70,11 @@ class MainActivity : LocalizedActivity() {
 
     private fun handleDeepLink(intent: Intent?) {
         val data = intent?.data ?: return
+        intent.data = null
         when {
             data.scheme == "orangtask" && data.host == "auth-callback" -> handleOAuthCallback(data)
+            data.scheme == "orangtask" && data.host == "github-callback" -> handleGithubCallback(data)
+            data.scheme == "orangtask" && data.host == "magic-link" -> handleMagicLink(data)
             data.scheme == "orangtask" && data.host == "recaptcha" -> {
                 CaptchaCallback.tokenFrom(data.toString())?.let(captchaTokenStore::set)
             }
@@ -89,19 +92,30 @@ class MainActivity : LocalizedActivity() {
         }
     }
 
+    private fun handleGithubCallback(data: Uri) {
+        val message = if (data.getQueryParameter("connected") == "1") {
+            AppStrings.get(this, R.string.github_connected)
+        } else {
+            AppStrings.get(this, R.string.github_connect_error)
+        }
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
     private fun handleAppLink(data: Uri) {
         when {
-            data.path?.startsWith("/auth/magic") == true -> {
-                sessionViewModel.onMagicLink(data.toString()) { message ->
-                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-                }
-            }
+            data.path == "/auth/magic" -> handleMagicLink(data)
             data.path == "/login" && data.getQueryParameter("verification") == "success" -> {
                 Toast.makeText(this, AppStrings.get(this, R.string.email_verified_sign_in), Toast.LENGTH_LONG).show()
             }
             data.path == "/login" && data.getQueryParameter("verification") == "invalid" -> {
                 Toast.makeText(this, AppStrings.get(this, R.string.verification_link_invalid), Toast.LENGTH_LONG).show()
             }
+        }
+    }
+
+    private fun handleMagicLink(data: Uri) {
+        sessionViewModel.onMagicLink(data.toString()) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
     }
 

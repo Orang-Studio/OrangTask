@@ -11,53 +11,82 @@ import {
   githubOAuthClient,
   syncGithub,
 } from '../services/github.js'
+import {
+  createNativeGithubState,
+  isNativeGithubState,
+  nativeGithubStateUserId,
+} from '../services/githubState.js'
+import { GITHUB_INTEGRATION_STATE_PREFIX } from './auth.js'
+import { nativePlatform } from '../lib/platform.js'
 import type { AppEnv } from '../types.js'
 
 const app = new Hono<AppEnv>()
 
 const APP_URL = process.env.APP_URL || 'http://localhost:5173'
-const API_URL = process.env.API_URL || 'http://localhost:3001'
-const REDIRECT_URI = `${API_URL}/api/github/callback`
 
 function settingsRedirect(params: Record<string, string>) {
   const query = new URLSearchParams(params)
   return `${APP_URL}/settings?section=github&${query}`
 }
 
+function nativeRedirect(params: Record<string, string>) {
+  return `orangtask://github-callback?${new URLSearchParams(params)}`
+}
+
 app.get('/connect', authMiddleware, async (c) => {
   const client = githubOAuthClient()
   if (!client) return c.json({ error: 'GitHub OAuth not configured' }, 400)
 
-  const state = randomBytes(24).toString('hex')
-  setCookie(c, 'github_state', state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Lax',
-    maxAge: 600,
-    path: '/',
-  })
+  const native = nativePlatform(c.req.query('platform') ?? c.req.header('x-platform')) !== null
+  const state = native
+    ? createNativeGithubState(c.get('userId'))
+    : GITHUB_INTEGRATION_STATE_PREFIX + randomBytes(24).toString('hex')
+  if (!native) {
+    setCookie(c, 'github_state', state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      maxAge: 600,
+      path: '/',
+    })
+  }
 
-  const params = new URLSearchParams({
-    client_id: client.id,
-    redirect_uri: REDIRECT_URI,
-    scope: GITHUB_SCOPES,
-    state,
-  })
+  // no redirect_uri GitHub falls back to the apps registered callback which may be either of our two callback routes
+  const params = new URLSearchParams({ client_id: client.id, scope: GITHUB_SCOPES, state })
   return c.json({ url: `https://github.com/login/oauth/authorize?${params}` })
 })
 
-app.get('/callback', authMiddleware, async (c) => {
+app.get('/callback', async (c, next) => {
+  // the sign in flow lands here when GitHubs registered callback is this URL
+  const state = c.req.query('state')
+  if (state && !state.startsWith(GITHUB_INTEGRATION_STATE_PREFIX)) {
+    const query = new URLSearchParams({ code: c.req.query('code') ?? '', state })
+    return c.redirect(`/api/auth/github/callback?${query}`)
+  }
+  if (isNativeGithubState(state)) {
+    const userId = nativeGithubStateUserId(state)
+    if (!userId) return c.redirect(nativeRedirect({ error: 'state' }))
+    c.set('userId', userId)
+    return next()
+  }
+  return authMiddleware(c, next)
+}, async (c) => {
   const userId = c.get('userId')
   const { code, state } = c.req.query()
-  const stored = getCookie(c, 'github_state')
-  deleteCookie(c, 'github_state')
+  const native = isNativeGithubState(state)
+  const stored = native ? state : getCookie(c, 'github_state')
+  if (!native) deleteCookie(c, 'github_state')
 
   if (!code || !state || !stored || state !== stored) {
-    return c.redirect(settingsRedirect({ github_error: 'state' }))
+    return c.redirect(native ? nativeRedirect({ error: 'state' }) : settingsRedirect({ github_error: 'state' }))
   }
 
   const client = githubOAuthClient()
-  if (!client) return c.redirect(settingsRedirect({ github_error: 'not_configured' }))
+  if (!client) {
+    return c.redirect(native
+      ? nativeRedirect({ error: 'not_configured' })
+      : settingsRedirect({ github_error: 'not_configured' }))
+  }
 
   const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
@@ -66,14 +95,17 @@ app.get('/callback', authMiddleware, async (c) => {
       client_id: client.id,
       client_secret: client.secret,
       code,
-      redirect_uri: REDIRECT_URI,
     }),
   })
   const tokenData = await tokenRes.json() as { access_token?: string; scope?: string }
-  if (!tokenData.access_token) return c.redirect(settingsRedirect({ github_error: 'token' }))
+  if (!tokenData.access_token) {
+    return c.redirect(native ? nativeRedirect({ error: 'token' }) : settingsRedirect({ github_error: 'token' }))
+  }
 
   const viewer = await fetchViewer(tokenData.access_token)
-  if (!viewer) return c.redirect(settingsRedirect({ github_error: 'token' }))
+  if (!viewer) {
+    return c.redirect(native ? nativeRedirect({ error: 'token' }) : settingsRedirect({ github_error: 'token' }))
+  }
 
   await sql`
     INSERT INTO github_connections (user_id, github_login, access_token, scopes)
@@ -91,7 +123,7 @@ app.get('/callback', authMiddleware, async (c) => {
     await sql`UPDATE github_connections SET last_error = ${message} WHERE user_id = ${userId}`.catch(() => {})
   })
 
-  return c.redirect(settingsRedirect({ github_connected: '1' }))
+  return c.redirect(native ? nativeRedirect({ connected: '1' }) : settingsRedirect({ github_connected: '1' }))
 })
 
 app.use('*', authMiddleware)
@@ -182,7 +214,7 @@ app.post('/disconnect', async (c) => {
 
   if (deleteTasks) {
     const rows = await sql`SELECT task_id FROM github_items WHERE user_id = ${userId} AND task_id IS NOT NULL`
-    const taskIds = rows.map((r: { task_id: string }) => r.task_id)
+    const taskIds = rows.map((r) => r.task_id as string)
     if (taskIds.length > 0) await sql`DELETE FROM tasks WHERE id = ANY(${taskIds})`
   }
 

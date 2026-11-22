@@ -14,7 +14,7 @@ jobs:
     outputs:
       apk_name: ${{ steps.prepare.outputs.apk_name }}
     env:
-      # An APK signed by anything else cannot update an existing install.
+      # an APK signed by anything else cannot update an existing install
       SIGNER_SHA256: E3:B8:3E:CC:C1:D7:B4:9D:92:E4:60:54:D9:A4:83:BB:09:56:D6:68:02:8A:F9:F3:57:A5:AB:03:26:6D:80:39
 
     steps:

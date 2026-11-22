@@ -11,7 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,11 +36,21 @@ fun Avatar(name: String?, url: String?, size: Dp = 24.dp, modifier: Modifier = M
             contentAlignment = Alignment.Center,
             modifier = modifier.size(size).background(Orange500, CircleShape),
         ) {
+            val fontSize = (size.value * 0.45f).sp
             Text(
                 text = name?.trim()?.firstOrNull()?.uppercase() ?: "?",
                 color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = (size.value * 0.45f).sp,
+                textAlign = TextAlign.Center,
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fontSize,
+                    lineHeight = fontSize,
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.Both,
+                    ),
+                ),
             )
         }
     }

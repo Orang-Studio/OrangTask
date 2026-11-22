@@ -6,7 +6,7 @@ import { t, tNodes, type MessageKey } from '../lib/i18n'
 export function LegalPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const updated = 'June 18, 2026'
+  const updated = 'October 13, 2026'
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-ink-900 px-4 py-10">
       <div className="max-w-2xl mx-auto">
@@ -62,6 +62,7 @@ export function LegalPage() {
               {t('legal.privacyPolicy' as MessageKey)}
             </h2>
             <p className="mb-3">{t('legal.lastUpdated' as MessageKey, { date: updated })}</p>
+            <p className="mb-3">{t('legal.privacyIdentity' as MessageKey)}</p>
 
             <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.whatWeCollect' as MessageKey)}</h3>
             <ul className="list-disc pl-5 space-y-1">
@@ -88,11 +89,17 @@ export function LegalPage() {
             <ul className="list-disc pl-5 space-y-1">
               <li>{tNodes('legal.oauthItem' as MessageKey, { oauth: <strong>{t('legal.oauth' as MessageKey)}</strong> })}</li>
               <li>{tNodes('legal.emailDeliveryItem' as MessageKey, { emailDelivery: <strong>{t('legal.emailDelivery' as MessageKey)}</strong> })}</li>
+              <li>{tNodes('legal.fcmItem' as MessageKey, { fcm: <strong>{t('legal.fcm' as MessageKey)}</strong> })}</li>
             </ul>
 
             <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.gdprRights' as MessageKey)}</h3>
             <p className="mb-3">
               {tNodes('legal.gdprParagraph' as MessageKey, { email: <a href="mailto:legal@oranges.lt" className="text-orange-500 hover:underline">legal@oranges.lt</a> })}
+            </p>
+            <p className="mb-3">
+              <a href="/delete-account" className="text-orange-500 hover:underline">
+                {t('deleteAccount.title' as MessageKey)}
+              </a>
             </p>
 
             <h3 className="font-semibold text-gray-900 dark:text-white mt-5 mb-2">{t('legal.cookies' as MessageKey)}</h3>

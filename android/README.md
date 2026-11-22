@@ -36,8 +36,8 @@ as the web app (REST + WebSocket), point it at your instance and go.
   and, on success, redirects to the `orangtask://auth-callback` deep link with
   the token pair (handled by `MainActivity`) instead of the web app. Login
   buttons appear only for providers the backend has configured (`/auth/providers`).
-  FCM push is still pending, it needs a Firebase project you own for the
-  service-account credentials.
+  Android builds include Firebase configuration for native FCM push; the backend
+  needs service-account credentials from the same project.
 
 ## Building
 

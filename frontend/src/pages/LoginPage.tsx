@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Mail, Github, Lock, ArrowRight, Check, KeyRound } from 'lucide-react'
+import { Mail, Github, Lock, ArrowRight, Check, KeyRound, UserX, AlertTriangle } from 'lucide-react'
 import { api } from '../lib/api'
 import { t, tNodes, type MessageKey } from '../lib/i18n'
 import { useAuthStore } from '../stores/auth'
@@ -26,6 +26,7 @@ export function LoginPage() {
   const [twoFactorCode, setTwoFactorCode] = useState('')
   const [recaptchaToken, setRecaptchaToken] = useState('')
   const [captchaRequired, setCaptchaRequired] = useState(false)
+  const [guestWarningOpen, setGuestWarningOpen] = useState(false)
 
   const urlError = searchParams.get('error')
   const verification = searchParams.get('verification')
@@ -68,10 +69,16 @@ export function LoginPage() {
           navigate('/today')
         }
       } else {
-        const res = await api.post<{ requires_email_2fa?: boolean }>('/auth/login', { email, password, recaptcha_token: recaptchaToken })
+        const res = await api.post<{ user?: any; requires_pin?: boolean; requires_email_2fa?: boolean }>('/auth/login', { email, password, recaptcha_token: recaptchaToken })
         if (res.requires_email_2fa) {
           setTwoFactorCode('')
           setMode('twoFactor')
+        } else if (res.requires_pin) {
+          setRequiresPin(true)
+          navigate('/pin?next=/today')
+        } else {
+          setUser(res.user)
+          navigate('/today')
         }
       }
     } catch (e) {
@@ -79,6 +86,20 @@ export function LoginPage() {
       setError(message)
       if (message.includes('CAPTCHA')) setCaptchaRequired(true)
       if (message.includes('Verify your email')) setMode('verifyEmail')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const doGuest = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await api.post<{ user?: any }>('/auth/guest', {})
+      setUser(res.user)
+      navigate('/today')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('login.guestError' as MessageKey))
     } finally {
       setLoading(false)
     }
@@ -184,7 +205,7 @@ export function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <Logo size={56} />
           <h1 className="mt-4 text-2xl font-bold uppercase tracking-wider">OrangTask</h1>
-          <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">{t('login.tagline' as MessageKey)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('login.tagline' as MessageKey)}</p>
         </div>
 
         <div className="surface p-6">
@@ -200,7 +221,7 @@ export function LoginPage() {
                 <Check size={24} className="text-white" strokeWidth={3} />
               </div>
               <h2 className="font-bold mb-1">{t('login.checkYourEmail' as MessageKey)}</h2>
-              <p className="text-sm text-gray-500 dark:text-ink-400">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {tNodes('login.sentLinkTo' as MessageKey, { email: <strong>{email}</strong> })}
               </p>
               <button
@@ -266,12 +287,52 @@ export function LoginPage() {
                     <Lock size={16} className="mr-2" />
                     {loading ? t('login.waiting' as MessageKey) : mode === 'register' ? t('login.createAccount' as MessageKey) : t('login.signIn' as MessageKey)}
                   </button>
+                  {mode === 'register' && !guestWarningOpen && (
+                    <button
+                      type="button"
+                      onClick={() => { setError(''); setGuestWarningOpen(true) }}
+                      disabled={loading}
+                      className="btn-secondary w-full"
+                    >
+                      <UserX size={16} className="mr-2" />
+                      {t('login.useAsGuest' as MessageKey)}
+                    </button>
+                  )}
+                  {mode === 'register' && guestWarningOpen && (
+                    <div className="p-3.5 rounded-lg border border-amber-300 dark:border-amber-700/70 bg-amber-50 dark:bg-amber-950/40 space-y-2.5 text-left">
+                      <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300">
+                        <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
+                        <div className="text-xs leading-relaxed">
+                          <p className="font-semibold mb-1">{t('login.guestWarningTitle' as MessageKey)}</p>
+                          <p>{t('login.guestWarningBody' as MessageKey)}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setGuestWarningOpen(false)}
+                          disabled={loading}
+                          className="btn-secondary flex-1 text-xs py-1.5"
+                        >
+                          {t('common.cancel' as MessageKey)}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={doGuest}
+                          disabled={loading}
+                          className="btn-primary flex-1 text-xs py-1.5"
+                        >
+                          {loading ? t('login.waiting' as MessageKey) : t('login.guestContinue' as MessageKey)}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {mode === 'reset' && (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-500 dark:text-ink-400">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {resetStep === 'request'
                       ? t('login.resetInstruction' as MessageKey)
                       : t('login.resetEnterCode' as MessageKey, { email })}
@@ -331,7 +392,7 @@ export function LoginPage() {
               {mode === 'twoFactor' && (
                 <div className="space-y-3 text-center">
                   <h2 className="font-bold">{t('login.checkYourEmail' as MessageKey)}</h2>
-                  <p className="text-sm text-gray-500 dark:text-ink-400">{tNodes('login.sentCodeTo' as MessageKey, { email: <strong>{email}</strong> })}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{tNodes('login.sentCodeTo' as MessageKey, { email: <strong>{email}</strong> })}</p>
                   <input
                     value={twoFactorCode}
                     onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -353,7 +414,7 @@ export function LoginPage() {
                 <div className="space-y-3 text-center">
                   <div className="w-12 h-12 mx-auto bg-orange-500 flex items-center justify-center"><Mail size={24} className="text-white" /></div>
                   <h2 className="font-bold">{t('login.checkYourEmail' as MessageKey)}</h2>
-                  <p className="text-sm text-gray-500 dark:text-ink-400">{tNodes('login.sentVerificationTo' as MessageKey, { email: <strong>{email}</strong> })}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{tNodes('login.sentVerificationTo' as MessageKey, { email: <strong>{email}</strong> })}</p>
                   <button onClick={resendVerification} disabled={loading} className="btn-secondary w-full">{loading ? t('login.sending' as MessageKey) : t('login.resendVerification' as MessageKey)}</button>
                   <button onClick={() => setMode('password')} className="text-xs text-gray-400 hover:text-orange-500">{t('login.backToSignIn' as MessageKey)}</button>
                 </div>
@@ -386,14 +447,14 @@ export function LoginPage() {
 
               <div className="mt-5 text-center text-sm space-y-1">
                 {mode === 'magic' && (
-                  <button onClick={() => setMode('password')} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">
+                  <button onClick={() => setMode('password')} className="text-gray-500 dark:text-gray-400 hover:text-orange-500">
                     {t('login.usePasswordInstead' as MessageKey)}
                   </button>
                 )}
                 {mode === 'password' && (
                   <div className="space-y-2">
                     <div className="space-x-3">
-                      <button onClick={() => setMode('magic')} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">
+                      <button onClick={() => setMode('magic')} className="text-gray-500 dark:text-gray-400 hover:text-orange-500">
                         {t('login.magicLink' as MessageKey)}
                       </button>
                       <button onClick={() => setMode('register')} className="text-orange-500 hover:underline inline-flex items-center gap-1">
@@ -406,12 +467,12 @@ export function LoginPage() {
                   </div>
                 )}
                 {mode === 'register' && (
-                  <button onClick={() => setMode('password')} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">
+                  <button onClick={() => setMode('password')} className="text-gray-500 dark:text-gray-400 hover:text-orange-500">
                     {t('login.haveAccountSignIn' as MessageKey)}
                   </button>
                 )}
                 {mode === 'reset' && (
-                  <button onClick={() => { setMode('password'); setError('') }} className="text-gray-500 dark:text-ink-400 hover:text-orange-500">
+                  <button onClick={() => { setMode('password'); setError('') }} className="text-gray-500 dark:text-gray-400 hover:text-orange-500">
                     {t('login.backToSignIn' as MessageKey)}
                   </button>
                 )}
@@ -425,6 +486,8 @@ export function LoginPage() {
         </p>
         <p className="text-center text-xs text-gray-400 mt-2">
           <a href="/legal" className="hover:text-orange-500 underline">{t('login.termsPrivacy' as MessageKey)}</a>
+          {' · '}
+          <a href="/delete-account" className="hover:text-orange-500 underline">{t('deleteAccount.footerLink' as MessageKey)}</a>
         </p>
       </div>
     </div>

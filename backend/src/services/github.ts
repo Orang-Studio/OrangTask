@@ -62,6 +62,8 @@ export function decryptToken(stored: string): string | null {
   }
 }
 
+const REPO_CONCURRENCY = 8
+
 export const GITHUB_SCOPES = 'repo read:org security_events'
 
 export function githubOAuthClient(): { id: string; secret: string } | null {
@@ -274,9 +276,16 @@ export async function syncGithub(userId: string): Promise<{ items: number; list_
   const collected: SyncedItem[] = []
   if (wants.issues || wants.pulls || wants.security) {
     const repos = await fetchRepos(token)
-    for (const repo of repos) {
-      collected.push(...(await collectRepoItems(token, repo, wants)))
+    const perRepo: SyncedItem[][] = new Array(repos.length)
+    let next = 0
+    const worker = async () => {
+      while (next < repos.length) {
+        const i = next++
+        perRepo[i] = await collectRepoItems(token, repos[i], wants)
+      }
     }
+    await Promise.all(Array.from({ length: Math.min(REPO_CONCURRENCY, repos.length) }, worker))
+    for (const items of perRepo) collected.push(...items)
   }
 
   const keys = collected.map((i) => i.external_key)
@@ -285,7 +294,7 @@ export async function syncGithub(userId: string): Promise<{ items: number; list_
     ? await sql`SELECT task_id FROM github_items WHERE user_id = ${userId} AND external_key <> ALL(${keys})`
     : await sql`SELECT task_id FROM github_items WHERE user_id = ${userId}`
 
-  const staleTaskIds = stale.map((s: { task_id: string | null }) => s.task_id).filter(Boolean)
+  const staleTaskIds = stale.map((s) => s.task_id as string | null).filter(Boolean)
   if (staleTaskIds.length > 0) await sql`DELETE FROM tasks WHERE id = ANY(${staleTaskIds})`
 
   if (keys.length > 0) {

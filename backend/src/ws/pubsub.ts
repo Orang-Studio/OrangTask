@@ -55,3 +55,16 @@ export async function broadcastToListMembers(listId: string, payload: unknown) {
     publishToUser(m.user_id, payload).catch(() => {})
   }
 }
+
+export async function broadcastManyToListMembers(listId: string, payloads: unknown[]) {
+  if (payloads.length === 0) return
+  const members = await sql`
+    SELECT DISTINCT user_id FROM list_members WHERE list_id = ${listId}
+    UNION
+    SELECT owner_id as user_id FROM lists WHERE id = ${listId}
+  `
+
+  for (const m of members) {
+    for (const payload of payloads) publishToUser(m.user_id, payload).catch(() => {})
+  }
+}

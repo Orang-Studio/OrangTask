@@ -1,6 +1,7 @@
 package lt.oranges.orangtask.lists
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import lt.oranges.orangtask.core.db.ListDao
@@ -10,12 +11,15 @@ import lt.oranges.orangtask.core.db.TagEntity
 import lt.oranges.orangtask.core.db.TaskDao
 import lt.oranges.orangtask.core.db.toEntity
 import lt.oranges.orangtask.core.network.CreateListRequest
+import lt.oranges.orangtask.core.network.SuggestIconRequest
 import lt.oranges.orangtask.core.network.CreateTagRequest
 import lt.oranges.orangtask.core.network.InviteMemberRequest
 import lt.oranges.orangtask.core.network.MemberDto
 import lt.oranges.orangtask.core.network.MemberRoleRequest
 import lt.oranges.orangtask.core.network.OrangApi
 import lt.oranges.orangtask.core.network.fetchAllPages
+import lt.oranges.orangtask.core.sync.OfflineQueue
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,6 +29,7 @@ class ListRepository @Inject constructor(
     private val listDao: ListDao,
     private val tagDao: TagDao,
     private val taskDao: TaskDao,
+    private val offlineQueue: OfflineQueue,
 ) {
     val lists: Flow<List<ListEntity>> = listDao.observeAll()
     val tags: Flow<List<TagEntity>> = tagDao.observeAll()
@@ -49,12 +54,17 @@ class ListRepository @Inject constructor(
         tagDao.deleteNotIn(tags.map { it.id })
     }
 
-    suspend fun createList(name: String, color: String? = "#f97316", icon: String? = "list"): ListEntity {
+    // no icon by default the server has Jev pick one from the name and pushes it as list updated
+    suspend fun createList(name: String, color: String? = "#f97316", icon: String? = null): ListEntity {
         val dto = api.createList(CreateListRequest(name = name, color = color, icon = icon)).list
         val entity = dto.toEntity()
         listDao.upsert(entity)
         return entity
     }
+
+    // jevs icon for a list name for the new list dialogs preview null when unsure
+    suspend fun suggestIcon(name: String): String? =
+        api.suggestListIcon(SuggestIconRequest(name)).icon
 
     suspend fun updateList(id: String, fields: JsonObject, optimistic: (ListEntity) -> ListEntity) {
         val before = listDao.getById(id) ?: return
@@ -76,6 +86,25 @@ class ListRepository @Inject constructor(
 
     suspend fun setListIcon(id: String, icon: String) =
         updateList(id, JsonObject(mapOf("icon" to JsonPrimitive(icon)))) { it.copy(icon = icon) }
+
+    // the callers own sidebar order the server keeps shared lists per member
+    suspend fun reorder(ids: List<String>) {
+        val before = ids.mapNotNull { listDao.getById(it) }
+        val index = ids.withIndex().associate { it.value to it.index }
+        listDao.upsertAll(before.map { it.copy(position = index.getValue(it.id)) })
+        val items = ids.withIndex().map { (i, id) ->
+            JsonObject(mapOf("id" to JsonPrimitive(id), "position" to JsonPrimitive(i)))
+        }
+        val body = JsonObject(mapOf("items" to JsonArray(items)))
+        try {
+            api.reorderLists(body)
+        } catch (e: IOException) {
+            offlineQueue.enqueue("PATCH", "api/lists/reorder", body)
+        } catch (e: Exception) {
+            listDao.upsertAll(before)
+            throw e
+        }
+    }
 
     suspend fun deleteList(id: String) {
         listDao.deleteById(id)

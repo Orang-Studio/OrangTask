@@ -52,10 +52,43 @@ import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
+private val GithubIcon = ImageVector.Builder(
+    name = "Github",
+    defaultWidth = 16.dp,
+    defaultHeight = 16.dp,
+    viewportWidth = 16f,
+    viewportHeight = 16f,
+).apply {
+    addPath(
+        pathData = PathParser().parsePathString(
+            "M6.766,11.328c-2.063,-0.25 -3.516,-1.734 -3.516,-3.656 " +
+                "0,-0.781 0.281,-1.625 0.75,-2.188 -0.203,-0.515 -0.172,-1.609 " +
+                "0.063,-2.062 0.625,-0.078 1.468,0.25 1.968,0.703 0.594,-0.187 " +
+                "1.219,-0.281 1.985,-0.281 0.765,0 1.39,0.094 1.953,0.265 " +
+                "0.484,-0.437 1.344,-0.765 1.969,-0.687 0.218,0.422 0.25,1.515 " +
+                "0.046,2.047 0.5,0.593 0.766,1.39 0.766,2.203 0,1.922 -1.453,3.375 " +
+                "-3.547,3.64 0.531,0.344 0.89,1.094 0.89,1.954v1.625c0,0.468 " +
+                "0.391,0.734 0.86,0.547C13.781,14.359 16,11.53 16,8.03 " +
+                "16,3.61 12.406,0 7.984,0 3.563,0 0,3.61 0,8.031a7.88,7.88 " +
+                "0,0 0,5.172 7.422c0.422,0.156 0.828,-0.125 0.828,-0.547v-1.25 " +
+                "c-0.219,0.094 -0.5,0.156 -0.75,0.156 -1.031,0 -1.64,-0.562 " +
+                "-2.078,-1.609 -0.172,-0.422 -0.36,-0.672 -0.719,-0.719 " +
+                "-0.187,-0.015 -0.25,-0.093 -0.25,-0.187 0,-0.188 0.313,-0.328 " +
+                "0.625,-0.328 0.453,0 0.844,0.281 1.25,0.86 0.313,0.452 " +
+                "0.64,0.655 1.031,0.655s0.641,-0.14 1,-0.5c0.266,-0.265 " +
+                "0.47,-0.5 0.657,-0.656",
+        ).toNodes(),
+        fill = SolidColor(Color.Black),
+    )
+}.build()
 
 val LIST_ICONS: Map<String, ImageVector> = linkedMapOf(
     "hash" to Icons.Outlined.Tag,
@@ -106,6 +139,7 @@ val LIST_ICONS: Map<String, ImageVector> = linkedMapOf(
     "paw" to Icons.Outlined.Pets,
     "rocket" to Icons.Outlined.Rocket,
     "webhook" to Icons.Outlined.Webhook,
+    "github" to GithubIcon,
 )
 
 const val DEFAULT_LIST_ICON = "list"

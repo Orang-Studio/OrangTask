@@ -17,6 +17,7 @@ data class TaskDto(
     @SerialName("assigned_to") val assignedTo: String? = null,
     @SerialName("assignee_name") val assigneeName: String? = null,
     @SerialName("assignee_avatar") val assigneeAvatar: String? = null,
+    @SerialName("assignee_ids") val assigneeIds: List<String>? = null,
     val title: String,
     val notes: String? = null,
     val priority: String = "none",
@@ -60,6 +61,17 @@ data class TagDto(
 )
 
 @Serializable
+data class ScratchpadDto(
+    val id: String,
+    @SerialName("user_id") val userId: String? = null,
+    val title: String = "",
+    val content: String = "",
+    val position: Int = 0,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
+@Serializable
 data class MemberDto(
     val id: String,
     val email: String,
@@ -97,6 +109,11 @@ data class SearchResultDto(
     val nextOffset: Int? = null,
 )
 @Serializable data class TagResponse(val tag: TagDto)
+@Serializable data class ScratchpadsResponse(
+    val scratchpads: List<ScratchpadDto> = emptyList(),
+    val nextOffset: Int? = null,
+)
+@Serializable data class ScratchpadResponse(val scratchpad: ScratchpadDto)
 @Serializable data class MembersResponse(
     val members: List<MemberDto> = emptyList(),
     val nextOffset: Int? = null,
@@ -119,4 +136,13 @@ data class CreateTaskRequest(
 data class CreateListRequest(val name: String, val color: String? = null, val icon: String? = null)
 
 @Serializable
+data class SuggestIconRequest(val name: String)
+
+@Serializable
+data class SuggestIconResponse(val icon: String? = null)
+
+@Serializable
 data class CreateTagRequest(val name: String, val color: String? = null)
+
+@Serializable
+data class CreateScratchpadRequest(val title: String = "", val content: String = "")

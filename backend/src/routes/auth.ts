@@ -7,10 +7,16 @@ import redis from '../services/redis.js'
 import { isCaptchaRequired, isVerificationCode, loginFailureCacheKey, verifyRecaptcha } from '../services/authSecurity.js'
 import { rateLimit } from '../middleware/rateLimit.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { nativePlatform, type NativePlatform } from '../lib/platform.js'
+import { createSessionTokens, InvalidSessionError, validCompanionDeviceId } from '../services/sessionTokens.js'
 import type { AppEnv } from '../types.js'
 
 const app = new Hono<AppEnv>()
+const sessionTokens = createSessionTokens(sql)
+const createTokenPair = sessionTokens.createTokenPair
 const APP_URL = process.env.APP_URL || 'http://localhost:5173'
+// github oauth only allows one callback url so sign in and integration forward by state prefix
+export const GITHUB_INTEGRATION_STATE_PREFIX = 'int~'
 
 function generateToken(bytes = 32) {
   return randomBytes(bytes).toString('hex')
@@ -57,27 +63,12 @@ function verifyPassword(password: string, stored: string): boolean {
   return timingSafeEqual(hashBuf, testBuf)
 }
 
-async function createTokenPair(userId: string) {
-  const accessToken = generateToken(32)
-  const refreshToken = generateToken(48)
-
-  const accessExpiry = new Date(Date.now() + 60 * 60 * 1000)
-  const refreshExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-
-  await sql`
-    INSERT INTO sessions (user_id, token, expires_at)
-    VALUES (${userId}, ${accessToken}, ${accessExpiry})
-  `
-  await sql`
-    INSERT INTO refresh_tokens (user_id, token, expires_at)
-    VALUES (${userId}, ${refreshToken}, ${refreshExpiry})
-  `
-
-  return { accessToken, refreshToken }
+function clientPlatform(c: Context<AppEnv>): NativePlatform | null {
+  return nativePlatform(c.req.header('x-platform'))
 }
 
 function isNative(c: Context<AppEnv>): boolean {
-  return !!c.req.header('x-platform')
+  return clientPlatform(c) !== null
 }
 
 function nativeTokens(c: Context<AppEnv>, accessToken: string, refreshToken: string) {
@@ -86,14 +77,14 @@ function nativeTokens(c: Context<AppEnv>, accessToken: string, refreshToken: str
 
 const NATIVE_AUTH_REDIRECT = 'orangtask://auth-callback'
 
-function buildOAuthState(native: boolean): { token: string; state: string } {
+function buildOAuthState(platform: NativePlatform | null): { token: string; state: string } {
   const token = generateToken()
-  return { token, state: native ? `${token}.android` : token }
+  return { token, state: platform ? `${token}.${platform}` : token }
 }
 
 function parseOAuthState(raw?: string): { token: string; native: boolean } {
   const [token = '', platform] = (raw ?? '').split('.')
-  return { token, native: platform === 'android' }
+  return { token, native: nativePlatform(platform) !== null }
 }
 
 function nativeAuthRedirect(c: Context<AppEnv>, params: Record<string, string>) {
@@ -166,24 +157,13 @@ app.post('/refresh', async (c) => {
   const refreshToken = getCookie(c, 'refresh_token') || bearerToken(c)
   if (!refreshToken) return c.json({ error: 'No refresh token' }, 401)
 
-  const [rt] = await sql`
-    SELECT rt.* FROM refresh_tokens rt
-    JOIN users u ON u.id = rt.user_id
-    WHERE rt.token = ${refreshToken} AND rt.expires_at > now()
-  `
-  if (!rt) return c.json({ error: 'Invalid or expired refresh token' }, 401)
-
-  const accessToken = generateToken(32)
-  const accessExpiry = new Date(Date.now() + 60 * 60 * 1000)
-
-  await sql`DELETE FROM sessions WHERE user_id = ${rt.user_id} AND expires_at <= now()`
-  await sql`
-    INSERT INTO sessions (user_id, token, expires_at)
-    VALUES (${rt.user_id}, ${accessToken}, ${accessExpiry})
-  `
-
-  const newRefreshExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-  await sql`UPDATE refresh_tokens SET expires_at = ${newRefreshExpiry} WHERE id = ${rt.id}`
+  let accessToken: string
+  try {
+    accessToken = await sessionTokens.refresh(refreshToken)
+  } catch (error) {
+    if (error instanceof InvalidSessionError) return c.json({ error: 'Invalid or expired refresh token' }, 401)
+    throw error
+  }
 
   const isProd = process.env.NODE_ENV === 'production'
   setCookie(c, 'session', accessToken, {
@@ -195,6 +175,34 @@ app.post('/refresh', async (c) => {
   })
 
   return c.json({ ok: true, ...(isNative(c) ? { access_token: accessToken } : {}) })
+})
+
+app.post('/companion-session', authMiddleware, rateLimit({ windowMs: 60000, max: 20, keyPrefix: 'companion' }), async (c) => {
+  if (clientPlatform(c) !== 'android') return c.json({ error: 'Android phone authentication required' }, 403)
+  const body = await c.req.json().catch(() => null)
+  if (!body || !validCompanionDeviceId(body.device_id) || typeof body.refresh_token !== 'string') {
+    return c.json({ error: 'Invalid companion session request' }, 400)
+  }
+
+  try {
+    const tokens = await sessionTokens.companion(
+      c.get('userId'),
+      bearerToken(c) ?? '',
+      body.refresh_token,
+      body.device_id,
+    )
+    // the native phone bridge provisions only after completing the phones existing PIN gate
+    c.header('Cache-Control', 'no-store')
+    return c.json({
+      user: tokens.user,
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+      requires_pin: false,
+    })
+  } catch (error) {
+    if (error instanceof InvalidSessionError) return c.json({ error: 'Invalid or expired phone session' }, 401)
+    throw error
+  }
 })
 
 app.post('/magic-link', rateLimit({ windowMs: 60000, max: 5, keyPrefix: 'ml' }), async (c) => {
@@ -209,7 +217,7 @@ app.post('/magic-link', rateLimit({ windowMs: 60000, max: 5, keyPrefix: 'ml' }),
     VALUES (${email.toLowerCase()}, ${token}, ${expiresAt})
   `
 
-  await sendMagicLink(email.toLowerCase(), token)
+  await sendMagicLink(email.toLowerCase(), token, clientPlatform(c) ?? 'web')
   return c.json({ ok: true })
 })
 
@@ -382,14 +390,18 @@ app.get('/github', async (c) => {
     setLinkCookie(c)
   }
 
-  const { token, state } = buildOAuthState(c.req.query('platform') === 'android')
+  const { token, state } = buildOAuthState(nativePlatform(c.req.query('platform')))
   setCookie(c, 'oauth_state', token, { httpOnly: true, maxAge: 600, path: '/' })
-  const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=user:email&state=${state}`
+  const params = new URLSearchParams({ client_id: clientId, scope: 'user:email', state })
+  const url = `https://github.com/login/oauth/authorize?${params}`
   return c.redirect(url)
 })
 
 app.get('/github/callback', async (c) => {
   const { code, state } = c.req.query()
+  if (state?.startsWith(GITHUB_INTEGRATION_STATE_PREFIX)) {
+    return c.redirect(`/api/github/callback?${new URLSearchParams({ code: code ?? '', state })}`)
+  }
   const { token: stateToken, native } = parseOAuthState(state)
   const storedState = getCookie(c, 'oauth_state')
   if (!stateToken || stateToken !== storedState) return oauthError(c, native, 'state')
@@ -437,7 +449,7 @@ app.get('/google', async (c) => {
     setLinkCookie(c)
   }
 
-  const { token, state } = buildOAuthState(c.req.query('platform') === 'android')
+  const { token, state } = buildOAuthState(nativePlatform(c.req.query('platform')))
   setCookie(c, 'oauth_state', token, { httpOnly: true, maxAge: 600, path: '/' })
 
   const apiUrl = process.env.API_URL || 'http://localhost:3001'
@@ -528,6 +540,31 @@ app.post('/register', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'reg' }),
   })
 })
 
+app.post('/guest', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'guest' }), async (c) => {
+  const guestEmail = `guest-${crypto.randomUUID()}@guest.orangtask.local`
+  const [user] = await sql`
+    INSERT INTO users (email, password_hash, name)
+    VALUES (${guestEmail}, ${null}, ${'Guest'})
+    RETURNING *
+  `
+  await sql`
+    INSERT INTO lists (owner_id, name, color, icon, position)
+    VALUES (${user.id}, 'Personal', '#f97316', 'inbox', 0)
+  `
+  const { accessToken, refreshToken } = await createTokenPair(user.id)
+  setAuthCookies(c, accessToken, refreshToken)
+  return c.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar_url: user.avatar_url,
+      is_guest: true,
+    },
+    ...nativeTokens(c, accessToken, refreshToken),
+  })
+})
+
 app.get('/verify-email', async (c) => {
   const token = c.req.query('token')
   if (!token) return c.redirect(`${APP_URL}/login?verification=invalid`)
@@ -572,6 +609,16 @@ app.post('/login', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'login' }), 
   }
 
   await redis.del(failureKey)
+
+  // app store review accounts have no reachable inbox so the emailed code would lock a reviewer out entirely
+  const [exempt] = await sql`SELECT 1 FROM login_2fa_exemptions WHERE email = ${normalized}`
+  if (exempt) {
+    const { accessToken, refreshToken } = await createTokenPair(user.id)
+    setAuthCookies(c, accessToken, refreshToken)
+    if (user.pin_hash) return c.json({ requires_pin: true, ...nativeTokens(c, accessToken, refreshToken) })
+    return c.json({ user: { id: user.id, email: user.email, name: user.name, avatar_url: user.avatar_url }, ...nativeTokens(c, accessToken, refreshToken) })
+  }
+
   await issueLoginCode(user.id, user.email)
   return c.json({ ok: true, requires_email_2fa: true })
 })
@@ -667,8 +714,8 @@ app.post('/reset-password', rateLimit({ windowMs: 60000, max: 10, keyPrefix: 'pw
   await sql`UPDATE users SET password_hash = ${hash}, updated_at = now() WHERE id = ${user.id}`
   await sql`UPDATE password_resets SET used = true WHERE id = ${reset.id}`
 
-  await sql`DELETE FROM sessions WHERE user_id = ${user.id}`
   await sql`DELETE FROM refresh_tokens WHERE user_id = ${user.id}`
+  await sql`DELETE FROM sessions WHERE user_id = ${user.id}`
 
   return c.json({ ok: true })
 })
@@ -745,8 +792,8 @@ app.post('/logout', async (c) => {
   const accessToken = getCookie(c, 'session') || bearerToken(c)
   const refreshToken = getCookie(c, 'refresh_token') || body.refresh_token
 
-  if (accessToken) await sql`DELETE FROM sessions WHERE token = ${accessToken}`
   if (refreshToken) await sql`DELETE FROM refresh_tokens WHERE token = ${refreshToken}`
+  if (accessToken) await sql`DELETE FROM sessions WHERE token = ${accessToken}`
 
   deleteCookie(c, 'session')
   deleteCookie(c, 'refresh_token')

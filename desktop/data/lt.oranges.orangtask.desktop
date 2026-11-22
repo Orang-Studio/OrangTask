@@ -1,0 +1,35 @@
+[Desktop Entry]
+Type=Application
+Name=OrangTask
+Name[lt]=OrangTask
+GenericName=Task Manager
+GenericName[lt]=Užduočių tvarkyklė
+Comment=Your tasks, in the tray
+Comment[lt]=Jūsų užduotys sistemos dėkle
+Exec=orangtask %U
+Icon=lt.oranges.orangtask
+Terminal=false
+Categories=Office;ProjectManagement;Qt;
+Keywords=todo;tasks;reminders;checklist;
+Keywords[lt]=užduotys;priminimai;darbai;sąrašas;
+MimeType=x-scheme-handler/orangtask;
+StartupNotify=true
+StartupWMClass=lt.oranges.orangtask
+SingleMainWindow=true
+X-GNOME-UsesNotifications=true
+Actions=quick-add;popup;sticky;
+
+[Desktop Action quick-add]
+Name=Quick Add Task
+Name[lt]=Greitai pridėti užduotį
+Exec=orangtask --quick-add
+
+[Desktop Action popup]
+Name=Show Task Popup
+Name[lt]=Rodyti užduočių langelį
+Exec=orangtask --popup
+
+[Desktop Action sticky]
+Name=Toggle Sticky Note
+Name[lt]=Rodyti / slėpti lipnųjį lapelį
+Exec=orangtask --sticky

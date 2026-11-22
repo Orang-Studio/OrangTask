@@ -1,6 +1,7 @@
 package lt.oranges.orangtask.core.db
 
 import lt.oranges.orangtask.core.network.ListDto
+import lt.oranges.orangtask.core.network.ScratchpadDto
 import lt.oranges.orangtask.core.network.TagDto
 import lt.oranges.orangtask.core.network.TaskDto
 import java.time.Instant
@@ -19,6 +20,8 @@ fun TaskDto.toEntity(existing: TaskEntity? = null) = TaskEntity(
         ?: existing?.takeIf { it.assignedTo == assignedTo }?.assigneeName,
     assigneeAvatar = if (assignedTo == null) null else assigneeAvatar
         ?: existing?.takeIf { it.assignedTo == assignedTo }?.assigneeAvatar,
+    // servers before multi assign only send assigned_to
+    assigneeIds = assigneeIds ?: listOfNotNull(assignedTo),
     title = title,
     notes = notes,
     priority = priority,
@@ -51,3 +54,12 @@ fun ListDto.toEntity(existing: ListEntity? = null) = ListEntity(
 )
 
 fun TagDto.toEntity() = TagEntity(id = id, name = name, color = color)
+
+fun ScratchpadDto.toEntity(existing: ScratchpadEntity? = null) = ScratchpadEntity(
+    id = id,
+    title = title,
+    content = content,
+    position = position,
+    createdAt = createdAt ?: existing?.createdAt,
+    updatedAt = updatedAt,
+)

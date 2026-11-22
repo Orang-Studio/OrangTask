@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalView
 
 class Haptics(private val view: View) {
     fun tap() = view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+    fun longPress() = view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
 
     fun success() {
         if (Build.VERSION.SDK_INT >= 30) {

@@ -1,3 +1,4 @@
+import { ArrowLeft, Bell, Check, CheckCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useNotifications, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { EmptyState } from '../components/EmptyState'
@@ -52,7 +53,7 @@ export function NotificationsPage() {
               <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${n.read ? 'bg-transparent' : 'bg-orange-500'}`} />
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium">{n.title}</div>
-                {n.body && <div className="text-sm text-gray-500 dark:text-ink-400 mt-0.5">{n.body}</div>}
+                {n.body && <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{n.body}</div>}
                 <div className="text-xs text-gray-400 mt-1">{formatDueDate(n.created_at)}</div>
               </div>
             </button>

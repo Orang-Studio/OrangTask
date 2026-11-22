@@ -212,7 +212,7 @@ export function WebhookManager() {
           )}
 
           {direction === 'incoming' && (
-            <p className="text-sm text-gray-500 dark:text-ink-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {t('webhook.incomingHint' as MessageKey)}
             </p>
           )}

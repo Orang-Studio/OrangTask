@@ -24,7 +24,7 @@ export function EmptyState({
         )}
       </div>
       <h3 className="text-lg font-bold uppercase tracking-wide mb-2">{title}</h3>
-      <p className="text-sm text-gray-500 dark:text-ink-400 max-w-xs">{description}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">{description}</p>
     </div>
   )
 }

@@ -110,6 +110,7 @@ app.get('/ws', upgradeWebSocket(async (c) => {
 app.get('/health', (c) => c.json({ ok: true, ts: new Date().toISOString() }))
 
 if (process.env.NODE_ENV === 'production') {
+  app.use('/.well-known/*', serveStatic({ root: './public' }))
   app.use('/assets/*', serveStatic({ root: './public' }))
   app.use('/icons/*', serveStatic({ root: './public' }))
   app.get('/favicon.ico', serveStatic({ path: './public/favicon.ico' }))

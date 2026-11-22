@@ -1,7 +1,7 @@
 export const PRIORITIES = ['none', 'low', 'medium', 'high'] as const
 export const STATUSES = ['todo', 'doing', 'done'] as const
 
-export const MEMBER_ROLES = ['editor', 'viewer'] as const
+export const MEMBER_ROLES = ['owner', 'editor', 'viewer'] as const
 
 export const MAX = {
   title: 500,

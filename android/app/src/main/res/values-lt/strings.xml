@@ -37,6 +37,7 @@
     <string name="clear_due_date">Išvalyti terminą</string>
     <string name="close">Uždaryti</string>
     <string name="collapse">Sutraukti</string>
+    <string name="color_label">Spalva</string>
     <string name="complete">ATLIKTI</string>
     <string name="complete_security_check">Atlikti saugumo patikrą</string>
     <string name="completed">ATLIKTA</string>
@@ -45,6 +46,7 @@
     <string name="continue_with_google">Tęsti su „Google“</string>
     <string name="copy_key">Kopijuoti raktą</string>
     <string name="copy_url">Kopijuoti URL</string>
+    <string name="could_not_delete_task">Nepavyko ištrinti užduoties</string>
     <string name="could_not_read_keep_zip">Nepavyko perskaityti failo. Pasirinkite iš „Google Takeout“ gautą .zip failą (jo neišskleiskite).</string>
     <string name="create">Sukurti</string>
     <string name="create_account">Sukurti paskyrą</string>
@@ -65,6 +67,8 @@
     <string name="delete_forever">Ištrinti visam laikui</string>
     <string name="delete_list">Ištrinti sąrašą</string>
     <string name="delete_list_confirmation">Ištrinti „%1$s“ ir visas jo užduotis?</string>
+    <string name="delete_note">Ištrinti pastabą</string>
+    <string name="delete_note_confirmation">Ištrinti „%1$s“?</string>
     <string name="delete_subtask">Ištrinti papildomą užduotį</string>
     <string name="delete_task">Ištrinti užduotį</string>
     <string name="delete_webhook">Ištrinti webhook\'ą</string>
@@ -74,6 +78,7 @@
     <string name="direct_api_access_example_label">Tiesioginės API prieigos pavyzdys</string>
     <string name="disabled">Išjungta</string>
     <string name="done">Atlikta</string>
+    <string name="edit">Redaguoti</string>
     <string name="email">El. paštas</string>
     <string name="email_label">El. paštas</string>
     <string name="email_placeholder">jūs@example.com</string>
@@ -92,7 +97,20 @@
     <string name="fcm_default_channel">orangtask_priminimai</string>
     <string name="forgot_password">Pamiršote slaptažodį?</string>
     <string name="forgot_pin">Pamiršote PIN?</string>
+    <string name="format_bold">Paryškinti</string>
+    <string name="format_bullet_list">Punktų sąrašas</string>
+    <string name="format_code">Kodas</string>
+    <string name="format_code_block">Kodo blokas</string>
+    <string name="format_divider">Skirtukas</string>
+    <string name="format_heading">Antraštė</string>
+    <string name="format_italic">Kursyvas</string>
+    <string name="format_link">Nuoroda</string>
+    <string name="format_numbered_list">Numeruotas sąrašas</string>
+    <string name="format_quote">Citata</string>
+    <string name="format_strikethrough">Perbraukti</string>
+    <string name="format_task_item">Sąrašo punktas</string>
     <string name="google_keep">Google Keep</string>
+    <string name="icon_label">Piktograma</string>
     <string name="import_from_google_keep">Importuoti iš „Google Keep“</string>
     <string name="import_google_keep_description">Eksportuokite užrašus naudodami „Google Takeout“ (takeout.google.com), tada pasirinkite gautą .zip failą – jo išskleisti nereikia. Kontroliniai sąrašai taps papildomomis užduotimis, o etiketės – žymomis.</string>
     <string name="import_into_list">Importuoti į sąrašą</string>
@@ -151,6 +169,7 @@
     <string name="login_footer">Nemokama atvirojo kodo programa. Galite ją talpinti savo serveryje.</string>
     <string name="login_tagline">Užduotys, sinchronizuojamos visuose įrenginiuose</string>
     <string name="magic_link">Magiška nuoroda</string>
+    <string name="magic_link_opens_app">Bakstelėkite nuorodą el. laiške. „OrangTask“ turėtų atsidaryti ir prijungti jus automatiškai.</string>
     <string name="magic_link_placeholder">https://…/auth/magic?token=…</string>
     <string name="mark_all_read">Pažymėti visus kaip perskaitytus</string>
     <string name="members">Nariai</string>
@@ -160,6 +179,8 @@
     <string name="network_error">Tinklo klaida, patikrinkite ryšį</string>
     <string name="new_api_key">Naujas API raktas</string>
     <string name="new_label">Naujas</string>
+    <string name="new_list">Naujas sąrašas</string>
+    <string name="new_note">Nauja pastaba</string>
     <plurals name="new_notifications">
         <item quantity="one">%1$d naujas</item>
         <item quantity="few">%1$d nauji</item>
@@ -176,6 +197,7 @@
     <string name="no_lists_yet">Sąrašų dar nėra</string>
     <string name="no_notifications">Pranešimų nėra</string>
     <string name="no_overdue_tasks">Pradelstų užduočių nėra</string>
+    <string name="no_scratchpads_yet">Pastabų dar nėra</string>
     <string name="no_search_results">Rezultatų pagal „%1$s“ nėra</string>
     <string name="no_tasks_in_list">Šiame sąraše nėra užduočių</string>
     <string name="no_tasks_yet">Užduočių dar nėra</string>
@@ -187,7 +209,7 @@
     <string name="notification_action_snooze_one_hour">Atidėti 1 val.</string>
     <string name="notification_channel_description">Užduočių priminimai ir atnaujinimai</string>
     <string name="notification_channel_name">Priminimai</string>
-    <string name="notification_delivery_description">Tiesioginiai pranešimai siunčiami į įrenginius, kuriuose juos įjungėte (šiandien – per naršyklę, o vietiniai „Android“ pranešimai bus pridėti vėlesniame atnaujinime). El. laiškai siunčiami jūsų paskyros adresu.</string>
+    <string name="notification_delivery_description">Tiesioginiai pranešimai siunčiami į įrenginius, kuriuose juos įjungėte. El. laiškai siunčiami jūsų paskyros adresu.</string>
     <string name="notifications">Pranešimai</string>
     <string name="notifications_caught_up">Viskas peržiūrėta. Čia bus rodoma nauja veikla.</string>
     <string name="notifications_heading">PRANEŠIMAI</string>
@@ -204,12 +226,14 @@
     <string name="password_min_length_error">Slaptažodį turi sudaryti bent 8 simboliai</string>
     <string name="password_placeholder">••••••••</string>
     <string name="paste_magic_link_error">Įklijuokite nuorodą iš savo el. laiško</string>
+    <string name="invalid_magic_link_error">Įklijuokite tinkamą „OrangTask“ prisijungimo nuorodą arba prieigos raktą</string>
     <string name="pin_description">Pasirinktinai: norint atidaryti šios paskyros programėlę reikės 4–6 skaitmenų PIN kodo.</string>
     <string name="pin_digits_placeholder">4–6 skaitmenys</string>
     <string name="pin_placeholder">••••</string>
     <string name="pin_reset_code_placeholder">123456</string>
     <string name="pin_reset_message">Atkūrimo kodą išsiuntėme jūsų paskyros el. pašto adresu.</string>
     <string name="please_wait">Palaukite…</string>
+    <string name="preview">Peržiūra</string>
     <string name="priority_high">Aukštas</string>
     <string name="priority_low">Žemas</string>
     <string name="priority_medium">Vidutinis</string>
@@ -217,7 +241,6 @@
     <string name="push">Tiesioginiai pranešimai</string>
     <string name="quick_add_placeholder">Pridėti užduotį… (pabandykite „report friday 5pm !high“)</string>
     <string name="reading_zip">Skaitomas ZIP failas…</string>
-    <string name="recurrence_rule_placeholder">Pasikartojimo taisyklė (pvz., FREQ=DAILY)</string>
     <string name="recurring">Pasikartojanti</string>
     <string name="remove_member_description">Pašalinti %1$s</string>
     <string name="remove_pin">Pašalinti PIN</string>
@@ -225,6 +248,68 @@
     <string name="remove_tag">Pašalinti žymą</string>
     <string name="rename">Pervadinti</string>
     <string name="rename_list">Pervadinti sąrašą</string>
+    <string name="repeat_after">Po</string>
+    <string name="repeat_custom_rule">Pasirinktinė taisyklė</string>
+    <string name="repeat_custom_rule_notice">Ši užduotis naudoja taisyklę, kurios parinkiklis negali redaguoti. Pasirinkus variantą žemiau, ji bus pakeista.</string>
+    <string name="repeat_daily">Kasdien</string>
+    <string name="repeat_decrease_interval">Mažinti intervalą</string>
+    <string name="repeat_edit">Redaguoti kartojimą</string>
+    <string name="repeat_ends">Baigiasi</string>
+    <string name="repeat_ends_never">Niekada</string>
+    <string name="repeat_ends_on_date">Konkrečią dieną</string>
+    <string name="repeat_every">Kartoti kas</string>
+    <string name="repeat_freq_day">Diena</string>
+    <string name="repeat_freq_month">Mėnuo</string>
+    <string name="repeat_freq_week">Savaitė</string>
+    <string name="repeat_freq_year">Metai</string>
+    <string name="repeat_increase_interval">Didinti intervalą</string>
+    <string name="repeat_monthly">Kas mėnesį</string>
+    <string name="repeat_monthly_day_option">%1$d d.</string>
+    <string name="repeat_monthly_nth">%1$s %2$s</string>
+    <string name="repeat_never">Nesikartoja</string>
+    <plurals name="repeat_occurrences">
+        <item quantity="one">kartą</item>
+        <item quantity="few">kartus</item>
+        <item quantity="many">karto</item>
+        <item quantity="other">kartų</item>
+    </plurals>
+    <string name="repeat_on_days">Kartoti</string>
+    <string name="repeat_ordinal_first">Pirmas</string>
+    <string name="repeat_ordinal_fourth">Ketvirtas</string>
+    <string name="repeat_ordinal_last">Paskutinis</string>
+    <string name="repeat_ordinal_second">Antras</string>
+    <string name="repeat_ordinal_third">Trečias</string>
+    <string name="repeat_remove">Nekartoti</string>
+    <string name="repeat_summary_every">Kas %1$d %2$s</string>
+    <string name="repeat_summary_until">iki %1$s</string>
+    <string name="repeat_title">Kartojimas</string>
+    <plurals name="repeat_unit_days">
+        <item quantity="one">dieną</item>
+        <item quantity="few">dienas</item>
+        <item quantity="many">dienos</item>
+        <item quantity="other">dienų</item>
+    </plurals>
+    <plurals name="repeat_unit_months">
+        <item quantity="one">mėnesį</item>
+        <item quantity="few">mėnesius</item>
+        <item quantity="many">mėnesio</item>
+        <item quantity="other">mėnesių</item>
+    </plurals>
+    <plurals name="repeat_unit_weeks">
+        <item quantity="one">savaitę</item>
+        <item quantity="few">savaites</item>
+        <item quantity="many">savaitės</item>
+        <item quantity="other">savaičių</item>
+    </plurals>
+    <plurals name="repeat_unit_years">
+        <item quantity="one">metus</item>
+        <item quantity="few">metus</item>
+        <item quantity="many">metų</item>
+        <item quantity="other">metų</item>
+    </plurals>
+    <string name="repeat_weekdays">Darbo dienomis</string>
+    <string name="repeat_weekly">Kas savaitę</string>
+    <string name="repeat_yearly">Kas metus</string>
     <string name="request_failed">Užklausa nepavyko (%1$d)</string>
     <string name="resend_code">Siųsti kodą dar kartą</string>
     <string name="resend_verification_email">Siųsti patvirtinimo el. laišką dar kartą</string>
@@ -244,6 +329,14 @@
     <string name="save_profile">Išsaugoti profilį</string>
     <string name="saved">Išsaugota ✓</string>
     <string name="saving">Išsaugoma…</string>
+    <string name="scratchpad_content_placeholder">Rašykite bet ką…</string>
+    <string name="scratchpad_empty_note">Ši pastaba tuščia.</string>
+    <string name="scratchpad_title_placeholder">Pastabos pavadinimas…</string>
+    <string name="scratchpads">Užrašinės</string>
+    <string name="scratchpads_empty_description">Užrašinės yra paprastos pastabos be žymimųjų langelių, skirtos tam, kas nėra užduotis.</string>
+    <string name="scratchpads_formatting_hint">Formatavimas: **paryškinta**, *kursyvas*, ~~perbraukta~~, `kodas`, ## antraštė, - punktas, 1. numeruotas, - [ ] sąrašas, &gt; citata, [tekstas](nuoroda), ``` kodo blokas, --- skirtukas.</string>
+    <string name="scratchpads_heading">UŽRAŠINĖS</string>
+    <string name="scratchpads_untitled">Pastaba be pavadinimo</string>
     <string name="search">Ieškoti</string>
     <string name="search_tasks_placeholder">Ieškoti užduočių…</string>
     <string name="search_unavailable">Paieška nepasiekiama</string>
@@ -260,6 +353,7 @@
     <string name="settings">Nustatymai</string>
     <string name="settings_appearance">Išvaizda</string>
     <string name="settings_data">Duomenys</string>
+    <string name="privacy_policy">Privatumo politika</string>
     <string name="settings_heading">NUSTATYMAI</string>
     <string name="settings_integrations">Integracijos</string>
     <string name="settings_notifications">Pranešimai</string>
@@ -268,7 +362,7 @@
     <string name="share">Bendrinti</string>
     <string name="share_list_title">BENDRINTI „%1$s“</string>
     <string name="sign_in">Prisijungti</string>
-    <string name="sign_in_link_label">Įklijuokite prisijungimo nuorodą</string>
+    <string name="sign_in_link_label">Neatsidarė? Įklijuokite nuorodą arba prieigos raktą</string>
     <string name="sign_in_link_sent">Prisijungimo nuorodą išsiuntėme adresu %1$s</string>
     <string name="sign_out">Atsijungti</string>
     <string name="sign_out_instead">Atsijungti</string>
@@ -288,6 +382,7 @@
         <item quantity="many">%1$d papildomų užduočių</item>
         <item quantity="other">%1$d papildomų užduočių</item>
     </plurals>
+    <string name="subtask_title">Antrinės užduoties pavadinimas</string>
     <string name="subtasks">Papildomos užduotys</string>
     <string name="tag">Žyma</string>
     <string name="task_assigned_description">Kai kas nors priskiria jums užduotį</string>
@@ -302,6 +397,7 @@
     </plurals>
     <string name="task_due_soon_description">Likus 1 valandai iki užduoties termino</string>
     <string name="task_due_soon_label">Artėja užduoties terminas</string>
+    <string name="task_deleted">Ištrinta „%1$s“</string>
     <string name="teammate_email_placeholder">komandos.narys@example.com</string>
     <string name="theme">Tema</string>
     <string name="theme_dark">Tamsi</string>
@@ -311,6 +407,7 @@
     <string name="today_empty_description">Viskas suplanuota. Pridėkite užduotį toliau, kad suplanuotumėte savo dieną.</string>
     <string name="type_at_least_two_characters">Įveskite bent 2 simbolius</string>
     <string name="type_email_to_confirm">Norėdami patvirtinti, įveskite %1$s:</string>
+    <string name="undo">Anuliuoti</string>
     <string name="unassigned">Nepriskirta</string>
     <string name="unlock">Atrakinti</string>
     <string name="unlock_your_tasks">Atrakinkite savo užduotis</string>
@@ -334,4 +431,37 @@
     <string name="webhooks_integrations_heading">WEBHOOK\'AI IR INTEGRACIJOS</string>
     <string name="wrong_pin_try_again">Neteisingas PIN, bandykite dar kartą</string>
     <string name="your_email">jūsų el. paštas</string>
+    <string name="about_title">Apie</string>
+    <string name="about_version">„OrangTask“ versija %1$s</string>
+    <string name="github_access_note">„OrangTask“ tik skaito sinchronizuojamus įrašus ir niekada nerašo į jūsų saugyklas.</string>
+    <string name="github_connect_on_web">Prijunkite „GitHub“ paskyrą, kad prasidėtų sinchronizavimas.</string>
+    <string name="github_connected">„GitHub“ prijungta.</string>
+    <string name="github_connect_error">Nepavyko prijungti „GitHub“. Bandykite dar kartą.</string>
+    <string name="github_connecting">Jungiama…</string>
+    <string name="github_description">Perkelkite savo „GitHub“ problemas, sujungimo prašymus ir saugumo įspėjimus kaip užduotis.</string>
+    <string name="github_disconnect">Atjungti</string>
+    <string name="github_disconnect_confirm">Atjungti „GitHub“? Sinchronizuoti įrašai bus pašalinti iš šios paskyros.</string>
+    <string name="github_issues">Problemos</string>
+    <string name="github_issues_description">Jums priskirtos problemos.</string>
+    <string name="github_last_synced">Paskutinį kartą sinchronizuota %1$s</string>
+    <string name="github_never_synced">Niekada nesinchronizuota</string>
+    <string name="github_not_configured">„GitHub“ šiame serveryje nesukonfigūruota.</string>
+    <string name="github_not_connected">Neprijungta</string>
+    <string name="github_pull_requests">Sujungimo prašymai</string>
+    <string name="github_pull_requests_description">Jūsų sukurti arba peržiūrėti paprašyti sujungimo prašymai.</string>
+    <string name="github_security">Saugumo įspėjimai</string>
+    <string name="github_security_description">„Dependabot“ ir kodo skenavimo įspėjimai jūsų saugyklose.</string>
+    <string name="github_sign_in">Prijungti „GitHub“</string>
+    <string name="github_signed_in_as">Prisijungta kaip %1$s</string>
+    <string name="github_sync_now">Sinchronizuoti dabar</string>
+    <string name="github_syncing">Sinchronizuojama…</string>
+    <string name="github_title">„GitHub“</string>
+    <string name="no_time">Be laiko</string>
+    <string name="edit_time">Keisti laiką</string>
+    <string name="everyone">Visi</string>
+    <string name="previous_month">Ankstesnis mėnuo</string>
+    <string name="next_month">Kitas mėnuo</string>
+    <string name="no_tasks_this_day">Šią dieną užduočių nėra</string>
+    <string name="widget_today_name">OrangTask: Šiandien</string>
+    <string name="widget_today_description">Vėluojančios ir šiandienos užduotys, pažymėkite atliktas</string>
 </resources>

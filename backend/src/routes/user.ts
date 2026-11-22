@@ -41,6 +41,11 @@ app.delete('/', async (c) => {
     return c.json({ error: 'Email does not match' }, 400)
   }
 
+  await sql`
+    UPDATE tasks SET assignee_ids = array_remove(assignee_ids, ${userId}::uuid),
+      assigned_to = (array_remove(assignee_ids, ${userId}::uuid))[1]
+    WHERE ${userId} = ANY(assignee_ids)
+  `
   await sql`DELETE FROM users WHERE id = ${userId}`
   return c.json({ ok: true })
 })

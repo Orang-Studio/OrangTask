@@ -20,8 +20,14 @@ class Converters {
 }
 
 @Database(
-    entities = [TaskEntity::class, ListEntity::class, TagEntity::class, PendingOpEntity::class],
-    version = 2,
+    entities = [
+        TaskEntity::class,
+        ListEntity::class,
+        TagEntity::class,
+        ScratchpadEntity::class,
+        PendingOpEntity::class,
+    ],
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -29,5 +35,6 @@ abstract class OrangDb : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun listDao(): ListDao
     abstract fun tagDao(): TagDao
+    abstract fun scratchpadDao(): ScratchpadDao
     abstract fun pendingOpDao(): PendingOpDao
 }

@@ -1,10 +1,16 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import {
+  Sun, CalendarDays, AlertCircle, Layers, Plus, Settings, LogOut,
+  PanelLeftClose, PanelLeftOpen, UserCheck, NotebookPen,
+} from 'lucide-react'
 import { useState } from 'react'
-import { useLists, useCreateList } from '../hooks/useLists'
+import { useLists, useReorderLists } from '../hooks/useLists'
+import { NewListModal } from './NewListModal'
+import { SortableList, SortableItem } from './Sortable'
 import { useTasks } from '../hooks/useTasks'
 import { useAuthStore } from '../stores/auth'
 import { Logo } from './Logo'
-import { ListIcon, DEFAULT_LIST_ICON } from '../lib/listIcons'
+import { ListIcon } from '../lib/listIcons'
 import { safeHttpUrl } from '../lib/safeUrl'
 import { useHaptics } from '../hooks/useHaptics'
 import { t, type MessageKey } from '../lib/i18n'
@@ -25,13 +31,12 @@ function SmartBadge({ smart }: { smart: 'today' | 'overdue' | 'assigned' }) {
 export function Sidebar() {
   const { data: lists } = useLists()
   const hasSharedLists = lists?.some((l) => l.is_shared || (l.my_role && l.my_role !== 'owner')) ?? false
-  const createList = useCreateList()
+  const reorderLists = useReorderLists()
   const { user, logout } = useAuthStore()
   const safeAvatarUrl = safeHttpUrl(user?.avatar_url)
   const navigate = useNavigate()
   const haptics = useHaptics()
-  const [adding, setAdding] = useState(false)
-  const [newName, setNewName] = useState('')
+  const [newListOpen, setNewListOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem('sidebar-collapsed') === '1' } catch { return false }
   })
@@ -46,7 +51,7 @@ export function Sidebar() {
   }
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center h-10 text-sm font-medium transition-colors ${
+    `flex items-center h-10 text-sm font-medium transition-colors overflow-hidden ${
       collapsed ? 'justify-center px-0' : 'gap-3 px-3'
     } ${
       isActive
@@ -61,20 +66,10 @@ export function Sidebar() {
     { to: '/all', label: t('sidebar.allTasks' as MessageKey), icon: Layers, smart: 'all' as const },
   ]
 
-  const handleCreate = async () => {
-    if (!newName.trim()) {
-      setAdding(false)
-      return
-    }
-    await createList.mutateAsync({ name: newName.trim(), color: '#f97316', icon: DEFAULT_LIST_ICON })
-    setNewName('')
-    setAdding(false)
-  }
-
   return (
-    <aside className={`${collapsed ? 'w-16' : 'w-60'} flex-shrink-0 border-r border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-850 flex flex-col h-full transition-[width] duration-200`}>
+    <aside className={`${collapsed ? 'w-16' : 'w-60'} flex-shrink-0 overflow-hidden border-r border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-850 flex flex-col h-full transition-[width] duration-200`}>
 
-      <div className={`flex items-center h-14 border-b border-gray-200 dark:border-ink-700 ${collapsed ? 'justify-center px-0' : 'gap-2 px-4'}`}>
+      <div className={`flex items-center h-14 flex-shrink-0 border-b border-gray-200 dark:border-ink-700 ${collapsed ? 'justify-center px-0' : 'gap-2 px-4'}`}>
         {collapsed ? (
           <button onClick={toggleCollapsed} className="p-1" aria-label={t('sidebar.expandSidebar' as MessageKey)} title={t('sidebar.expandSidebar' as MessageKey)}>
             <Logo size={28} />
@@ -96,7 +91,7 @@ export function Sidebar() {
           {SMART_VIEWS.map((v) => (
             <NavLink key={v.to} to={v.to} className={navClass} onClick={() => haptics.tap()} title={collapsed ? v.label : undefined}>
               <v.icon size={17} className="flex-shrink-0" />
-              {!collapsed && <span>{v.label}</span>}
+              {!collapsed && <span className="truncate">{v.label}</span>}
               {!collapsed && v.smart === 'today' && <SmartBadge smart="today" />}
               {!collapsed && v.smart === 'overdue' && <SmartBadge smart="overdue" />}
             </NavLink>
@@ -105,21 +100,21 @@ export function Sidebar() {
           {hasSharedLists && (
             <NavLink to="/assigned" className={navClass} onClick={() => haptics.tap()} title={collapsed ? t('sidebar.assignedToMe' as MessageKey) : undefined}>
               <UserCheck size={17} className="flex-shrink-0" />
-              {!collapsed && <span>{t('sidebar.assignedToMe' as MessageKey)}</span>}
+              {!collapsed && <span className="truncate">{t('sidebar.assignedToMe' as MessageKey)}</span>}
               {!collapsed && <SmartBadge smart="assigned" />}
             </NavLink>
           )}
 
           <NavLink to="/scratchpads" className={navClass} onClick={() => haptics.tap()} title={collapsed ? t('scratchpads.title' as MessageKey) : undefined}>
             <NotebookPen size={17} className="flex-shrink-0" />
-            {!collapsed && <span>{t('scratchpads.title' as MessageKey)}</span>}
+            {!collapsed && <span className="truncate">{t('scratchpads.title' as MessageKey)}</span>}
           </NavLink>
         </div>
 
         <div className={`mt-6 mb-1 flex items-center ${collapsed ? 'justify-center px-0' : 'justify-between px-4'}`}>
-          {!collapsed && <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">{t('sidebar.lists' as MessageKey)}</span>}
+          {!collapsed && <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold truncate">{t('sidebar.lists' as MessageKey)}</span>}
           <button
-            onClick={() => { if (collapsed) toggleCollapsed(); setAdding(true) }}
+            onClick={() => { haptics.tap(); setNewListOpen(true) }}
             className="text-gray-400 hover:text-orange-500"
             aria-label={t('sidebar.newList' as MessageKey)}
             title={t('sidebar.newList' as MessageKey)}
@@ -128,37 +123,31 @@ export function Sidebar() {
           </button>
         </div>
         <div className="px-2 space-y-0.5">
-          {lists?.map((list) => (
-            <NavLink key={list.id} to={`/list/${list.id}`} className={navClass} onClick={() => haptics.tap()} title={collapsed ? list.name : undefined}>
-              <ListIcon icon={list.icon} color={list.color} size={17} />
-              {!collapsed && <span className="truncate">{list.name}</span>}
-              {!collapsed && (list.task_count ?? 0) > 0 && (
-                <span className="ml-auto text-xs text-gray-400">{list.task_count}</span>
-              )}
-            </NavLink>
-          ))}
-          {!collapsed && adding && (
-            <input
-              autoFocus
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onBlur={handleCreate}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreate()
-                if (e.key === 'Escape') {
-                  setNewName('')
-                  setAdding(false)
-                }
-              }}
-              placeholder={t('sidebar.listNamePlaceholder' as MessageKey)}
-              className="input-field mx-1 h-9 text-sm"
-              style={{ width: 'calc(100% - 8px)' }}
-            />
-          )}
+          <SortableList ids={lists?.map((l) => l.id) ?? []} onReorder={(ids) => reorderLists.mutate(ids)}>
+            {lists?.map((list) => (
+              <SortableItem key={list.id} id={list.id} className="bg-white dark:bg-ink-850">
+                {() => (
+                  <NavLink
+                    to={`/list/${list.id}`}
+                    draggable={false}
+                    className={navClass}
+                    onClick={() => haptics.tap()}
+                    title={collapsed ? list.name : undefined}
+                  >
+                    <ListIcon icon={list.icon} color={list.color} size={17} />
+                    {!collapsed && <span className="truncate">{list.name}</span>}
+                    {!collapsed && (list.task_count ?? 0) > 0 && (
+                      <span className="ml-auto text-xs text-gray-400">{list.task_count}</span>
+                    )}
+                  </NavLink>
+                )}
+              </SortableItem>
+            ))}
+          </SortableList>
         </div>
       </nav>
 
-      <div className="border-t border-gray-200 dark:border-ink-700 p-2">
+      <div className="border-t border-gray-200 dark:border-ink-700 flex-shrink-0 p-2">
         <div className={`flex ${collapsed ? 'flex-col items-center gap-1' : 'items-center gap-2'}`}>
           <button
             onClick={() => navigate('/settings')}
@@ -199,6 +188,8 @@ export function Sidebar() {
           </button>
         </div>
       </div>
+
+      <NewListModal open={newListOpen} onClose={() => setNewListOpen(false)} onCreated={(id) => navigate(`/list/${id}`)} />
     </aside>
   )
 }

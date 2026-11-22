@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.0",
+    "@typesafe-ai/sdk": "^0.7.0",
     "bcryptjs": "^2.4.3",
     "chrono-node": "^2.7.7",
     "hono": "^4.6.0",

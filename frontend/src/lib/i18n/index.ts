@@ -11,10 +11,11 @@ export type LanguagePref = 'system' | Language
 
 const files = import.meta.glob<Record<string, unknown>>('./*.json', { eager: true })
 
+// eager JSON globs resolve to module namespaces not the plain object so the catalog lives under default unwrap it or every lookup misses and falls back to English
 const CATALOGS = Object.fromEntries(
-  Object.entries(files).map(([path, cat]) => [
+  Object.entries(files).map(([path, mod]) => [
     path.replace('./', '').replace('.json', ''),
-    cat as Catalog,
+    ((mod as { default?: Catalog }).default ?? mod) as Catalog,
   ]),
 ) as Partial<Record<Language, Catalog>>
 

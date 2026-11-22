@@ -1,0 +1,18 @@
+[Desktop Entry]
+Name=OrangTask
+Name[lt]=OrangTask
+Comment=Search and complete OrangTask tasks
+Comment[lt]=Ieškokite ir užbaikite OrangTask užduotis
+Type=Service
+Icon=lt.oranges.orangtask
+X-KDE-ServiceTypes=Plasma/Runner
+X-KDE-PluginInfo-Author=Orang Studio
+X-KDE-PluginInfo-Name=orangtask
+X-KDE-PluginInfo-Version=@PROJECT_VERSION@
+X-KDE-PluginInfo-License=GPL-3.0
+X-KDE-PluginInfo-EnabledByDefault=true
+X-Plasma-API=DBus
+X-Plasma-DBusRunner-Service=lt.oranges.orangtask
+X-Plasma-DBusRunner-Path=/runner
+X-Plasma-Request-Actions-Once=true
+X-Plasma-Runner-Min-Letter-Count=2

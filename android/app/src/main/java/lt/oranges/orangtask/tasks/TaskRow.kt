@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import lt.oranges.orangtask.R
+import lt.oranges.orangtask.core.i18n.tr
 import lt.oranges.orangtask.core.db.TaskEntity
 import lt.oranges.orangtask.ui.components.Avatar
 import lt.oranges.orangtask.ui.components.PriorityDot
@@ -128,7 +129,7 @@ private fun TaskRowContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onOpen)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
         ) {
             TaskCheckbox(done = task.done, onClick = onToggleComplete)
 
@@ -220,7 +221,8 @@ private fun TaskRowContent(
                         if (task.assignedTo != null) {
                             Avatar(name = task.assigneeName, url = task.assigneeAvatar, size = 16.dp)
                             task.assigneeName?.let {
-                                Text(it, fontSize = 12.sp, maxLines = 1, color = mutedColor)
+                                val more = task.assigneeIds.size - 1
+                                Text(if (more > 0) "$it +$more" else it, fontSize = 12.sp, maxLines = 1, color = mutedColor)
                             }
                         }
                         if (showListName && task.listName != null) {

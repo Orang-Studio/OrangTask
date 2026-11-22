@@ -141,6 +141,11 @@ fun LoginScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 24.dp),
             )
+            TextButton(onClick = {
+                CustomTabsIntent.Builder().build().launchUrl(context, Uri.parse("https://task.oranges.lt/legal"))
+            }) {
+                Text(tr(R.string.privacy_policy), fontSize = 12.sp, color = Gray400)
+            }
         }
     }
 }
@@ -189,6 +194,13 @@ private fun MagicSentContent(state: LoginUiState, vm: LoginViewModel) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp),
+        )
+        Text(
+            tr(R.string.magic_link_opens_app),
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp),
         )
 
         Spacer(Modifier.height(20.dp))

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -36,6 +37,7 @@ import retrofit2.HttpException
 import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import javax.inject.Inject
 
@@ -58,6 +60,7 @@ class TaskListViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val taskRepository: TaskRepository,
     private val listRepository: ListRepository,
+    private val undoableTaskDelete: UndoableTaskDeleteCoordinator,
     authRepository: AuthRepository,
 ) : ViewModel() {
 
@@ -73,7 +76,12 @@ class TaskListViewModel @Inject constructor(
 
     val errors = MutableSharedFlow<String>(extraBufferCapacity = 4)
 
-    val tasks: StateFlow<List<TaskEntity>> = taskFlow()
+    val calendarMonth = MutableStateFlow(YearMonth.now())
+    val selectedDay = MutableStateFlow(LocalDate.now())
+
+    val tasks: StateFlow<List<TaskEntity>> = combine(taskFlow(), undoableTaskDelete.pendingIds) { tasks, pendingIds ->
+        tasks.filterNot { it.id in pendingIds }
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val list: StateFlow<ListEntity?> = (listId?.let { listRepository.observeList(it) } ?: flowOf(null))
@@ -87,12 +95,16 @@ class TaskListViewModel @Inject constructor(
 
     private val selectedId = MutableStateFlow<String?>(null)
 
-    val selectedTask: StateFlow<TaskEntity?> = selectedId
-        .flatMapLatest { id -> if (id == null) flowOf(null) else taskRepository.observeById(id) }
+    val selectedTask: StateFlow<TaskEntity?> = combine(
+        selectedId.flatMapLatest { id -> if (id == null) flowOf(null) else taskRepository.observeById(id) },
+        undoableTaskDelete.pendingIds,
+    ) { task, pendingIds -> task?.takeUnless { it.id in pendingIds } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val subtasks: StateFlow<List<TaskEntity>> = selectedId
-        .flatMapLatest { id -> if (id == null) flowOf(emptyList()) else taskRepository.observeSubtasks(id) }
+    val subtasks: StateFlow<List<TaskEntity>> = combine(
+        selectedId.flatMapLatest { id -> if (id == null) flowOf(emptyList()) else taskRepository.observeSubtasks(id) },
+        undoableTaskDelete.pendingIds,
+    ) { tasks, pendingIds -> tasks.filterNot { it.id in pendingIds } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     var members by mutableStateOf<List<MemberDto>>(emptyList())
@@ -120,7 +132,15 @@ class TaskListViewModel @Inject constructor(
         val dayStart = dayStartMillis()
         return when (kind) {
             "today" -> taskRepository.observeToday(dayStart, dayStart + DAY_MILLIS - 1)
-            "upcoming" -> taskRepository.observeWeek(dayStart, dayStart + 8 * DAY_MILLIS - 1)
+            "upcoming" -> calendarMonth.flatMapLatest { month ->
+                val zone = ZoneId.systemDefault()
+                val start = calendarGridStart(month)
+                val end = start.plusDays(calendarWeeks(month) * 7L)
+                taskRepository.observeWeek(
+                    start.atStartOfDay(zone).toInstant().toEpochMilli(),
+                    end.atStartOfDay(zone).toInstant().toEpochMilli() - 1,
+                )
+            }
             "overdue" -> taskRepository.observeOverdue(dayStart)
             "assigned" -> taskRepository.observeAssigned(myUserId)
             else -> taskRepository.observeAll().map { it }
@@ -151,9 +171,12 @@ class TaskListViewModel @Inject constructor(
             return
         }
 
-        val due = parsed.dueAt ?: if (kind == "today") {
-            LocalDate.now().atTime(23, 59).atZone(ZoneId.systemDefault()).toInstant()
-        } else null
+        // same end of day default as the web
+        val due = parsed.dueAt ?: when (kind) {
+            "today" -> LocalDate.now()
+            "upcoming" -> selectedDay.value
+            else -> null
+        }?.atTime(23, 59)?.atZone(ZoneId.systemDefault())?.toInstant()
         viewModelScope.launch {
             mutate {
                 taskRepository.createTask(
@@ -171,10 +194,12 @@ class TaskListViewModel @Inject constructor(
         taskRepository.setCompleted(task.id, !task.done)
     }
 
-    fun deleteTask(task: TaskEntity) = launchMutation {
+    fun deleteTask(task: TaskEntity) {
         if (selectedId.value == task.id) selectedId.value = null
-        taskRepository.deleteTask(task.id)
+        undoableTaskDelete.stage(task)
     }
+
+    fun reorder(ids: List<String>) = launchMutation { taskRepository.reorder(ids) }
 
     fun setTitle(id: String, title: String) = launchMutation {
         if (title.isNotBlank()) taskRepository.setTitle(id, title.trim())
@@ -190,8 +215,8 @@ class TaskListViewModel @Inject constructor(
         taskRepository.setRecurrence(id, rule.trim().ifEmpty { null })
     }
 
-    fun setAssignee(id: String, member: MemberDto?) = launchMutation {
-        taskRepository.setAssignee(id, member?.id, member?.name, member?.avatarUrl)
+    fun setAssignees(id: String, members: List<MemberDto>) = launchMutation {
+        taskRepository.setAssignees(id, members)
     }
 
     fun addSubtask(parent: TaskEntity, title: String) = launchMutation {
@@ -202,7 +227,8 @@ class TaskListViewModel @Inject constructor(
 
     fun addTag(taskId: String, tag: TagEntity) = launchMutation { taskRepository.addTag(taskId, tag) }
 
-    fun removeTag(taskId: String, tag: TagEntity) = launchMutation { taskRepository.removeTag(taskId, tag) }
+    fun removeTag(taskId: String, tagId: String, tagName: String) =
+        launchMutation { taskRepository.removeTag(taskId, tagId, tagName) }
 
     fun createAndAddTag(taskId: String, name: String) = launchMutation {
         if (name.isNotBlank()) taskRepository.addTag(taskId, listRepository.createTag(name.trim()))
